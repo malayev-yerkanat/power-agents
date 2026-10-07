@@ -7,6 +7,13 @@ export interface Connection {
   detail: string;
   executable?: string;
 }
+export interface ModelOption { id: string; name: string }
+export interface ModelCatalog {
+  connectionId: string;
+  models: ModelOption[];
+  status: 'ready' | 'unavailable' | 'error';
+  note: string;
+}
 export interface Member { id: string; name: string; connectionId: string; model: string; role: string }
 export interface TaskSpec { id: string; title: string; description: string; assigneeId: string; dependsOn: string[] }
 export interface TeamPlan { summary: string; successCriteria: string[]; roles: { memberId: string; role: string }[]; tasks: TaskSpec[] }

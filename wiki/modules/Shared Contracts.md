@@ -12,6 +12,6 @@ tags: [module, contracts]
 
 # Shared Contracts
 
-`src/shared/types.ts` defines the shapes passed among the client, HTTP layer, engine, store, and adapters. A `Run` contains team membership, plan, tasks, messages, artifacts, session IDs, status, phase, counters, and version. `RunEvent` records changes for the UI stream. Runtime validation is implemented separately in the HTTP and core protocol layers.
+`src/shared/types.ts` defines the shapes passed among the client, HTTP layer, engine, store, and adapters. A `Run` contains team membership, plan, tasks, messages, artifacts, session IDs, status, phase, counters, and version. `RunEvent` records changes for the UI stream. `ModelCatalog` carries model IDs, names, discovery status, and a user-facing note for one connection; the chosen model stays in `Member.model`. Runtime validation is implemented separately in the HTTP and core protocol layers.
 
-See [types](../../src/shared/types.ts), [[Data Flow]], and [[Dependency Graph]].
+See [types](../../src/shared/types.ts), [[Data Flow]], [[Model Selection Flow]], and [[Dependency Graph]].

@@ -4,7 +4,8 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { RunWorkspace } from '../src/client/RunWorkspace.tsx';
 import { Composer } from '../src/client/Composer.tsx';
-import type { Run } from '../src/shared/types.ts';
+import { ModelPicker } from '../src/client/ModelPicker.tsx';
+import type { Connection, Run } from '../src/shared/types.ts';
 const run: Run = {
   id: 'run', goal: 'A concrete goal', title: '<script>alert(1)</script>', status: 'awaiting_approval',
   mode: 'demo', members: [{ id: 'a', name: 'Alice', connectionId: 'codex', model: '', role: '' }, { id: 'b', name: 'Bob', connectionId: 'claude', model: '', role: '' }],
@@ -37,9 +38,29 @@ test('composer distinguishes demo from real calls and presents model/team contro
   const html = renderToStaticMarkup(createElement(Composer, { connections: [
     { id: 'codex', name: 'Codex', kind: 'codex-cli', available: true, detail: 'Unverified login' },
     { id: 'claude', name: 'Claude', kind: 'claude-cli', available: true, detail: 'Unverified login' },
-  ], onCreate: async () => {}, openSettings: () => {} }));
+  ], onCreate: async () => {}, openSettings: () => {}, loadModels: async () => ({ connectionId: 'codex', models: [], status: 'ready' as const, note: '' }) }));
   assert.ok(html.includes('Демо без запросов к моделям'));
   assert.ok(html.includes('Реальный запуск использует ваши CLI-подписки или API.'));
   assert.ok(html.includes('Что нужно сделать?'));
   assert.ok(html.includes('План потребует вашего согласования'));
+  assert.ok(html.includes('<select id="model-'));
+  assert.ok(!html.includes('<input id="model-'));
+});
+
+test('model picker shows provider options and requires API model selection', () => {
+  const cli: Connection = { id: 'codex', name: 'Codex', kind: 'codex-cli', available: true, detail: '' };
+  const api: Connection = { id: 'anthropic-api', name: 'Anthropic', kind: 'anthropic-api', available: true, detail: '' };
+  const renderPicker = (connection: Connection, catalog?: { connectionId: string; models: { id: string; name: string }[]; status: 'ready' | 'unavailable' | 'error'; note: string }) =>
+    renderToStaticMarkup(createElement(ModelPicker, { id: 'model-test', connection, value: '', catalog, onChange: () => {}, onRetry: () => {} }));
+  const cliHtml = renderPicker(cli, { connectionId: 'codex', models: [{ id: 'gpt-6.1-sol', name: 'GPT-6.1 Sol' }], status: 'ready', note: 'CLI models' });
+  assert.match(cliHtml, /<option value=""[^>]*>По умолчанию<\/option>/);
+  assert.match(cliHtml, /<option value="gpt-6\.1-sol">GPT-6\.1 Sol<\/option>/);
+  const apiLoading = renderPicker(api);
+  assert.match(apiLoading, /<select[^>]*disabled=""/);
+  assert.match(apiLoading, /Загружаем модели/);
+  const apiHtml = renderPicker(api, { connectionId: 'anthropic-api', models: [{ id: 'claude-opus-5', name: 'Claude Opus 5' }], status: 'ready', note: 'API models' });
+  assert.match(apiHtml, /<option value=""[^>]*disabled=""[^>]*>Выберите модель<\/option>/);
+  assert.match(apiHtml, /<option value="claude-opus-5">Claude Opus 5<\/option>/);
+  const readyWithoutNote = renderPicker(cli, { connectionId: 'codex', models: [{ id: 'gpt-6.1-sol', name: 'GPT-6.1 Sol' }], status: 'ready', note: '' });
+  assert.doesNotMatch(readyWithoutNote, /Список моделей недоступен/);
 });

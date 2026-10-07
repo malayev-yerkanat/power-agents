@@ -10,7 +10,7 @@ tags: [product, architecture]
 
 Power Agents is a local prototype where a user gives a goal to a team of 2–5 AI participants. A chosen leader proposes a plan; the user approves or requests revisions. The engine then runs dependent tasks, relays participant questions, assembles a result, and asks a second participant to review it. The browser shows events and text artifacts. See [[Data Flow]].
 
-The implementation runs on one computer with Node.js 24+, a React/Vite client, a local HTTP API, and SQLite. It discovers Codex CLI, Claude Code, Antigravity CLI (`agy`), and OpenAI/Anthropic API connections at server startup. A demo mode exercises the orchestration without model calls. See [[Tech Stack]] and [[Provider Adapters]].
+The implementation runs on one computer with Node.js 24+, a React/Vite client, a local HTTP API, and SQLite. It discovers Codex CLI, Claude Code, Antigravity CLI (`agy`), and OpenAI/Anthropic API connections at server startup. The composer loads a model list for each selected connection; CLI participants may keep the provider default, while API participants must select a model. A demo mode exercises the orchestration without model calls. See [[Tech Stack]], [[Provider Adapters]], and [[Model Selection Flow]].
 
 ## Current boundaries
 

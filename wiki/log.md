@@ -8,6 +8,12 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-07 — Model selection
+
+- Replaced free-form model IDs in the team composer with a connection-specific selector.
+- Added protected, on-demand model discovery through Codex and Antigravity CLI commands and OpenAI/Anthropic model-list APIs. Claude Code uses documented aliases until a machine-readable CLI list is available.
+- Kept provider credentials on the server and documented that catalog presence does not prove account entitlement or endpoint compatibility.
+
 ## 2026-10-07 — Session recovery
 
 - Added a one-time browser session recovery path after HTTP 401, including fresh CSRF tokens for mutations and event stream reconnection.

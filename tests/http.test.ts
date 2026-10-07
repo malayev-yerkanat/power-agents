@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import type { AddressInfo } from 'node:net';
 import { createApiHandler } from '../src/server/http.ts';
 import { Store } from '../src/server/store.ts';
-import type { CreateRunInput, Run } from '../src/shared/types.ts';
+import type { Connection, CreateRunInput, ModelCatalog, Run } from '../src/shared/types.ts';
 
 function fixture(): Run {
   return {
@@ -17,7 +17,7 @@ function fixture(): Run {
   };
 }
 
-async function setup() {
+async function setup(connections: Connection[] = [], models?: (connection: Connection) => Promise<ModelCatalog>) {
   const store = new Store(':memory:');
   const calls: unknown[][] = [];
   const engine = {
@@ -27,7 +27,7 @@ async function setup() {
     message(id: string, body: string) { calls.push(['message', id, body]); return fixture(); },
   };
   store.createRun(fixture(), { type: 'created', message: 'Created' });
-  const handler = createApiHandler({ store, engine, connections: [] });
+  const handler = createApiHandler({ store, engine, connections, models });
   const server = createServer((req, res) => {
     void handler(req, res).then(handled => { if (!handled) { res.writeHead(404); res.end(); } });
   });
@@ -43,6 +43,21 @@ async function setup() {
     async close() { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); store.close(); },
   };
 }
+
+test('model catalog requires a session and rejects unknown connections', async () => {
+  const connection: Connection = { id: 'codex', name: 'Codex CLI', kind: 'codex-cli', available: true, detail: '' };
+  const catalog: ModelCatalog = { connectionId: 'codex', models: [{ id: 'gpt-6.1-sol', name: 'GPT-6.1 Sol' }], status: 'ready', note: '' };
+  const seen: string[] = [];
+  const app = await setup([connection], async value => { seen.push(value.id); return catalog; });
+  try {
+    assert.equal((await fetch(`${app.base}/api/models/codex`)).status, 401);
+    assert.equal((await fetch(`${app.base}/api/models/missing`, { headers: app.headers })).status, 404);
+    const response = await fetch(`${app.base}/api/models/codex`, { headers: app.headers });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), catalog);
+    assert.deepEqual(seen, ['codex']);
+  } finally { await app.close(); }
+});
 
 test('bootstrap issues strict session cookie and protects all remaining API reads', async () => {
   const app = await setup();

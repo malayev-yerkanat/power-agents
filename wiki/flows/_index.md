@@ -10,3 +10,4 @@ tags: [flows]
 
 - [[Data Flow]] — a team run from goal to reviewed result
 - [[Session and API Flow]] — browser authentication and event refresh
+- [[Model Selection Flow]] — provider catalogs and participant model choice

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowRight, ArrowUpRight, Check, Crown, Flask, Lightbulb, Plus, SlidersHorizontal, Trash, UsersThree } from '@phosphor-icons/react';
-import type { Connection, CreateRunInput, Member } from '../shared/types';
+import type { Connection, CreateRunInput, Member, ModelCatalog } from '../shared/types';
+import { ModelPicker } from './ModelPicker';
 import { Avatar, ErrorNote } from './ui';
 
-type Props = { connections: Connection[]; onCreate: (input: CreateRunInput) => Promise<void>; openSettings: () => void };
+type Props = { connections: Connection[]; onCreate: (input: CreateRunInput) => Promise<void>; openSettings: () => void; loadModels: (connectionId: string) => Promise<ModelCatalog> };
 const examples = [
   { label: 'Исследовать идею', goal: 'Исследуйте идею сервиса для совместной работы небольших команд с AI. Определите аудиторию, ключевые сценарии, риски и составьте план проверки спроса. Разделяйте проверенные факты и предположения.' },
   { label: 'Продумать продукт', goal: 'Разработайте концепцию приложения для личных заметок: сценарии использования, структуру экранов и план первой версии. Один участник должен независимо проверить предложения и найти слабые места.' },
@@ -12,7 +13,7 @@ const examples = [
 function newMember(connection: Connection | undefined, index: number): Member {
   return { id: `member-${crypto.randomUUID().slice(0, 8)}`, name: `${connection?.name || 'Агент'}${index > 2 ? ` ${index + 1}` : ''}`, connectionId: connection?.id || '', model: '', role: ['Координация и итоговый результат', 'Исследование и проработка', 'Независимое ревью'][index] || '' };
 }
-export function Composer({ connections, onCreate, openSettings }: Props) {
+export function Composer({ connections, onCreate, openSettings, loadModels }: Props) {
   const [goal, setGoal] = useState('');
   const [mode, setMode] = useState<'live' | 'demo'>('live');
   const [members, setMembers] = useState<Member[]>(() => {
@@ -22,6 +23,29 @@ export function Composer({ connections, onCreate, openSettings }: Props) {
   const [leaderId, setLeaderId] = useState(members[0]?.id || '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [catalogs, setCatalogs] = useState<Record<string, ModelCatalog>>({});
+  const requested = useRef(new Set<string>());
+  const fetchCatalog = useCallback((connectionId: string) => {
+    if (requested.current.has(connectionId)) return;
+    requested.current.add(connectionId);
+    void loadModels(connectionId).then(catalog => {
+      setCatalogs(current => ({ ...current, [connectionId]: catalog }));
+    }).catch(() => {
+      setCatalogs(current => ({ ...current, [connectionId]: { connectionId, models: [], status: 'error', note: 'Не удалось загрузить список моделей.' } }));
+    });
+  }, [loadModels]);
+  useEffect(() => {
+    for (const connectionId of new Set(members.map(member => member.connectionId).filter(Boolean))) fetchCatalog(connectionId);
+  }, [members, fetchCatalog]);
+  const retryCatalog = (connectionId: string) => {
+    requested.current.delete(connectionId);
+    setCatalogs(current => {
+      const next = { ...current };
+      delete next[connectionId];
+      return next;
+    });
+    fetchCatalog(connectionId);
+  };
   const unavailable = members.filter(member => !connections.find(c => c.id === member.connectionId)?.available);
   const updateMember = (id: string, patch: Partial<Member>) => setMembers(current => current.map(member => member.id === id ? { ...member, ...patch } : member));
   async function submit(event: React.FormEvent) {
@@ -55,7 +79,7 @@ export function Composer({ connections, onCreate, openSettings }: Props) {
                 <button type="button" onClick={() => setLeaderId(member.id)} className={`leader-button ${leaderId === member.id ? 'is-leader' : ''}`} aria-pressed={leaderId === member.id} aria-label={`Назначить ${member.name} лидером`}><Crown size={14} weight={leaderId === member.id ? 'fill' : 'regular'} /><span>{leaderId === member.id ? 'Лидер' : 'Назначить'}</span></button>
                 <button className="icon-button subtle" type="button" disabled={members.length <= 2} aria-label={`Удалить ${member.name}`} onClick={() => { const next = members.filter(m => m.id !== member.id); setMembers(next); if (leaderId === member.id) setLeaderId(next[0].id); }}><Trash size={16} /></button>
               </div>
-              <div className="member-fields"><div className="field"><label htmlFor={`connection-${member.id}`}>Подключение</label><select id={`connection-${member.id}`} value={member.connectionId} onChange={e => updateMember(member.id, { connectionId: e.target.value, model: '' })}>{connections.map(connection => <option key={connection.id} value={connection.id}>{connection.name}{!connection.available ? ' · не настроено' : ''}</option>)}</select></div><div className="field"><label htmlFor={`role-${member.id}`}>Роль <span>необязательно</span></label><input id={`role-${member.id}`} value={member.role} maxLength={300} placeholder="Лидер распределит" onChange={e => updateMember(member.id, { role: e.target.value })} /></div><div className="field"><label htmlFor={`model-${member.id}`}>Модель <span>{member.connectionId.endsWith('-api') ? 'для API' : 'необязательно'}</span></label><input id={`model-${member.id}`} value={member.model} maxLength={100} placeholder={member.connectionId.endsWith('-api') ? 'ID модели' : 'По умолчанию'} onChange={e => updateMember(member.id, { model: e.target.value })} /></div></div>
+              <div className="member-fields"><div className="field"><label htmlFor={`connection-${member.id}`}>Подключение</label><select id={`connection-${member.id}`} value={member.connectionId} onChange={e => updateMember(member.id, { connectionId: e.target.value, model: '' })}>{connections.map(connection => <option key={connection.id} value={connection.id}>{connection.name}{!connection.available ? ' · не настроено' : ''}</option>)}</select></div><div className="field"><label htmlFor={`role-${member.id}`}>Роль <span>необязательно</span></label><input id={`role-${member.id}`} value={member.role} maxLength={300} placeholder="Лидер распределит" onChange={e => updateMember(member.id, { role: e.target.value })} /></div><div className="field"><label htmlFor={`model-${member.id}`}>Модель <span>{member.connectionId.endsWith('-api') ? 'для API' : 'необязательно'}</span></label><ModelPicker id={`model-${member.id}`} connection={connections.find(connection => connection.id === member.connectionId) || { id: '', name: '', kind: 'demo', available: false, detail: '' }} value={member.model} catalog={catalogs[member.connectionId]} onChange={model => updateMember(member.id, { model })} onRetry={() => retryCatalog(member.connectionId)} /></div></div>
             </div>)}
             {members.length < 5 && <button className="add-member" type="button" onClick={() => setMembers(current => [...current, newMember(connections.find(c => c.available) || connections[0], current.length)])}><Plus size={16} />Добавить участника<span>до 5 агентов</span></button>}
           </div>

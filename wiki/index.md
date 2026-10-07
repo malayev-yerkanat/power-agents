@@ -15,6 +15,7 @@ Start with [[hot|Hot Cache]] for recent changes or [[Architecture Overview]] for
 - [[Architecture Overview]] — components and boundaries
 - [[Data Flow]] — create, approve, execute, review
 - [[Session and API Flow]] — local API, cookie, CSRF, SSE
+- [[Model Selection Flow]] — model lists for each connection
 - [[Tech Stack]] — runtime and dependencies
 - [[Dependency Graph]] — module relationships
 - [[Key Decisions]] — design choices and scope

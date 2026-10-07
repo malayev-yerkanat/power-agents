@@ -101,6 +101,8 @@ h2 { font-weight: 550; font-size: 17px; letter-spacing: -.35px; }
 .field label span { color: #a0a695; font-size: 8px; margin-left: 3px; }
 .field input, .field select { display: block; border: 1px solid #e3e6dc; border-radius: 5px; background: #f9faf6; color: #64725a; font-size: 10px; width: 100%; min-width: 0; height: 32px; padding: 0 8px; }
 .field select { padding-right: 5px; }
+.model-picker > div { margin-top: 5px; line-height: 1.35; }
+@media (max-width: 1250px) { .member-fields .field:last-child .model-picker { flex: 1; min-width: 0; max-width: 260px; } }
 .add-member { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; padding: 13px; font-size: 11px; color: #6c7d60; }
 .add-member span { font-size: 9px; color: #9ba48f; margin-left: 2px; }
 .add-member:hover { background: #f0f4e9; }

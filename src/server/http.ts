@@ -1,9 +1,10 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { z } from 'zod';
-import type { Connection, CreateRunInput, Run, RunEvent } from '../shared/types.ts';
+import type { Connection, CreateRunInput, ModelCatalog, Run, RunEvent } from '../shared/types.ts';
 import type { Store } from './store.ts';
 import { createSchema as engineCreateSchema } from './core/protocol.ts';
+import { createModelCatalogLoader } from './adapters/models.ts';
 
 interface EngineApi {
   create(input: CreateRunInput): Run | Promise<Run>;
@@ -11,7 +12,7 @@ interface EngineApi {
   control(id: string, action: 'pause' | 'resume' | 'cancel'): Run | Promise<Run>;
   message(id: string, body: string): Run | Promise<Run>;
 }
-interface Options { store: Store; engine: EngineApi; connections: Connection[] }
+interface Options { store: Store; engine: EngineApi; connections: Connection[]; models?: (connection: Connection) => Promise<ModelCatalog> }
 class HttpError extends Error {
   statusCode: number;
   constructor(statusCode: number, message: string) { super(message); this.statusCode = statusCode; }
@@ -150,6 +151,7 @@ function handleError(res: ServerResponse, error: unknown): void {
 export function createApiHandler(options: Options): (req: IncomingMessage, res: ServerResponse) => Promise<boolean> {
   const session = randomBytes(32).toString('hex');
   const csrfToken = randomBytes(32).toString('hex');
+  const models = options.models ?? createModelCatalogLoader();
   let windowStart = Date.now();
   let requestCount = 0;
   return async (req, res) => {
@@ -175,6 +177,11 @@ export function createApiHandler(options: Options): (req: IncomingMessage, res: 
       if (!secureEqual(cookie, session)) throw new HttpError(401, 'Open the application to start a session');
       if (req.method === 'GET') {
         if (url.pathname === '/api/events') eventStream(req, res, options.store);
+        else if (path[1] === 'models' && path.length === 3) {
+          const connection = options.connections.find(value => value.id === path[2]);
+          if (!connection) throw new HttpError(404, 'Connection not found');
+          json(res, 200, await models(connection));
+        }
         else if (path[1] === 'runs' && path.length === 3) {
           const run = options.store.getRun(path[2]);
           if (!run) throw new HttpError(404, 'Run not found');
