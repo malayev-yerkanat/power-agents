@@ -63,7 +63,7 @@ Owner: UI worker owns `src/client/` only.
 - [x] Review spec compliance first, then correctness/security; fix findings and repeat affected checks.
 - [x] Run `npm test`, `npm run build`, `npm audit --omit=dev`.
 - [x] Start the local app and inspect in a browser: create demo run, approve, observe peer exchange and revised result, refresh and confirm persistence.
-- [x] Live collaboration smoke run completed with Codex CLI and Gemini Antigravity CLI after an intentional user launch. Automated checks still use mocked providers. Claude CLI reported missing login during a local authentication failure check; executable discovery is explicitly not authentication verification.
+- [ ] Live collaboration smoke run remains for an intentional user launch. Automated checks used mocked providers. Claude CLI reported missing login during a local authentication failure check; executable discovery is explicitly not authentication verification.
 - [x] Document setup, key environment variables, workflow, privacy/permission boundary and prototype limitations in `docs/prototype.md`.
 - [x] Commit local implementation and show the running workspace; publishing remains a separate user action.
 
@@ -78,4 +78,3 @@ The demo is always labelled and cannot masquerade as live execution. A live run 
 - Browser demo: three members, peer questions/answers, revised final after independent review, Markdown download. Results remained available after server restart; production UI reported no console errors.
 - Spec and correctness/security review findings fixed with regression tests.
 - Implementation committed locally; no push. Runtime and generated artifacts are excluded from Git.
-- 2026-10-07: A browser-initiated live run with Codex CLI and Gemini Antigravity CLI completed planning, approval, three dependent tasks, synthesis, and independent review. The final Markdown checklist and review artifacts were saved. This verifies these two CLI connections for a small task, not all providers or task types.

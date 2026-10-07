@@ -26,9 +26,3 @@ export function timeLabel(value: string) {
 export function dateLabel(value: string) {
   return new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' }).format(new Date(value));
 }
-export async function api<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(path, options);
-  const data = await response.json().catch(() => ({ error: 'Сервер вернул неожиданный ответ.' }));
-  if (!response.ok) throw new Error(data.error || `Не удалось выполнить запрос (${response.status}).`);
-  return data as T;
-}
