@@ -18,10 +18,11 @@ export class Store {
   constructor(path: string) {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = new DatabaseSync(path);
-    this.db.exec(`
+    try { this.db.exec(`
       PRAGMA foreign_keys = ON;
-      PRAGMA journal_mode = WAL;
       PRAGMA busy_timeout = 5000;
+      PRAGMA locking_mode = EXCLUSIVE;
+      PRAGMA journal_mode = WAL;
       CREATE TABLE IF NOT EXISTS runs (
         id TEXT PRIMARY KEY,
         created_at TEXT NOT NULL,
@@ -36,7 +37,7 @@ export class Store {
         created_at TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS events_run_id ON events(run_id, id);
-    `);
+    `); } catch (error) { this.db.close(); throw error; }
   }
 
   listRuns(): Run[] {

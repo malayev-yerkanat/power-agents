@@ -132,3 +132,14 @@ test('notifies only after commit, isolates subscribers, and supports unsubscribe
     assert.equal(errorLog.mock.callCount(), 1);
   } finally { store.close(); }
 });
+
+test('a second coordinator cannot open the same database while the first is running', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'power-agents-single-'));
+  const path = join(directory, 'runs.sqlite');
+  const first = new Store(path);
+  try {
+    first.createRun(run(), created);
+    assert.throws(() => new Store(path), /locked|busy/i);
+    assert.equal(first.getRun('run-1')?.status, 'planning');
+  } finally { first.close(); rmSync(directory, { recursive: true, force: true }); }
+});

@@ -416,3 +416,26 @@ test('reserving turns never exceeds the global 100-turn limit during parallel di
     assert.equal(app.engine.get(seed.id).tasks.filter(task => task.status === 'completed').length, 1);
   } finally { await app.clean(); }
 });
+
+test('protocol rejects reserved participant identities', () => {
+  for (const reserved of ['user', 'team', '__proto__', 'constructor']) {
+    assert.throws(() => validateInput({ ...input, leaderId: reserved, members: [{ ...input.members[0], id: reserved }, input.members[1]] }), /зарезервирован/);
+  }
+});
+
+test('repeated dependencies cannot expand plan validation exponentially', () => {
+  const raw = JSON.parse(plan(seedRun()).text);
+  raw.tasks = Array.from({ length: 12 }, (_, index) => ({ id: `task-${index}`, title: 'Task', description: 'Work', assigneeId: 'a', dependsOn: index ? Array(12).fill(`task-${index - 1}`) : [] }));
+  assert.throws(() => parsePlan(JSON.stringify(raw), ['a', 'b']), /повторяющиеся зависимости/);
+});
+
+test('participant names matching Object prototype fields do not create fake sessions', async () => {
+  let received: string | undefined = 'not-called';
+  const runner: TurnRunner = async value => { received = value.sessionId; return plan(contextOf(value).run, [{ ...defaultTasks[0], assigneeId: 'toString' }]); };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create({ ...input, leaderId: 'toString', members: [{ ...input.members[0], id: 'toString' }, input.members[1]] });
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    assert.equal(received, undefined);
+  } finally { await app.clean(); }
+});

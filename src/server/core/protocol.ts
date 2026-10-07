@@ -2,6 +2,8 @@ import { z } from 'zod';
 import type { AgentEnvelope, CreateRunInput, TeamPlan } from '../../shared/types.ts';
 import { parseJsonObject } from '../adapters/index.ts';
 
+export class InputError extends Error { readonly statusCode = 400; }
+
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/);
 const text = (max: number) => z.string().trim().min(1).max(max);
 export const createSchema = z.object({
@@ -10,8 +12,9 @@ export const createSchema = z.object({
 });
 export function validateInput(value: unknown): CreateRunInput {
   const input = createSchema.parse(value);
-  if (new Set(input.members.map(m => m.id)).size !== input.members.length) throw new Error('Участники должны иметь уникальные ID.');
-  if (!input.members.some(m => m.id === input.leaderId)) throw new Error('Выберите руководителя команды.');
+  if (input.members.some(m => ['user', 'team', 'all', '__proto__', 'constructor', 'prototype'].includes(m.id))) throw new InputError('Выберите другой ID участника: этот ID зарезервирован.');
+  if (new Set(input.members.map(m => m.id)).size !== input.members.length) throw new InputError('Участники должны иметь уникальные ID.');
+  if (!input.members.some(m => m.id === input.leaderId)) throw new InputError('Выберите руководителя команды.');
   return input;
 }
 const planSchema = z.object({
@@ -27,9 +30,14 @@ export function parsePlan(raw: string, members: string[]): TeamPlan {
   for (const task of plan.tasks) {
     if (!members.includes(task.assigneeId) || task.dependsOn.some(dep => !ids.includes(dep))) throw new Error('План ссылается на неизвестного участника или задачу.');
   }
+  const completed = new Set<string>();
   const visit = (taskId: string, path: string[]): void => {
     if (path.includes(taskId)) throw new Error('План содержит цикл зависимостей.');
-    plan.tasks.find(t => t.id === taskId)!.dependsOn.forEach(dep => visit(dep, [...path, taskId]));
+    if (completed.has(taskId)) return;
+    const task = plan.tasks.find(t => t.id === taskId)!;
+    if (new Set(task.dependsOn).size !== task.dependsOn.length) throw new Error('План содержит повторяющиеся зависимости.');
+    task.dependsOn.forEach(dep => visit(dep, [...path, taskId]));
+    completed.add(taskId);
   };
   ids.forEach(taskId => visit(taskId, []));
   return plan;

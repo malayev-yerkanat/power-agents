@@ -6,10 +6,9 @@ import { Store } from './store.ts';
 import { runTurn } from './adapters/index.ts';
 import { redactError } from './adapters/common.ts';
 import { demoRunner } from './core/demo.ts';
-import { validateInput, parseEnvelope, parsePlan } from './core/protocol.ts';
+import { InputError, validateInput, parseEnvelope, parsePlan } from './core/protocol.ts';
 import { promptFor } from './core/prompts.ts';
 import { applyResult, type Job } from './core/results.ts';
-class InputError extends Error { readonly statusCode = 400; }
 interface Options { store: Store; connections: Connection[]; workspaceRoot: string; runner?: TurnRunner; demoRunner?: TurnRunner }
 export class Engine {
   private readonly options: Options;
@@ -134,7 +133,7 @@ export class Engine {
     const member = snapshot.members.find(m => m.id === job.memberId)!;
     const connection = this.options.connections.find(c => c.id === member.connectionId) ?? { id: 'demo', name: 'Демо', kind: 'demo' as const, available: true, detail: '' };
     const runner = snapshot.mode === 'demo' ? this.options.demoRunner ?? demoRunner : this.options.runner ?? runTurn;
-    const result = await runner({ runId: snapshot.id, member, connection, purpose: job.purpose, prompt: promptFor({ run: snapshot, ...job }), cwd: join(this.options.workspaceRoot, snapshot.id), sessionId: snapshot.sessions[member.id], signal: controller.signal, onProgress: () => {} });
+    const result = await runner({ runId: snapshot.id, member, connection, purpose: job.purpose, prompt: promptFor({ run: snapshot, ...job }), cwd: join(this.options.workspaceRoot, snapshot.id), sessionId: Object.hasOwn(snapshot.sessions, member.id) ? snapshot.sessions[member.id] : undefined, signal: controller.signal, onProgress: () => {} });
     if (controller.signal.aborted || this.stopped || !['planning', 'running'].includes(this.get(snapshot.id).status)) return;
     const current = this.get(snapshot.id);
     const userNotes = (run: Run) => run.messages.filter(m => m.fromId === 'user').length;
