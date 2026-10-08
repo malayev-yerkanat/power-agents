@@ -12,3 +12,9 @@ coverage/
 .obsidian-git-data/
 .smart-connections/
 .trash/
+
+# Extracted art sources are tracked; local ZIP export bundles are redundant.
+/output/art-direction/**/*.zip
+
+# Separate promotional reel workspace; keep it locally outside platform commits.
+/power-agents-reel/
