@@ -1,0 +1,188 @@
+[
+  {
+    "file": "city-background.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGB"
+  },
+  {
+    "file": "claude-ranger.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ],
+    "fully_transparent_pixels": 1114810,
+    "partially_transparent_pixels": 455578,
+    "fully_opaque_pixels": 2128,
+    "nonzero_alpha_bounds": [
+      0,
+      21,
+      1240,
+      1254
+    ],
+    "visible_bounds_alpha128": [
+      213,
+      100,
+      1196,
+      1208
+    ]
+  },
+  {
+    "file": "codex-ranger.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ],
+    "fully_transparent_pixels": 1092792,
+    "partially_transparent_pixels": 477948,
+    "fully_opaque_pixels": 1776,
+    "nonzero_alpha_bounds": [
+      0,
+      21,
+      1236,
+      1254
+    ],
+    "visible_bounds_alpha128": [
+      208,
+      106,
+      1067,
+      1212
+    ]
+  },
+  {
+    "file": "encounter.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGB"
+  },
+  {
+    "file": "gemini-ranger.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ],
+    "fully_transparent_pixels": 1108452,
+    "partially_transparent_pixels": 463048,
+    "fully_opaque_pixels": 1016,
+    "nonzero_alpha_bounds": [
+      17,
+      21,
+      1218,
+      1254
+    ],
+    "visible_bounds_alpha128": [
+      222,
+      90,
+      1044,
+      1197
+    ]
+  },
+  {
+    "file": "review-board.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGB"
+  },
+  {
+    "file": "villain-boss.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ],
+    "fully_transparent_pixels": 860725,
+    "partially_transparent_pixels": 710711,
+    "fully_opaque_pixels": 1080,
+    "nonzero_alpha_bounds": [
+      0,
+      19,
+      1230,
+      1254
+    ],
+    "visible_bounds_alpha128": [
+      74,
+      28,
+      1183,
+      1230
+    ]
+  },
+  {
+    "file": "villain-foot-soldier.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ],
+    "fully_transparent_pixels": 1136664,
+    "partially_transparent_pixels": 433619,
+    "fully_opaque_pixels": 2233,
+    "nonzero_alpha_bounds": [
+      69,
+      53,
+      1218,
+      1238
+    ],
+    "visible_bounds_alpha128": [
+      184,
+      110,
+      1096,
+      1196
+    ]
+  },
+  {
+    "file": "villain-monster.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ],
+    "fully_transparent_pixels": 1045020,
+    "partially_transparent_pixels": 526433,
+    "fully_opaque_pixels": 1063,
+    "nonzero_alpha_bounds": [
+      0,
+      20,
+      1236,
+      1254
+    ],
+    "visible_bounds_alpha128": [
+      95,
+      101,
+      1170,
+      1192
+    ]
+  }
+]

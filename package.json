@@ -12,7 +12,13 @@
     "start": "NODE_ENV=production node --env-file-if-exists=.env --import tsx src/server/index.ts",
     "test": "node --import tsx --test tests/*.test.ts",
     "typecheck": "tsc --noEmit",
-    "test:coverage": "node --import tsx --test --experimental-test-coverage tests/*.test.ts"
+    "test:coverage": "node --import tsx --test --experimental-test-coverage tests/*.test.ts",
+    "service:install": "node --import tsx scripts/launchd.ts install",
+    "service:start": "node --import tsx scripts/launchd.ts start",
+    "service:stop": "node --import tsx scripts/launchd.ts stop",
+    "service:restart": "node --import tsx scripts/launchd.ts restart",
+    "service:status": "node --import tsx scripts/launchd.ts status",
+    "service:uninstall": "node --import tsx scripts/launchd.ts uninstall"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

@@ -2,7 +2,7 @@
 type: index
 status: active
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-08
 tags: [modules]
 ---
 
@@ -15,3 +15,4 @@ tags: [modules]
 - [[Local HTTP API]] — validation, security, and streams
 - [[Client Interface]] — team composition and workspace
 - [[Shared Contracts]] — run and message types
+- [[Telegram Notifications]] — private-chat pairing and run alerts

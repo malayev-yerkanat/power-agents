@@ -1,0 +1,140 @@
+[
+  {
+    "direction": "a",
+    "asset": "ranger",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "transparent_pixels": 1170449,
+    "partial_alpha_pixels": 400025,
+    "alpha_bounds": [
+      0,
+      39,
+      1220,
+      1254
+    ]
+  },
+  {
+    "direction": "a",
+    "asset": "monster",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "transparent_pixels": 884990,
+    "partial_alpha_pixels": 684691,
+    "alpha_bounds": [
+      0,
+      17,
+      1222,
+      1254
+    ]
+  },
+  {
+    "direction": "a",
+    "asset": "scene",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGB",
+    "transparent_pixels": 0,
+    "partial_alpha_pixels": 0,
+    "alpha_bounds": null
+  },
+  {
+    "direction": "b",
+    "asset": "ranger",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "transparent_pixels": 1125831,
+    "partial_alpha_pixels": 444508,
+    "alpha_bounds": [
+      0,
+      21,
+      1226,
+      1254
+    ]
+  },
+  {
+    "direction": "b",
+    "asset": "monster",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "transparent_pixels": 878879,
+    "partial_alpha_pixels": 691915,
+    "alpha_bounds": [
+      0,
+      21,
+      1236,
+      1254
+    ]
+  },
+  {
+    "direction": "b",
+    "asset": "scene",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGB",
+    "transparent_pixels": 0,
+    "partial_alpha_pixels": 0,
+    "alpha_bounds": null
+  },
+  {
+    "direction": "c",
+    "asset": "ranger",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "transparent_pixels": 1118338,
+    "partial_alpha_pixels": 451511,
+    "alpha_bounds": [
+      0,
+      21,
+      1240,
+      1254
+    ]
+  },
+  {
+    "direction": "c",
+    "asset": "monster",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "transparent_pixels": 922953,
+    "partial_alpha_pixels": 645943,
+    "alpha_bounds": [
+      0,
+      20,
+      1236,
+      1254
+    ]
+  },
+  {
+    "direction": "c",
+    "asset": "scene",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGB",
+    "transparent_pixels": 0,
+    "partial_alpha_pixels": 0,
+    "alpha_bounds": null
+  }
+]

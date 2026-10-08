@@ -3,7 +3,7 @@ type: meta
 title: "Hot Cache"
 status: active
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-08
 tags: [context]
 ---
 
@@ -11,7 +11,7 @@ tags: [context]
 
 ## Last Updated
 
-2026-10-07. Added connection-specific model selectors, browser session recovery, and verified demo and live runs.
+2026-10-08. Implemented the selected Airy Pixel interface and run-state city scene. Telegram notifications, the approved pixel-art constraint, and selected C1/L1 weapons remain documented below.
 
 ## Key Recent Facts
 
@@ -22,8 +22,14 @@ tags: [context]
 - Protected API routes require a session cookie minted by `/api/bootstrap`; mutations also require a CSRF header. After a 401, the client reboots the session and retries once with a fresh CSRF token.
 - A production-mode browser restart test confirmed the live event stream reconnects without reloading the page.
 - The model field is a selector. Codex and Antigravity lists come from local CLI discovery; OpenAI and Anthropic lists come from their APIs when keys are configured. Claude Code offers documented aliases with an access caveat.
+- An optional Telegram bot pairs one private chat through a one-use `/start` link. SQLite queues plan-ready and completion alerts with run transitions; delivery retries after restart. Messages omit task content. Approval still happens in the local app. See [[Telegram Notification Flow]].
+- A user LaunchAgent now runs the production server at login and restarts it after exit. It retains local SQLite and CLI discovery. It cannot run while the Mac sleeps or is off. See [[macOS Autostart Flow]].
 
 ## Recent Changes
+
+- Installed `com.poweragents.local` from `scripts/launchd.ts`; port 4317 now belongs to launchd. Production page and API responded, and all three CLI connections were discovered.
+- Added [[Telegram Notifications]], Settings controls, and [[Telegram Notification Flow]]. `TELEGRAM_BOT_TOKEN` is server-side and optional; no live bot message was sent during automated verification.
+- Added [[Pixel Art Consistency]] as the authoritative visual constraint. Airy Pixel B is implemented with C1/L1 sprites, a city encounter, and a modal run-history drawer. Full animation sheets remain planned.
 
 - Added [[Model Selection Flow]] and updated the provider, client, and API pages for model discovery.
 - Updated [[Session and API Flow]], [[Client Interface]], and [[Local HTTP API]] for restart recovery, including event stream retry while the server is offline.

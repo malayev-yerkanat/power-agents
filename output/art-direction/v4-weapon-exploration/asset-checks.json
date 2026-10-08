@@ -1,0 +1,435 @@
+{
+  "originals_and_preview_derivations": [
+    {
+      "name": "c1-straight-saber",
+      "source": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v4-weapon-exploration/c1-straight-saber.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "source_mode": "RGBA",
+      "source_alpha_range": [
+        0,
+        255
+      ],
+      "zero_alpha_pixels": 1100294,
+      "low_alpha_1_to_15": 26400,
+      "dominant_nonzero_alpha": 253,
+      "visible_bounds_alpha128": [
+        207,
+        108,
+        1068,
+        1213
+      ],
+      "preview_frame": [
+        160,
+        160
+      ],
+      "preview_actor_height": 96,
+      "preview_placement": [
+        42,
+        48
+      ],
+      "preview_pivot": [
+        80,
+        144
+      ],
+      "alpha_processing": "threshold128 in preview only; original unchanged",
+      "resampling": "nearest-neighbor; normalization study, not hand-redrawn production sprite"
+    },
+    {
+      "name": "c2-energy-katana",
+      "source": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v4-weapon-exploration/c2-energy-katana.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "source_mode": "RGBA",
+      "source_alpha_range": [
+        0,
+        255
+      ],
+      "zero_alpha_pixels": 1091549,
+      "low_alpha_1_to_15": 28082,
+      "dominant_nonzero_alpha": 253,
+      "visible_bounds_alpha128": [
+        198,
+        106,
+        1068,
+        1214
+      ],
+      "preview_frame": [
+        160,
+        160
+      ],
+      "preview_actor_height": 96,
+      "preview_placement": [
+        41,
+        48
+      ],
+      "preview_pivot": [
+        80,
+        144
+      ],
+      "alpha_processing": "threshold128 in preview only; original unchanged",
+      "resampling": "nearest-neighbor; normalization study, not hand-redrawn production sprite"
+    },
+    {
+      "name": "c3-paired-tonfas",
+      "source": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v4-weapon-exploration/c3-paired-tonfas.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "source_mode": "RGBA",
+      "source_alpha_range": [
+        0,
+        255
+      ],
+      "zero_alpha_pixels": 1065267,
+      "low_alpha_1_to_15": 53027,
+      "dominant_nonzero_alpha": 253,
+      "visible_bounds_alpha128": [
+        120,
+        107,
+        1199,
+        1214
+      ],
+      "preview_frame": [
+        160,
+        160
+      ],
+      "preview_actor_height": 96,
+      "preview_placement": [
+        35,
+        48
+      ],
+      "preview_pivot": [
+        80,
+        144
+      ],
+      "alpha_processing": "threshold128 in preview only; original unchanged",
+      "resampling": "nearest-neighbor; normalization study, not hand-redrawn production sprite"
+    },
+    {
+      "name": "l1-rigid-staff",
+      "source": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v4-weapon-exploration/l1-rigid-staff.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "source_mode": "RGBA",
+      "source_alpha_range": [
+        0,
+        255
+      ],
+      "zero_alpha_pixels": 1107064,
+      "low_alpha_1_to_15": 49253,
+      "dominant_nonzero_alpha": 253,
+      "visible_bounds_alpha128": [
+        81,
+        97,
+        1178,
+        1198
+      ],
+      "preview_frame": [
+        160,
+        160
+      ],
+      "preview_actor_height": 96,
+      "preview_placement": [
+        32,
+        48
+      ],
+      "preview_pivot": [
+        80,
+        144
+      ],
+      "alpha_processing": "threshold128 in preview only; original unchanged",
+      "resampling": "nearest-neighbor; normalization study, not hand-redrawn production sprite"
+    },
+    {
+      "name": "l2-double-glaive",
+      "source": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v4-weapon-exploration/l2-double-glaive.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "source_mode": "RGBA",
+      "source_alpha_range": [
+        0,
+        255
+      ],
+      "zero_alpha_pixels": 1112367,
+      "low_alpha_1_to_15": 45740,
+      "dominant_nonzero_alpha": 253,
+      "visible_bounds_alpha128": [
+        136,
+        92,
+        1219,
+        1197
+      ],
+      "preview_frame": [
+        160,
+        160
+      ],
+      "preview_actor_height": 96,
+      "preview_placement": [
+        36,
+        48
+      ],
+      "preview_pivot": [
+        80,
+        144
+      ],
+      "alpha_processing": "threshold128 in preview only; original unchanged",
+      "resampling": "nearest-neighbor; normalization study, not hand-redrawn production sprite"
+    },
+    {
+      "name": "l3-tech-hammer",
+      "source": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v4-weapon-exploration/l3-tech-hammer.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "source_mode": "RGBA",
+      "source_alpha_range": [
+        0,
+        255
+      ],
+      "zero_alpha_pixels": 1128291,
+      "low_alpha_1_to_15": 34420,
+      "dominant_nonzero_alpha": 253,
+      "visible_bounds_alpha128": [
+        245,
+        118,
+        1119,
+        1187
+      ],
+      "preview_frame": [
+        160,
+        160
+      ],
+      "preview_actor_height": 96,
+      "preview_placement": [
+        45,
+        48
+      ],
+      "preview_pivot": [
+        80,
+        144
+      ],
+      "alpha_processing": "threshold128 in preview only; original unchanged",
+      "resampling": "nearest-neighbor; normalization study, not hand-redrawn production sprite"
+    },
+    {
+      "name": "gemini",
+      "source": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v3-weapons-formations/gemini-blaster.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "source_mode": "RGBA",
+      "source_alpha_range": [
+        0,
+        255
+      ],
+      "zero_alpha_pixels": 1173890,
+      "low_alpha_1_to_15": 21961,
+      "dominant_nonzero_alpha": 253,
+      "visible_bounds_alpha128": [
+        249,
+        93,
+        1032,
+        1199
+      ],
+      "preview_frame": [
+        160,
+        160
+      ],
+      "preview_actor_height": 96,
+      "preview_placement": [
+        46,
+        48
+      ],
+      "preview_pivot": [
+        80,
+        144
+      ],
+      "alpha_processing": "threshold128 in preview only; original unchanged",
+      "resampling": "nearest-neighbor; normalization study, not hand-redrawn production sprite"
+    },
+    {
+      "name": "villain-foot-soldier",
+      "source": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v2-ai-rangers-city/villain-foot-soldier.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "source_mode": "RGBA",
+      "source_alpha_range": [
+        0,
+        255
+      ],
+      "zero_alpha_pixels": 1136664,
+      "low_alpha_1_to_15": 24713,
+      "dominant_nonzero_alpha": 253,
+      "visible_bounds_alpha128": [
+        184,
+        110,
+        1096,
+        1196
+      ],
+      "preview_frame": [
+        160,
+        160
+      ],
+      "preview_actor_height": 91,
+      "preview_placement": [
+        39,
+        53
+      ],
+      "preview_pivot": [
+        80,
+        144
+      ],
+      "alpha_processing": "threshold128 in preview only; original unchanged",
+      "resampling": "nearest-neighbor; normalization study, not hand-redrawn production sprite"
+    },
+    {
+      "name": "villain-monster",
+      "source": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v2-ai-rangers-city/villain-monster.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "source_mode": "RGBA",
+      "source_alpha_range": [
+        0,
+        255
+      ],
+      "zero_alpha_pixels": 1045020,
+      "low_alpha_1_to_15": 50703,
+      "dominant_nonzero_alpha": 253,
+      "visible_bounds_alpha128": [
+        95,
+        101,
+        1170,
+        1192
+      ],
+      "preview_frame": [
+        160,
+        160
+      ],
+      "preview_actor_height": 110,
+      "preview_placement": [
+        19,
+        34
+      ],
+      "preview_pivot": [
+        80,
+        144
+      ],
+      "alpha_processing": "threshold128 in preview only; original unchanged",
+      "resampling": "nearest-neighbor; normalization study, not hand-redrawn production sprite"
+    },
+    {
+      "name": "villain-boss",
+      "source": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v2-ai-rangers-city/villain-boss.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "source_mode": "RGBA",
+      "source_alpha_range": [
+        0,
+        255
+      ],
+      "zero_alpha_pixels": 860725,
+      "low_alpha_1_to_15": 55284,
+      "dominant_nonzero_alpha": 253,
+      "visible_bounds_alpha128": [
+        74,
+        28,
+        1183,
+        1230
+      ],
+      "preview_frame": [
+        160,
+        160
+      ],
+      "preview_actor_height": 134,
+      "preview_placement": [
+        14,
+        10
+      ],
+      "preview_pivot": [
+        80,
+        144
+      ],
+      "alpha_processing": "threshold128 in preview only; original unchanged",
+      "resampling": "nearest-neighbor; normalization study, not hand-redrawn production sprite"
+    }
+  ],
+  "scene": {
+    "logical_size": [
+      768,
+      512
+    ],
+    "display_size": [
+      1536,
+      1024
+    ],
+    "exact_2x_block_replication_verified": true,
+    "provisional_selection": [
+      "C1",
+      "L1"
+    ],
+    "positions": [
+      [
+        "l1-rigid-staff",
+        [
+          145,
+          311
+        ]
+      ],
+      [
+        "c1-straight-saber",
+        [
+          285,
+          391
+        ]
+      ],
+      [
+        "gemini",
+        [
+          137,
+          461
+        ]
+      ],
+      [
+        "villain-foot-soldier",
+        [
+          460,
+          365
+        ]
+      ],
+      [
+        "villain-monster",
+        [
+          543,
+          461
+        ]
+      ],
+      [
+        "villain-boss",
+        [
+          674,
+          332
+        ]
+      ]
+    ],
+    "composition": "deterministic alpha composition, no generative repaint",
+    "caveat": "Grid replication verified only; artist-level grid alignment, palette ramps and geometry remain unverified."
+  }
+}

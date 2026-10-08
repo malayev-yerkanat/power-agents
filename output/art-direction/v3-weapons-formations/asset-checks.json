@@ -1,0 +1,81 @@
+[
+  {
+    "file": "claude-staff.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ],
+    "zero_alpha_pixels": 1118477,
+    "near_invisible_alpha_1_to_15": 39882,
+    "most_common_nonzero_alpha": 253,
+    "visible_bounds_alpha128": [
+      195,
+      108,
+      1218,
+      1190
+    ]
+  },
+  {
+    "file": "codex-saber.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ],
+    "zero_alpha_pixels": 1087034,
+    "near_invisible_alpha_1_to_15": 33109,
+    "most_common_nonzero_alpha": 253,
+    "visible_bounds_alpha128": [
+      218,
+      105,
+      1068,
+      1213
+    ]
+  },
+  {
+    "file": "formation-a-triangle.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGB"
+  },
+  {
+    "file": "formation-b-staggered.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGB"
+  },
+  {
+    "file": "gemini-blaster.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ],
+    "zero_alpha_pixels": 1173890,
+    "near_invisible_alpha_1_to_15": 21961,
+    "most_common_nonzero_alpha": 253,
+    "visible_bounds_alpha128": [
+      249,
+      93,
+      1032,
+      1199
+    ]
+  }
+]

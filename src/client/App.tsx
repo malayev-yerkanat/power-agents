@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowClockwise, ArrowUpRight, CaretRight, Check, Command, FolderSimple, List, PlugsConnected, Plus, SidebarSimple, X } from '@phosphor-icons/react';
+import { ArrowClockwise, ArrowUpRight, CaretRight, Check, FolderSimple, List, PlugsConnected, Plus, SidebarSimple, X } from '@phosphor-icons/react';
 import type { Bootstrap, CreateRunInput, ModelCatalog, Run, RunDetail, RunEvent } from '../shared/types';
 import { Composer } from './Composer';
 import { RunWorkspace } from './RunWorkspace';
 import { api, createSessionRequest } from './session';
+import { TelegramSettings } from './TelegramSettings';
 import { dateLabel, ErrorNote, statusLabels } from './ui';
 
 export function App() {
@@ -14,6 +15,11 @@ export function App() {
   const [detailError, setDetailError] = useState('');
   const [settings, setSettings] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const historyDialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (sidebarOpen) historyDialog.current?.showModal();
+    else historyDialog.current?.close();
+  }, [sidebarOpen]);
   const [streamStatus, setStreamStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [streamVersion, setStreamVersion] = useState(0);
   const streamRecoveryCount = useRef(0);
@@ -111,25 +117,33 @@ export function App() {
   async function create(input: CreateRunInput) { const run = await mutate('/api/runs', input); select(run.id); }
   const connectionsReady = bootstrap?.connections.filter(connection => connection.available).length || 0;
   return <div className="app-shell" onKeyDown={event => { if (event.key === 'Escape') setSidebarOpen(false); }}>
-    {sidebarOpen && <button className="sidebar-overlay" aria-label="Закрыть меню" onClick={() => setSidebarOpen(false)} />}
-    <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`} aria-label="Основная навигация">
-      <button className="brand" onClick={() => select(null)} aria-label="Power Agents — новая задача"><span className="brand-mark"><Command size={23} weight="bold" /></span><span>power<span className="brand-light">agents</span><small>TEAM WORKSPACE</small></span></button>
+    <dialog ref={historyDialog} id="run-navigation" className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`} aria-label="История запусков" onCancel={() => setSidebarOpen(false)} onClick={event => { if (event.target === event.currentTarget) { const bounds = event.currentTarget.getBoundingClientRect(); if (event.clientX > bounds.right || event.clientX < bounds.left) setSidebarOpen(false); } }}>
+      <button className="icon-button history-close" aria-label="Закрыть историю" onClick={() => setSidebarOpen(false)}><X size={18} /></button>
+      <button className="brand" onClick={() => select(null)} aria-label="Power Agents — новая задача"><span className="brand-bolt" aria-hidden="true" /><span>POWER AGENTS</span></button>
       <button className="new-task-button" onClick={() => select(null)}><Plus size={17} />Новая задача<ArrowUpRight size={15} className="ml-auto opacity-50" /></button>
       <div className="sidebar-section-title"><span>РАБОЧЕЕ ПРОСТРАНСТВО</span><SidebarSimple size={15} /></div>
       <button className={`sidebar-nav ${!selectedId ? 'is-active' : ''}`} onClick={() => select(null)}><FolderSimple size={18} /><span>Все задачи</span><span className="sidebar-count">{bootstrap?.runs.length || 0}</span></button>
       <div className="sidebar-section-title mt-7"><span>ИСТОРИЯ ЗАПУСКОВ</span></div>
       <nav className="run-history" aria-label="История запусков">{bootstrap?.runs.length ? bootstrap.runs.map(run => <button key={run.id} className={`history-item ${selectedId === run.id ? 'is-selected' : ''}`} onClick={() => select(run.id)}><span className={`history-dot history-${run.status}`} /><span className="min-w-0 flex-1"><span className="history-title">{run.title}</span><span className="history-meta">{run.mode === 'demo' ? 'Демо · ' : ''}{statusLabels[run.status]}<span>{dateLabel(run.createdAt)}</span></span></span></button>) : <div className="history-empty"><p>Пока чистый лист</p><span>Ваши задачи и результаты<br />будут сохраняться здесь.</span></div>}</nav>
-      <div className="sidebar-bottom"><button className="connection-button" onClick={() => setSettings(true)}><PlugsConnected size={19} /><span>Подключения<small>{bootstrap ? `${connectionsReady} из ${bootstrap.connections.length} доступны` : 'Проверяем окружение'}</small></span><CaretRight size={13} /></button><div className="local-status"><span className={`connection-dot ${streamStatus === 'connected' ? 'is-connected' : ''}`} /><span>{streamStatus === 'connected' ? 'Локальное пространство' : streamStatus === 'disconnected' ? 'Переподключение…' : 'Подключаемся…'}</span><span className="ml-auto">v0.1</span></div></div>
-    </aside>
-    <div className="app-main"><header className="topbar"><div className="flex min-w-0 items-center gap-3"><button className="icon-button mobile-menu" aria-label="Открыть меню" onClick={() => setSidebarOpen(true)}><List size={21} /></button><span className="text-muted">Рабочее пространство</span><CaretRight size={12} className="text-muted shrink-0" /><span className="truncate">{selectedId ? 'Командная задача' : 'Новая задача'}</span></div><button className="topbar-connection" onClick={() => setSettings(true)}><span className={`connection-dot ${connectionsReady ? 'is-connected' : ''}`} /><span>{connectionsReady} доступно</span><PlugsConnected size={15} /></button></header>
+      <div className="sidebar-bottom"><button className="connection-button" onClick={() => { setSidebarOpen(false); setSettings(true); }}><PlugsConnected size={19} /><span>Подключения<small>{bootstrap ? `${connectionsReady} из ${bootstrap.connections.length} доступны` : 'Проверяем окружение'}</small></span><CaretRight size={13} /></button><div className="local-status"><span className={`connection-dot ${streamStatus === 'connected' ? 'is-connected' : ''}`} /><span>{streamStatus === 'connected' ? 'Локальное пространство' : streamStatus === 'disconnected' ? 'Переподключение…' : 'Подключаемся…'}</span><span className="ml-auto">v0.1</span></div></div>
+    </dialog>
+    <div className="app-main"><header className="topbar">
+      <button className="header-brand" onClick={() => select(null)} aria-label="Power Agents — новая задача"><span className="brand-bolt" aria-hidden="true" /><span>POWER AGENTS</span></button>
+      <nav className="header-nav" aria-label="Разделы пространства">
+        <button className={!sidebarOpen ? 'is-active' : ''} onClick={() => setSidebarOpen(false)}>Пространство</button>
+        <button aria-expanded={sidebarOpen} aria-controls="run-navigation" onClick={() => setSidebarOpen(value => !value)}><List size={17} />Запуски</button>
+        <button onClick={() => setSettings(true)}><PlugsConnected size={17} />Подключения<span className={`connection-dot ${streamStatus === 'connected' ? 'is-connected' : ''}`} aria-label={streamStatus === 'connected' ? 'Сервер подключён' : 'Нет потока событий'} /></button>
+      </nav>
+      <button className="primary-button header-new-task" onClick={() => select(null)}><Plus size={17} /><span>Новая задача</span></button>
+    </header>
       {!bootstrap ? <div className="bootstrap-state">{error ? <><ErrorNote>{error}</ErrorNote><button className="secondary-button mt-4" onClick={() => void refresh()}><ArrowClockwise size={16} />Повторить подключение</button></> : <><div className="skeleton skeleton-title" /><div className="skeleton skeleton-copy" /><div className="skeleton skeleton-composer" /><p className="text-sm text-muted mt-5">Подключаем рабочее пространство…</p></>}</div> : <>{error && <div className="px-8 pt-4"><ErrorNote>{error}</ErrorNote></div>}{selectedId ? detail ? <RunWorkspace key={detail.run.id} detail={detail} mutate={mutate} /> : <div className="bootstrap-state">{detailError ? <><ErrorNote>{detailError}</ErrorNote><button className="secondary-button mt-4" onClick={() => { setDetailError(''); request<RunDetail>(`/api/runs/${encodeURIComponent(selectedId)}`).then(setDetail).catch(cause => setDetailError(String(cause))); }}><ArrowClockwise size={15} />Повторить</button></> : <><div className="skeleton skeleton-title" /><div className="skeleton skeleton-composer" /><p className="text-sm text-muted mt-4">Загружаем задачу…</p></>}</div> : <Composer connections={bootstrap.connections} onCreate={create} openSettings={() => setSettings(true)} loadModels={loadModels} />}</>}
     </div>
-    <Settings open={settings} bootstrap={bootstrap} close={() => setSettings(false)} refresh={refresh} />
+    <Settings open={settings} bootstrap={bootstrap} close={() => setSettings(false)} refresh={refresh} request={request} />
   </div>;
 }
-function Settings({ open, bootstrap, close, refresh }: { open: boolean; bootstrap: Bootstrap | null; close: () => void; refresh: () => Promise<void> }) {
+function Settings({ open, bootstrap, close, refresh, request }: { open: boolean; bootstrap: Bootstrap | null; close: () => void; refresh: () => Promise<void>; request: <T>(path: string, options?: RequestInit) => Promise<T> }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (open) dialog.current?.showModal(); else dialog.current?.close(); }, [open]);
-  return <dialog ref={dialog} className="settings-dialog" onCancel={close} onClick={event => { if (event.target === event.currentTarget) close(); }} aria-labelledby="settings-title"><div className="settings-inner"><div className="flex items-start justify-between gap-4"><div><span className="eyebrow">ОКРУЖЕНИЕ</span><h2 id="settings-title">Подключения</h2></div><button className="icon-button" aria-label="Закрыть подключения" onClick={close}><X size={19} /></button></div><p className="settings-intro">Используйте установленный CLI или API-подключение. Команда запускается на вашем компьютере.</p><div className="connection-list">{bootstrap?.connections.map(connection => <div className="connection-row" key={connection.id}><div className="flex items-center justify-between gap-3"><h3>{connection.name}</h3><span className={`connection-availability ${connection.available ? 'available' : ''}`}>{connection.available && <Check size={12} />}{connection.available ? 'Обнаружено' : 'Не настроено'}</span></div><p>{connection.detail}</p>{connection.executable && <code>{connection.executable}</code>}</div>)}</div><div className="settings-note"><strong>Перед первым запуском</strong><p>Наличие CLI не подтверждает авторизацию: войдите в аккаунт через соответствующий CLI в терминале. Авторизация проверяется при первом обращении к модели. Для API задайте OPENAI_API_KEY или ANTHROPIC_API_KEY в окружении сервера и перезапустите приложение.</p><p>API-запросы могут расходовать средства вашего провайдера. Пароли и ключи в этом интерфейсе не вводятся.</p></div><button className="secondary-button w-full" disabled={busy} onClick={async () => { setBusy(true); await refresh(); setBusy(false); }}><ArrowClockwise size={16} />{busy ? 'Проверяем…' : 'Обновить статус'}</button></div></dialog>;
+  return <dialog ref={dialog} className="settings-dialog" onCancel={close} onClick={event => { if (event.target === event.currentTarget) close(); }} aria-labelledby="settings-title"><div className="settings-inner"><div className="flex items-start justify-between gap-4"><div><span className="eyebrow">ОКРУЖЕНИЕ</span><h2 id="settings-title">Подключения</h2></div><button className="icon-button" aria-label="Закрыть подключения" onClick={close}><X size={19} /></button></div><p className="settings-intro">Используйте установленный CLI или API-подключение. Команда запускается на вашем компьютере.</p><div className="connection-list">{bootstrap?.connections.map(connection => <div className="connection-row" key={connection.id}><div className="flex items-center justify-between gap-3"><h3>{connection.name}</h3><span className={`connection-availability ${connection.available ? 'available' : ''}`}>{connection.available && <Check size={12} />}{connection.available ? 'Обнаружено' : 'Не настроено'}</span></div><p>{connection.detail}</p>{connection.executable && <code>{connection.executable}</code>}</div>)}</div>{bootstrap && <TelegramSettings open={open} request={request} csrfToken={bootstrap.csrfToken} />}<div className="settings-note"><strong>Перед первым запуском</strong><p>Наличие CLI не подтверждает авторизацию: войдите в аккаунт через соответствующий CLI в терминале. Авторизация проверяется при первом обращении к модели. Для API задайте OPENAI_API_KEY или ANTHROPIC_API_KEY в окружении сервера и перезапустите приложение.</p><p>API-запросы могут расходовать средства вашего провайдера. Пароли и ключи в этом интерфейсе не вводятся.</p></div><button className="secondary-button w-full" disabled={busy} onClick={async () => { setBusy(true); try { await refresh(); } finally { setBusy(false); } }}><ArrowClockwise size={16} />{busy ? 'Проверяем…' : 'Обновить статус'}</button></div></dialog>;
 }

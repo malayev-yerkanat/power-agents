@@ -1,0 +1,35 @@
+.encounter { margin: 26px 0 30px; border: 1px solid var(--border, #d6d8d1); background: #f9f9ef; }
+.encounter-heading { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 12px 18px; color: #395690; font-size: 12px; }
+.encounter-heading > :last-child { color: #68748a; }
+.encounter-scroll { overflow-x: auto; scrollbar-width: thin; scrollbar-color: #9aaec7 #f5f6ec; }
+.encounter-scroll:focus-visible { outline: 2px solid #4162a6; outline-offset: 3px; }
+.encounter-stage { position: relative; width: 768px; height: 356px; margin: 0 auto; isolation: isolate; background: #b1d8ee url('/art/city-background.png') center bottom / 768px 512px no-repeat; image-rendering: pixelated; }
+.encounter-actor { position: absolute; width: 160px; height: 160px; pointer-events: none; }
+.encounter-actor img { display: block; width: 160px; height: 160px; max-width: none; image-rendering: pixelated; user-select: none; }
+.encounter-marker { position: absolute; top: 145px; left: 71px; min-width: 18px; padding: 1px 3px; background: #faf9eb; color: #294b87; border: 1px solid #526da0; font: 10px/12px ui-monospace, monospace; text-align: center; }
+.encounter-monster .encounter-marker { color: #68375c; border-color: #795a75; }
+.encounter-failed .encounter-marker { background: #ffe8dc; color: #993f28; }
+.encounter-neutral { position: absolute; left: 48px; top: 70px; width: 64px; height: 74px; display: grid; place-items: center; border: 4px solid #526678; background: #dae2e5; box-shadow: inset 4px 4px #f9faf3, inset -4px -4px #9aacb5; color: #344858; font: bold 24px ui-monospace, monospace; }
+.encounter-active img { animation: encounter-idle 2s steps(1, end) infinite; }
+@keyframes encounter-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
+.encounter-roster { display: flex; flex-wrap: wrap; gap: 14px 24px; list-style: none; margin: 0; padding: 18px; }
+.encounter-roster li { display: flex; align-items: flex-start; gap: 8px; min-width: 110px; }
+.encounter-roster-number { display: grid; place-items: center; width: 19px; height: 19px; border: 1px solid #aebacf; color: #41609a; font: 10px ui-monospace, monospace; }
+.encounter-roster li > div { display: grid; gap: 4px; }
+.encounter-roster strong { color: #344f83; font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+.encounter-roster li > div > span { font-size: 11px; color: #697487; }
+.encounter-mapping { margin: 0 18px 16px; font-size: 11px; color: #65728a; }
+.encounter-mapping summary { cursor: pointer; width: fit-content; }
+.encounter-mapping ul { display: grid; gap: 8px; list-style: none; padding: 12px 0 0; margin: 0; }
+.encounter-mapping li { display: grid; grid-template-columns: 24px 1fr auto; gap: 8px; align-items: baseline; }
+.encounter-mapping small { font-size: 10px; }
+.encounter-scroll-hint { display: none; margin: 8px 18px 0; font-size: 10px; color: #697487; }
+@media (max-width: 1000px) { .encounter-scroll-hint { display: block; } }
+@media (max-width: 520px) { .encounter-heading { padding: 12px; } .encounter-roster { padding: 14px 12px; gap: 14px; } .encounter-mapping { margin: 0 12px 14px; } .encounter-mapping li { grid-template-columns: 24px 1fr; } .encounter-mapping small { grid-column: 2; } }
+@media (prefers-reduced-motion: reduce) { .encounter-active img { animation: none; } }
+
+/* Keep the scene calm and let task status live in the real progress UI. */
+.encounter { border: 2px solid #8da8ce; background: #fffdf5; box-shadow: 2px 2px 0 #dbe4ef; }
+.encounter-scroll { background: #edf3f8; }
+.encounter-roster { justify-content: space-evenly; }
+.encounter-roster strong { color: #173973; }

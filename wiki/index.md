@@ -2,7 +2,7 @@
 type: index
 status: active
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-08
 tags: [navigation, repository]
 ---
 
@@ -16,9 +16,12 @@ Start with [[hot|Hot Cache]] for recent changes or [[Architecture Overview]] for
 - [[Data Flow]] — create, approve, execute, review
 - [[Session and API Flow]] — local API, cookie, CSRF, SSE
 - [[Model Selection Flow]] — model lists for each connection
+- [[Telegram Notification Flow]] — private-chat pairing and durable alerts
+- [[macOS Autostart Flow]] — login startup and service controls
 - [[Tech Stack]] — runtime and dependencies
 - [[Dependency Graph]] — module relationships
 - [[Key Decisions]] — design choices and scope
+- [[Pixel Art Consistency]] — approved visual constraint and Airy Pixel implementation scope
 
 ## Modules
 
@@ -29,6 +32,7 @@ Start with [[hot|Hot Cache]] for recent changes or [[Architecture Overview]] for
 - [[Local HTTP API]]
 - [[Client Interface]]
 - [[Shared Contracts]]
+- [[Telegram Notifications]]
 
 ## Sources and navigation
 

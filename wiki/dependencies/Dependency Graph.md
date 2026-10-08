@@ -2,7 +2,7 @@
 type: dependency
 status: active
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-08
 tags: [dependency, architecture]
 ---
 
@@ -16,6 +16,9 @@ flowchart LR
   Engine --> Store
   Engine --> Adapters[Provider Adapters]
   Store --> API
+  API --> Telegram[Telegram Notifications]
+  Telegram --> Store
+  Telegram --> BotAPI[Telegram Bot API]
   Contracts[Shared Contracts] -. types .-> UI
   Contracts -. types .-> API
   Contracts -. types .-> Engine

@@ -1,0 +1,111 @@
+[
+  {
+    "name": "claude-ranger",
+    "prompt": "Use case: stylized-concept. Create ONE full-body isolated Power Rangers-inspired AI agent Ranger sprite concept, genuinely transparent PNG. Reference 1 establishes the approved sturdy Ranger proportions, roughly four-and-a-half heads high, armor detailing, helmet construction, gloves, boots, broad shoulders and readable pixel-art treatment. Reference 2 is ONLY for the side-on slightly three-quarter ARCADE camera: horizontal footline, eye-level camera, minimal visible top surfaces. Discard its forest and enemies. Reproject the first character to this flatter camera. Face RIGHT with chest partially visible, neutral combat-ready stance, both knees slightly flexed. Shared costume: domed helmet, black wraparound visor, silver mouth plate, chunky shoulder shells, white/cream gauntlets and tall boots, dark undersuit joints, simple silver belt, compact utility blade held lowered with complete clearance. One dominant large chest insignia, no extra logos. Crisp deliberate 32-bit-console-era pixel clusters, consistent coarse logical pixel density, dark single outline, 3–4 hard shading levels per material, upper-left daylight. No smooth gradients, blur, antialiasing, painterly texture, text, labels, scenery, ground shadow, sparks or effects. Complete character and blade entirely inside square canvas with generous 10% transparent margins. Target character height approximately 80% of canvas; native-style silhouette around 96 logical pixels tall.\nClaude identity: warm terracotta #D97757 armor with copper shadows, cream #F3E9D5 trim and charcoal black visor. Reference 3 is official installed Claude icon: integrate its irregular orange radial starburst with uneven rays as ONE large chest emblem on cream armor. A subtle fanned ridge above visor echoes it; no sun face, no letters.",
+    "referenced_image_paths": [
+      "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/b-command-diorama/ranger.png",
+      "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/a-arcade-sentai/scene.png",
+      "/Applications/Claude.app/Contents/Resources/ion-dist/images/claude_app_icon.png"
+    ],
+    "transparent_background": true,
+    "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-46d6f91f-0c1a-4146-bbe0-a2a5084f471c.png"
+  },
+  {
+    "name": "codex-ranger",
+    "prompt": "Use case: stylized-concept. Create ONE full-body isolated Power Rangers-inspired AI agent Ranger sprite concept, genuinely transparent PNG. Reference 1 establishes the approved sturdy Ranger proportions, roughly four-and-a-half heads high, armor detailing, helmet construction, gloves, boots, broad shoulders and readable pixel-art treatment. Reference 2 is ONLY for the side-on slightly three-quarter ARCADE camera: horizontal footline, eye-level camera, minimal visible top surfaces. Discard its forest and enemies. Reproject the first character to this flatter camera. Face RIGHT with chest partially visible, neutral combat-ready stance, both knees slightly flexed. Shared costume: domed helmet, black wraparound visor, silver mouth plate, chunky shoulder shells, white/cream gauntlets and tall boots, dark undersuit joints, simple silver belt, compact utility blade held lowered with complete clearance. One dominant large chest insignia, no extra logos. Crisp deliberate 32-bit-console-era pixel clusters, consistent coarse logical pixel density, dark single outline, 3–4 hard shading levels per material, upper-left daylight. No smooth gradients, blur, antialiasing, painterly texture, text, labels, scenery, ground shadow, sparks or effects. Complete character and blade entirely inside square canvas with generous 10% transparent margins. Target character height approximately 80% of canvas; native-style silhouette around 96 logical pixels tall.\nCodex identity: saturated periwinkle / electric blue armor with lavender highlight steps and white-silver trim. Reference 3 is the authentic Codex application icon: integrate its blue-lavender six-lobed/scalloped badge with white terminal >_ symbol as ONE large chest emblem, readable on pale chest armor. Use a restrained chevron shape in the visor brow. Do not use OpenAI knot or green.",
+    "referenced_image_paths": [
+      "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/b-command-diorama/ranger.png",
+      "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/a-arcade-sentai/scene.png",
+      "/Applications/ChatGPT.app/Contents/Resources/icon-codex-light.png"
+    ],
+    "transparent_background": true,
+    "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-ee0902a8-1515-40b1-89fd-7085c907dab6.png"
+  },
+  {
+    "name": "gemini-ranger",
+    "prompt": "Use case: stylized-concept. Create ONE full-body isolated Power Rangers-inspired AI agent Ranger sprite concept, genuinely transparent PNG. Reference 1 establishes the approved sturdy Ranger proportions, roughly four-and-a-half heads high, armor detailing, helmet construction, gloves, boots, broad shoulders and readable pixel-art treatment. Reference 2 is ONLY for the side-on slightly three-quarter ARCADE camera: horizontal footline, eye-level camera, minimal visible top surfaces. Discard its forest and enemies. Reproject the first character to this flatter camera. Face RIGHT with chest partially visible, neutral combat-ready stance, both knees slightly flexed. Shared costume: domed helmet, black wraparound visor, silver mouth plate, chunky shoulder shells, white/cream gauntlets and tall boots, dark undersuit joints, simple silver belt, compact utility blade held lowered with complete clearance. One dominant large chest insignia, no extra logos. Crisp deliberate 32-bit-console-era pixel clusters, consistent coarse logical pixel density, dark single outline, 3–4 hard shading levels per material, upper-left daylight. No smooth gradients, blur, antialiasing, painterly texture, text, labels, scenery, ground shadow, sparks or effects. Complete character and blade entirely inside square canvas with generous 10% transparent margins. Target character height approximately 80% of canvas; native-style silhouette around 96 logical pixels tall.\nGemini identity: cobalt blue armor with white-silver trim; restrained red shoulder inset, yellow belt detail, green forearm accent. ONE large four-point Gemini spark chest emblem on pale chest panel: four equally long axis-aligned tapered points, inward curved sides, red TOP, yellow LEFT, green BOTTOM, blue RIGHT, represented by crisp color steps. Same spark geometry subtly shapes visor corners. Keep blue dominant, no rainbow stripes or purple-only branding. Current official source gemini.google/about shows this four-color spark.",
+    "referenced_image_paths": [
+      "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/b-command-diorama/ranger.png",
+      "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/a-arcade-sentai/scene.png"
+    ],
+    "transparent_background": true,
+    "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-512df0f1-6c66-4ceb-81b7-001255641171.png"
+  },
+  {
+    "name": "villain-monster",
+    "prompt": "Generate ONE original generic tokusatsu Power Rangers villain concept, isolated on genuine transparent background. Reference 1 is a Ranger of the same game: MATCH its coarse crisp 32-bit-era pixel-art density, strong dark outlines, chunky hard 3–4-tone material shading, upper-left light, and sturdy proportions. Reference 2 provides ONLY the low side-on slightly three-quarter arcade camera on a horizontal lane. Do not copy its skull knight or forest. Villain faces LEFT toward Rangers, chest partly visible, full body neutral battle-ready stance. Original theatrical practical creature-suit/science-fiction costume, playful mildly menacing Saturday-morning tokusatsu. Clear segmented costume construction, readable at small browser workspace scale. No medieval armor, skeleton, skull face, mace, shield, gore, AI logos, text, background, ground shadow, glow or effects. Keep all limbs and appendages fully inside square canvas with generous clear 10% margin. Intentional pixel clusters not smooth gradients.\nMonster of the week: 'Volt Mantis', a theatrical lime/olive insect creature costume, approximately 1.15 Ranger height. Broad sculpted angular mantis head with two short antennae, large orange faceted eyes, expressive rubber mouth, segmented chartreuse chest and abdomen, magenta shoulder fins, two oversized curved silver forearm pincers, chunky grasshopper boots. Bipedal person-in-costume anatomy, two arms and two legs; exaggerated campy readable silhouette, not realistic insect horror.",
+    "referenced_image_paths": [
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-ee0902a8-1515-40b1-89fd-7085c907dab6.png",
+      "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/a-arcade-sentai/scene.png"
+    ],
+    "transparent_background": true,
+    "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-3752a91c-0bbf-4169-9aa8-634cf416c435.png"
+  },
+  {
+    "name": "villain-boss",
+    "prompt": "Generate ONE original generic tokusatsu Power Rangers villain concept, isolated on genuine transparent background. Reference 1 is a Ranger of the same game: MATCH its coarse crisp 32-bit-era pixel-art density, strong dark outlines, chunky hard 3–4-tone material shading, upper-left light, and sturdy proportions. Reference 2 provides ONLY the low side-on slightly three-quarter arcade camera on a horizontal lane. Do not copy its skull knight or forest. Villain faces LEFT toward Rangers, chest partly visible, full body neutral battle-ready stance. Original theatrical practical creature-suit/science-fiction costume, playful mildly menacing Saturday-morning tokusatsu. Clear segmented costume construction, readable at small browser workspace scale. No medieval armor, skeleton, skull face, mace, shield, gore, AI logos, text, background, ground shadow, glow or effects. Keep all limbs and appendages fully inside square canvas with generous clear 10% margin. Intentional pixel clusters not smooth gradients.\nArmored boss: 'Crimson Overlord', approximately 1.4 Ranger height. Broad imposing scarlet/maroon science-fiction armor over charcoal rubber suit, sculpted silver theatrical alien faceplate (NOT skull), narrow amber eyes, three wide swept-back horn/fin shapes, huge shell-like pauldrons, gold piping and a single orange power core, armored clawed fists, heavy angular boots. Waist armor panels, no cape, sword, medieval plate, wings or shield. Original campy television supervillain silhouette.",
+    "referenced_image_paths": [
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-ee0902a8-1515-40b1-89fd-7085c907dab6.png",
+      "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/a-arcade-sentai/scene.png"
+    ],
+    "transparent_background": true,
+    "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-f2f35858-17e6-4ff6-af23-91001fcf75b9.png"
+  },
+  {
+    "name": "villain-foot-soldier",
+    "prompt": "Generate ONE original generic tokusatsu Power Rangers villain concept, isolated on genuine transparent background. Reference 1 is a Ranger of the same game: MATCH its coarse crisp 32-bit-era pixel-art density, strong dark outlines, chunky hard 3–4-tone material shading, upper-left light, and sturdy proportions. Reference 2 provides ONLY the low side-on slightly three-quarter arcade camera on a horizontal lane. Do not copy its skull knight or forest. Villain faces LEFT toward Rangers, chest partly visible, full body neutral battle-ready stance. Original theatrical practical creature-suit/science-fiction costume, playful mildly menacing Saturday-morning tokusatsu. Clear segmented costume construction, readable at small browser workspace scale. No medieval armor, skeleton, skull face, mace, shield, gore, AI logos, text, background, ground shadow, glow or effects. Keep all limbs and appendages fully inside square canvas with generous clear 10% margin. Intentional pixel clusters not smooth gradients.\nA slim repeatable masked foot soldier, approximately 0.95 Ranger height in the game. Graphite rubber bodysuit, pewter molded mask with slanted amber eye lenses and an angular closed mouth grille, dusty plum chest plates and wrist/boot cuffs. Three blunt crown ridges, compact pauldrons, mitten-like claw gloves, two feet. No weapon. Clear simple silhouette, no ornate greebles.",
+    "referenced_image_paths": [
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-ee0902a8-1515-40b1-89fd-7085c907dab6.png",
+      "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/a-arcade-sentai/scene.png"
+    ],
+    "transparent_background": true,
+    "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-ffbc6d36-8da6-4f38-ab60-89eee9577c6d.png"
+  },
+  {
+    "name": "city-background",
+    "prompt": "Generate a clean wide landscape 32-bit-era PIXEL ART modern city encounter background for Power Agents. Reference 1 is ONLY camera: horizontal side-on arcade beat-em-up viewpoint with slight three-quarter depth. Replace all forest, ruins, fantasy architecture and actors. Reference 2 establishes pixel cluster treatment and upper-left daylight. NO ACTORS, no people, no monsters, no text, no interface. Modern metropolitan plaza/broad street with simple horizontal pavement strips in lower third, restrained small street furniture at far edges, concrete sidewalk, understated shopfronts in middle distance, glass office towers and distant skyline under clear pale blue sky. Low-contrast desaturated blue-gray/teal city, warm gray pavement, sparse planters. Keep middle and lower staging area open and broad for 6 actors, horizon level, no isometric platform, no overhead map camera, no steep diagonal vanishing-point street. Character feet will sit around 82% image height, with ample background behind them. Crisp deliberately stepped pixels, medium-coarse clusters, no painterly blur or smooth gradients. Landscape 1536x1024 composition.",
+    "referenced_image_paths": [
+      "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/a-arcade-sentai/scene.png",
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-ee0902a8-1515-40b1-89fd-7085c907dab6.png"
+    ],
+    "transparent_background": false,
+    "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-a8968757-419e-42a8-84da-bfb22ae0cf4d.png"
+  },
+  {
+    "name": "encounter-study",
+    "prompt": "Compose a wide landscape 1536x1024 32-bit pixel-art idle RPG encounter study. Input 1 is the exact city background. Input 2 Codex Ranger, input 3 Claude Ranger, input 4 Gemini Ranger, input 5 lime mantis monster. Preserve these designs, clear emblems, palette and crisp pixel treatment; position full bodies on horizontal arcade road at y about 84% of image. Equal Ranger height about 250 pixels. Three Rangers on LEFT half at x~180,410,640, all facing RIGHT, no overlap, consistent scale and lighting. Mantis at x~1050 facing LEFT, height about 290px including antennae. Leave clear space at x~850 and x~1320 for two additional villains in next pass. Preserve modern city backdrop, quiet skyline and open foreground, no UI, labels, typography, effects or additional actors. Entire weapons and silhouettes visible, shared grounded footline, side-on slightly 3/4 camera. This is a concept scene not an action poster: standing combat-ready all characters clearly readable.",
+    "referenced_image_paths": [
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-a8968757-419e-42a8-84da-bfb22ae0cf4d.png",
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-ee0902a8-1515-40b1-89fd-7085c907dab6.png",
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-46d6f91f-0c1a-4146-bbe0-a2a5084f471c.png",
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-512df0f1-6c66-4ceb-81b7-001255641171.png",
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-3752a91c-0bbf-4169-9aa8-634cf416c435.png"
+    ],
+    "transparent_background": false,
+    "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-b383bb2e-3b43-498b-95fc-5d6f7870d974.png"
+  },
+  {
+    "name": "encounter",
+    "prompt": "Edit reference 1 encounter scene into complete six-character concept composition. Preserve the city background, camera and exact designs of the three Rangers and green mantis, especially product chest marks. Add the foot soldier from reference2 and boss from reference3, faithfully. Arrange SIX separate full silhouettes across the street on common horizontal footline around y=810: Codex center x=160, Claude x=380, Gemini x=600, foot soldier x=850, mantis x=1080, boss x=1340. Make Rangers about 225px tall, foot soldier 215px, mantis 260px, boss 315px. These scales should allow clear gaps between all limbs and weapons. Rangers face RIGHT; all three villains face LEFT. Boss clearly largest. Keep all heads, fins, feet, weapons and pincers uncut within canvas. No overlap of characters. Grounded readable arcade staging. Match crisp pixel art, upper-left daylight and outline weight. No labels, UI, action effects, or additional characters. Wide landscape same1536x1024 composition.",
+    "referenced_image_paths": [
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-b383bb2e-3b43-498b-95fc-5d6f7870d974.png",
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-ffbc6d36-8da6-4f38-ab60-89eee9577c6d.png",
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-f2f35858-17e6-4ff6-af23-91001fcf75b9.png"
+    ],
+    "transparent_background": false,
+    "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-c19e7743-293b-4c92-887b-d58392628205.png"
+  },
+  {
+    "name": "review-board",
+    "prompt": "Create a polished labelled art-direction review board for POWER AGENTS, landscape1536x1024. Use supplied references faithfully: 1 complete city encounter containing all six final designs, 2 original Codex Ranger, 3 original Claude Ranger, 4 original Gemini Ranger, 5 clean city. Dark navy flat presentation background, ivory simple highly legible headings, tidy generous gutters. Title exactly \"POWER AGENTS / V2\". Subtitle \"AI RANGERS · CITY ENCOUNTERS\". Upper row THREE equal columns each shows full-body Ranger, name below exactly \"CODEX\", \"CLAUDE\", \"GEMINI\", and 5 small palette swatches. Codex periwinkle/lavender/blue/white/charcoal; Claude terracotta/copper/cream/silver/charcoal; Gemini blue/red/yellow/green/white. Middle row three smaller villain studies faithfully from encounter reference1: plum masked soldier labeled \"FOOT SOLDIER\", lime-magenta mantis labeled \"MONSTER OF THE WEEK\", red/gold armored boss labeled \"ARMORED BOSS\". Bottom strip modern empty city preview left labeled \"CITY STAGE\", and complete encounter preview right labeled \"ENCOUNTER SCALE\". Full silhouettes no cropping, labels separate from characters, no text over sprite bodies. Maintain B sturdy armor design, all emblems recognizable, consistent pixel-art treatment. Footer exactly \"CONCEPT ART — NOT ANIMATION-READY\". Balanced composition, not a game UI.",
+    "referenced_image_paths": [
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-c19e7743-293b-4c92-887b-d58392628205.png",
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-ee0902a8-1515-40b1-89fd-7085c907dab6.png",
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-46d6f91f-0c1a-4146-bbe0-a2a5084f471c.png",
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-512df0f1-6c66-4ceb-81b7-001255641171.png",
+      "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-a8968757-419e-42a8-84da-bfb22ae0cf4d.png"
+    ],
+    "transparent_background": false,
+    "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-eaa9701c-fba4-4883-9720-0a14529aa6d5.png"
+  }
+]

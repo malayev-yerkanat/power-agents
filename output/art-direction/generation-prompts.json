@@ -1,0 +1,110 @@
+{
+  "root": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction",
+  "directions": [
+    {
+      "id": "a",
+      "name": "Arcade Sentai",
+      "style": "Heroic 32-bit arcade sprite, five-head-tall athletic proportions, bold near-black outline, saturated crimson, ivory, navy armor shadows and warm gold accents, expressive confident silhouette. Side-on three-quarter fighting-game view with feet on a shared horizontal baseline. Large deliberate pixel clusters with 3-4 shade steps, no soft gradients.",
+      "palette": [
+        "#172033",
+        "#D93438",
+        "#FF7157",
+        "#FFF1D2",
+        "#376586",
+        "#EAB64E"
+      ],
+      "assets": [
+        {
+          "kind": "ranger",
+          "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-48c94447-376a-408e-ba07-7a675d619b63.png",
+          "prompt": "Use case: stylized-concept. Asset: isolated character sprite CONCEPT for Power Agents, direction Arcade Sentai. Reference image is visual inspiration for the Ranger costume and pixel-art energy, not a composition to copy. Generate ONE full-body RED POWER RANGER, including entire feet and weapon, neutral combat-ready stance facing right. Same character across comparative variants: red full-face helmet with broad black visor and silver mouth plate, white diamond chest detail, white gloves and boots, silver belt, one short silver sword held down and outward in right hand. No assigned provider or permanent job. STYLE: Heroic 32-bit arcade sprite, five-head-tall athletic proportions, bold near-black outline, saturated crimson, ivory, navy armor shadows and warm gold accents, expressive confident silhouette. Side-on three-quarter fighting-game view with feet on a shared horizontal baseline. Large deliberate pixel clusters with 3-4 shade steps, no soft gradients. Suggested palette #172033, #D93438, #FF7157, #FFF1D2, #376586, #EAB64E. Canvas square, character centered occupying about 72% of height with generous empty margin around all limbs/weapon. Genuinely transparent alpha background; NO painted checkerboard, NO scenery, NO floor or contact shadow, NO text, letters, labels, borders, UI, extra characters, glow or fog. Crisp unblurred pixel-art concept, controlled squared edges, readable silhouette. This is a single pose, not an animation sheet.",
+          "saved_path": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/a-arcade-sentai/ranger.png"
+        },
+        {
+          "kind": "monster",
+          "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-6041bd04-f650-4bfe-be17-77d623122b40.png",
+          "prompt": "Use case: stylized-concept. Generate ONE isolated full-body task monster sprite concept for Power Agents, direction Arcade Sentai. Input1 is the APPROVED STYLE REFERENCE for pixel density, outline, shading and perspective, NOT a character to reproduce. Input2 is subject inspiration: its large horned armored skull guardian. Same underlying monster across comparisons: two ivory horns, skull-like ivory mask, amber-red eyes, dark slate/navy armored shoulders, chunky armored boots, round shield in its left hand with a red angular emblem, short spiked mace in its right hand. Neutral combat-ready pose facing left toward a Ranger, full silhouette including feet, shield and mace. STYLE: Heroic 32-bit arcade sprite, five-head-tall athletic proportions, bold near-black outline, saturated crimson, ivory, navy armor shadows and warm gold accents, expressive confident silhouette. Side-on three-quarter fighting-game view with feet on a shared horizontal baseline. Large deliberate pixel clusters with 3-4 shade steps, no soft gradients. Monster about 1.2 times Ranger height in world scale, both matching stylistic body proportions. Canvas square centered with at least 10% clear margin around every appendage. Actual transparent alpha background. NO background, floor shadow, checkerboard pattern, labels, text, panels, extra characters or scene. Crisp pixel clusters, no antialias softness, no gradients. Same monster design expressed in this art direction, not a sprite animation sheet.",
+          "saved_path": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/a-arcade-sentai/monster.png"
+        },
+        {
+          "kind": "scene",
+          "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-4f6d17dd-6666-45e4-8b8f-f6efb2bfdb90.png",
+          "prompt": "Use case: stylized-concept. Create one LANDSCAPE 3:2 small environment vignette for Power Agents art direction Arcade Sentai. Reference1 is the exact red Ranger character style, Reference2 is the exact horned skull armored monster style. Preserve those designs, their costume/weapon identity and relative proportions as closely as possible. STYLE Heroic 32-bit arcade sprite, five-head-tall athletic proportions, bold near-black outline, saturated crimson, ivory, navy armor shadows and warm gold accents, expressive confident silhouette. Side-on three-quarter fighting-game view with feet on a shared horizontal baseline. Large deliberate pixel clusters with 3-4 shade steps, no soft gradients. ENVIRONMENT A sunlit side-on forest-ruins battle stage: mossy stone columns, a compact clearing, a waterfall and distant citadel, restrained saturated foliage. Classic horizontal arcade encounter lane. Show ONLY these two characters, Ranger left facing right, monster right facing left, both complete and standing naturally on the same ground plane with a comfortable gap. Monster including horns about1.2x ranger height. Characters about 35% of picture height, visible and unoccluded, neutral ready poses; no attack action, no health bars, no percentage values, no UI panels. Keep background lower-contrast than actors. Crisp pixel-art environment compatible with sprites, not painted soft illustration. Opaque full scene. No lettering, labels, logos, watermarks. Light source upper left. This is a concept composition demonstrating eventual browser workspace world scale.",
+          "saved_path": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/a-arcade-sentai/scene.png"
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "name": "Command Diorama",
+      "style": "Tactical 32-bit strategy sprite, four-head-tall sturdy proportions, faceted armor, muted burgundy, cool slate shadows, pale mint lighting and restrained amber accents. Elevated three-quarter 30-degree diorama camera, consistent orthographic perspective. Fine deliberate pixel clusters, selective outlines, 3-4 stepped shades, no blur.",
+      "palette": [
+        "#192C32",
+        "#AF3544",
+        "#D9E7D8",
+        "#52717A",
+        "#8CC6B4",
+        "#D0A558"
+      ],
+      "assets": [
+        {
+          "kind": "ranger",
+          "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-49b0a858-4174-4608-ab95-c58276c5b577.png",
+          "prompt": "Use case: stylized-concept. Asset: isolated character sprite CONCEPT for Power Agents, direction Command Diorama. Reference image is visual inspiration for the Ranger costume and pixel-art energy, not a composition to copy. Generate ONE full-body RED POWER RANGER, including entire feet and weapon, neutral combat-ready stance facing right. Same character across comparative variants: red full-face helmet with broad black visor and silver mouth plate, white diamond chest detail, white gloves and boots, silver belt, one short silver sword held down and outward in right hand. No assigned provider or permanent job. STYLE: Tactical 32-bit strategy sprite, four-head-tall sturdy proportions, faceted armor, muted burgundy, cool slate shadows, pale mint lighting and restrained amber accents. Elevated three-quarter 30-degree diorama camera, consistent orthographic perspective. Fine deliberate pixel clusters, selective outlines, 3-4 stepped shades, no blur. Suggested palette #192C32, #AF3544, #D9E7D8, #52717A, #8CC6B4, #D0A558. Canvas square, character centered occupying about 72% of height with generous empty margin around all limbs/weapon. Genuinely transparent alpha background; NO painted checkerboard, NO scenery, NO floor or contact shadow, NO text, letters, labels, borders, UI, extra characters, glow or fog. Crisp unblurred pixel-art concept, controlled squared edges, readable silhouette. This is a single pose, not an animation sheet.",
+          "saved_path": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/b-command-diorama/ranger.png"
+        },
+        {
+          "kind": "monster",
+          "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-6ace4ddd-8028-4970-9763-bd2ec244ffd5.png",
+          "prompt": "Use case: stylized-concept. Generate ONE isolated full-body task monster sprite concept for Power Agents, direction Command Diorama. Input1 is the APPROVED STYLE REFERENCE for pixel density, outline, shading and perspective, NOT a character to reproduce. Input2 is subject inspiration: its large horned armored skull guardian. Same underlying monster across comparisons: two ivory horns, skull-like ivory mask, amber-red eyes, dark slate/navy armored shoulders, chunky armored boots, round shield in its left hand with a red angular emblem, short spiked mace in its right hand. Neutral combat-ready pose facing left toward a Ranger, full silhouette including feet, shield and mace. STYLE: Tactical 32-bit strategy sprite, four-head-tall sturdy proportions, faceted armor, muted burgundy, cool slate shadows, pale mint lighting and restrained amber accents. Elevated three-quarter 30-degree diorama camera, consistent orthographic perspective. Fine deliberate pixel clusters, selective outlines, 3-4 stepped shades, no blur. Monster about 1.2 times Ranger height in world scale, both matching stylistic body proportions. Canvas square centered with at least 10% clear margin around every appendage. Actual transparent alpha background. NO background, floor shadow, checkerboard pattern, labels, text, panels, extra characters or scene. Crisp pixel clusters, no antialias softness, no gradients. Same monster design expressed in this art direction, not a sprite animation sheet.",
+          "saved_path": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/b-command-diorama/monster.png"
+        },
+        {
+          "kind": "scene",
+          "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-46524481-d832-404d-8ac7-001a4e7e49bf.png",
+          "prompt": "Use case: stylized-concept. Create one LANDSCAPE 3:2 small environment vignette for Power Agents art direction Command Diorama. Reference1 is the exact red Ranger character style, Reference2 is the exact horned skull armored monster style. Preserve those designs, their costume/weapon identity and relative proportions as closely as possible. STYLE Tactical 32-bit strategy sprite, four-head-tall sturdy proportions, faceted armor, muted burgundy, cool slate shadows, pale mint lighting and restrained amber accents. Elevated three-quarter 30-degree diorama camera, consistent orthographic perspective. Fine deliberate pixel clusters, selective outlines, 3-4 stepped shades, no blur. ENVIRONMENT A compact elevated three-quarter command-outpost diorama: slate stone platform, one small mint-lit mission terminal, mossy ruin walls, a distant forest glimpse. Calm tactical layout with floor geometry clearly supporting both actors. Show ONLY these two characters, Ranger left facing right, monster right facing left, both complete and standing naturally on the same ground plane with a comfortable gap. Monster including horns about1.2x ranger height. Characters about 35% of picture height, visible and unoccluded, neutral ready poses; no attack action, no health bars, no percentage values, no UI panels. Keep background lower-contrast than actors. Crisp pixel-art environment compatible with sprites, not painted soft illustration. Opaque full scene. No lettering, labels, logos, watermarks. Light source upper left. This is a concept composition demonstrating eventual browser workspace world scale.",
+          "saved_path": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/b-command-diorama/scene.png"
+        }
+      ]
+    },
+    {
+      "id": "c",
+      "name": "Pocket Sentai",
+      "style": "Compact expressive 32-bit idle-RPG sprite, two-and-a-half-head-tall chibi proportions, oversized expressive helmet, short sturdy limbs, chunky black-purple outline, bright coral red, warm cream and violet-blue shadows. Slightly elevated three-quarter RPG view. Large clean pixel clusters, two or three stepped shades, playful but polished, no soft gradients.",
+      "palette": [
+        "#28243F",
+        "#EC4055",
+        "#FF926B",
+        "#FFF0C9",
+        "#666AB0",
+        "#75CBB1"
+      ],
+      "assets": [
+        {
+          "kind": "ranger",
+          "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-698f7cbc-6dcd-490d-9ce0-82c755e0422f.png",
+          "prompt": "Use case: stylized-concept. Asset: isolated character sprite CONCEPT for Power Agents, direction Pocket Sentai. Reference image is visual inspiration for the Ranger costume and pixel-art energy, not a composition to copy. Generate ONE full-body RED POWER RANGER, including entire feet and weapon, neutral combat-ready stance facing right. Same character across comparative variants: red full-face helmet with broad black visor and silver mouth plate, white diamond chest detail, white gloves and boots, silver belt, one short silver sword held down and outward in right hand. No assigned provider or permanent job. STYLE: Compact expressive 32-bit idle-RPG sprite, two-and-a-half-head-tall chibi proportions, oversized expressive helmet, short sturdy limbs, chunky black-purple outline, bright coral red, warm cream and violet-blue shadows. Slightly elevated three-quarter RPG view. Large clean pixel clusters, two or three stepped shades, playful but polished, no soft gradients. Suggested palette #28243F, #EC4055, #FF926B, #FFF0C9, #666AB0, #75CBB1. Canvas square, character centered occupying about 72% of height with generous empty margin around all limbs/weapon. Genuinely transparent alpha background; NO painted checkerboard, NO scenery, NO floor or contact shadow, NO text, letters, labels, borders, UI, extra characters, glow or fog. Crisp unblurred pixel-art concept, controlled squared edges, readable silhouette. This is a single pose, not an animation sheet.",
+          "saved_path": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/c-pocket-sentai/ranger.png"
+        },
+        {
+          "kind": "monster",
+          "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-054be130-4d04-4595-9d30-710c9158f54c.png",
+          "prompt": "Use case: stylized-concept. Generate ONE isolated full-body task monster sprite concept for Power Agents, direction Pocket Sentai. Input1 is the APPROVED STYLE REFERENCE for pixel density, outline, shading and perspective, NOT a character to reproduce. Input2 is subject inspiration: its large horned armored skull guardian. Same underlying monster across comparisons: two ivory horns, skull-like ivory mask, amber-red eyes, dark slate/navy armored shoulders, chunky armored boots, round shield in its left hand with a red angular emblem, short spiked mace in its right hand. Neutral combat-ready pose facing left toward a Ranger, full silhouette including feet, shield and mace. STYLE: Compact expressive 32-bit idle-RPG sprite, two-and-a-half-head-tall chibi proportions, oversized expressive helmet, short sturdy limbs, chunky black-purple outline, bright coral red, warm cream and violet-blue shadows. Slightly elevated three-quarter RPG view. Large clean pixel clusters, two or three stepped shades, playful but polished, no soft gradients. Monster about 1.2 times Ranger height in world scale, both matching stylistic body proportions. Canvas square centered with at least 10% clear margin around every appendage. Actual transparent alpha background. NO background, floor shadow, checkerboard pattern, labels, text, panels, extra characters or scene. Crisp pixel clusters, no antialias softness, no gradients. Same monster design expressed in this art direction, not a sprite animation sheet.",
+          "saved_path": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/c-pocket-sentai/monster.png"
+        },
+        {
+          "kind": "scene",
+          "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-70f9ebb9-e243-4e38-a14c-586a5516ab82.png",
+          "prompt": "Use case: stylized-concept. Create one LANDSCAPE 3:2 small environment vignette for Power Agents art direction Pocket Sentai. Reference1 is the exact red Ranger character style, Reference2 is the exact horned skull armored monster style. Preserve those designs, their costume/weapon identity and relative proportions as closely as possible. STYLE Compact expressive 32-bit idle-RPG sprite, two-and-a-half-head-tall chibi proportions, oversized expressive helmet, short sturdy limbs, chunky black-purple outline, bright coral red, warm cream and violet-blue shadows. Slightly elevated three-quarter RPG view. Large clean pixel clusters, two or three stepped shades, playful but polished, no soft gradients. ENVIRONMENT A compact slightly elevated forest shrine clearing, oversized rounded foliage rendered in chunky pixels, small old stone arch, warm inviting daylight, a playful idle-RPG encounter area. Show ONLY these two characters, Ranger left facing right, monster right facing left, both complete and standing naturally on the same ground plane with a comfortable gap. Monster including horns about1.2x ranger height. Characters about 35% of picture height, visible and unoccluded, neutral ready poses; no attack action, no health bars, no percentage values, no UI panels. Keep background lower-contrast than actors. Crisp pixel-art environment compatible with sprites, not painted soft illustration. Opaque full scene. No lettering, labels, logos, watermarks. Light source upper left. This is a concept composition demonstrating eventual browser workspace world scale.",
+          "saved_path": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/c-pocket-sentai/scene.png"
+        }
+      ]
+    }
+  ],
+  "comparison": {
+    "saved_path": "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/comparison-board.png",
+    "prompt": "Use case: compositing. Create a polished large landscape visual comparison board titled exactly \"POWER AGENTS \u2014 SPRITE DIRECTIONS\", subtitle \"Concept exploration / choose an art direction\". Three equal columns LEFT TO RIGHT labelled exactly \"A \u00b7 ARCADE SENTAI\", \"B \u00b7 COMMAND DIORAMA\", \"C \u00b7 POCKET SENTAI\". Reference1 is A's character pair and setting; Reference2 is B's pair and setting; Reference3 is C's pair and setting. Use each supplied character design and setting in the corresponding column. Preserve the distinguishing proportions, costumes, monster design, weapon silhouette and perspective. Warm pale ivory matte presentation background, very restrained dark navy dividers. Upper row in each column: the isolated red ranger and corresponding horned armored monster together on a plain pale ivory surface, complete uncropped bodies/weapons; generous whitespace around them; same relative actor scale between columns, monster1.2x ranger height. Lower row each column: corresponding supplied environment vignette as a wide thumbnail. Footer each column: six solid square palette swatches, respectively A #172033 #D93438 #FF7157 #FFF1D2 #376586 #EAB64E, B #192C32 #AF3544 #D9E7D8 #52717A #8CC6B4 #D0A558, C #28243F #EC4055 #FF926B #FFF0C9 #666AB0 #75CBB1. Under swatches labels exactly A \"Heroic / bold / arcade\", B \"Tactical / calm / diorama\", C \"Compact / playful / idle RPG\". Bottom line exactly \"Concept art \u2014 not animation-ready sprites\". Keep titles and labels outside character-image areas, no text covering characters. Crisp pixel-art and clean graphic-design presentation, comparable spacing, useful large samples, readable typography. No additional characters, fake UI or health bars. Large landscape canvas with enough vertical space for both rows.",
+    "source_path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-a88ea2bc-7f92-4e3e-9f09-f8acf0d3e947.png"
+  },
+  "generator": "Built-in image_gen"
+}

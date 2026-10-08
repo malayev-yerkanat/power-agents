@@ -1,0 +1,93 @@
+{
+  "mode": "built-in image_gen",
+  "generations": [
+    {
+      "name": "claude-staff",
+      "prompt": "Use case: precise-object-edit. Edit the supplied approved Ranger asset for Power Agents. Preserve exactly its sturdy proportions, armor construction, helmet, provider palette, chest insignia, pixel-art style, upper-left lighting, right-facing slightly three-quarter arcade camera. Change only weapon and arms/hands as needed for its grip. Full body with exactly two arms and two legs, combat-ready neutral stance. ONE weapon only, no holstered secondary weapon. Clear chest insignia and face. Deliberately crisp coarse 32-bit-era pixel clusters and hard shading. Genuinely transparent PNG with zero-alpha empty background and opaque character interiors; no checkerboard, ground shadow, scenery, text or effects. Fit entire character and entire weapon inside square canvas with at least 10% empty margin on all sides, shrinking composition within canvas if necessary. No cropped boots, weapon tips or accessory parts.\nRemove the old sword entirely. Equip ONE two-handed energy staff: slim dark copper shaft, cream mechanical grip collars, compact terracotta starburst-shaped head at the upper end, closed material energy core without glow. Staff length about 0.85 character height. Position it diagonally across lower torso at waist level from lower LEFT to upper RIGHT, starburst head outside the right shoulder silhouette but below helmet top. Two hands spaced naturally along shaft, hands wrap the same straight pole, wrists and elbows anatomically clear. Keep shaft below chest insignia so the orange chest starburst is unobscured. Keep weapon complete. No sword, blade, extra grip or extra hand.",
+      "referenced_image_paths": [
+        "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v2-ai-rangers-city/claude-ranger.png"
+      ],
+      "transparent_background": true,
+      "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-75da8b5a-8957-453f-8df7-e335135e8372.png"
+    },
+    {
+      "name": "codex-saber",
+      "prompt": "Use case: precise-object-edit. Edit the supplied approved Ranger asset for Power Agents. Preserve exactly its sturdy proportions, armor construction, helmet, provider palette, chest insignia, pixel-art style, upper-left lighting, right-facing slightly three-quarter arcade camera. Change only weapon and arms/hands as needed for its grip. Full body with exactly two arms and two legs, combat-ready neutral stance. ONE weapon only, no holstered secondary weapon. Clear chest insignia and face. Deliberately crisp coarse 32-bit-era pixel clusters and hard shading. Genuinely transparent PNG with zero-alpha empty background and opaque character interiors; no checkerboard, ground shadow, scenery, text or effects. Fit entire character and entire weapon inside square canvas with at least 10% empty margin on all sides, shrinking composition within canvas if necessary. No cropped boots, weapon tips or accessory parts.\nReplace the existing ornate gold-hilt sword with ONE compact futuristic saber: simple silver-white angular blade with narrow periwinkle inset, short charcoal and lavender technical hilt with small squared guard, no medieval gold crossguard or gem. Held one-handed lowered diagonally toward screen right, fully clear of boots, other hand a closed ready fist. Blade length about half the Ranger's torso-plus-leg height. Preserve the exact white >_ terminal emblem on blue scalloped chest badge.",
+      "referenced_image_paths": [
+        "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v2-ai-rangers-city/codex-ranger.png"
+      ],
+      "transparent_background": true,
+      "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-ff0768fa-32dc-40cc-9db8-afa0bbcece76.png"
+    },
+    {
+      "name": "gemini-blaster",
+      "prompt": "Use case: precise-object-edit. Edit the supplied approved Ranger asset for Power Agents. Preserve exactly its sturdy proportions, armor construction, helmet, provider palette, chest insignia, pixel-art style, upper-left lighting, right-facing slightly three-quarter arcade camera. Change only weapon and arms/hands as needed for its grip. Full body with exactly two arms and two legs, combat-ready neutral stance. ONE weapon only, no holstered secondary weapon. Clear chest insignia and face. Deliberately crisp coarse 32-bit-era pixel clusters and hard shading. Genuinely transparent PNG with zero-alpha empty background and opaque character interiors; no checkerboard, ground shadow, scenery, text or effects. Fit entire character and entire weapon inside square canvas with at least 10% empty margin on all sides, shrinking composition within canvas if necessary. No cropped boots, weapon tips or accessory parts.\nRemove the old sword entirely. Equip ONE compact futuristic ray blaster pistol with a chunky angular cobalt/white body, short dark barrel, tiny four-color spark badge and restrained red/yellow/green details. It reads as a sci-fi sidearm, not a rifle. Hold one-handed toward screen RIGHT in a low-ready angle below the chest insignia, finger area and grip anatomically sensible, opposite hand a separate ready fist. No beam, muzzle flash, glow, sword, holster weapon or extra hand. Preserve the multicolor spark chest emblem clearly.",
+      "referenced_image_paths": [
+        "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v2-ai-rangers-city/gemini-ranger.png"
+      ],
+      "transparent_background": true,
+      "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-a96241af-e6d8-42e7-949a-90e2209f1460.png"
+    },
+    {
+      "name": "formation-a-triangle",
+      "prompt": "Use case: compositing. Create Power Agents encounter OPTION A as a landscape1536x1024 pixel-art image, WITHOUT any labels or text.\nReferences: 1 clean city backdrop preserve; 2 NEW Codex with compact lavender saber; 3 NEW Claude with two-handed copper starburst staff; 4 NEW Gemini with compact blue blaster; 5 old encounter for the THREE ENEMY designs only (plum foot soldier, green-magenta mantis, crimson-gold boss). Ignore old Ranger weapons and the old straight lineup entirely.\nPrimary change: a genuinely TRIANGULAR squad formation on the city street. Keep same side-on arcade camera; use three different FOOT POSITIONS for ground depth, not an elevated isometric view.\nPrecise composition on1536x1024:\n- Claude at rear upper-left, stance center x250, feet y660, body height230px. Staff diagonal down-left to up-right, both hands.\n- Gemini at rear lower-left, stance center x270, feet y950, body height230px. ONE blaster, NO sword.\n- Codex at forward triangle tip, stance center x590, feet y805, body height230px. ONE compact saber.\nThus the two rear Ranger foot pivots make a vertical pair and the forward Ranger makes the right-pointing triangle tip. All face RIGHT. No two Rangers share a footline, no straight row or diagonal line. Preserve same head/body size, outfits and exact weapon identity. Leave gaps; no head/emblem/weapon occlusion.\nEnemies occupy opposing shallow cluster: plum foot soldier at x960 feet y805 bodyheight220; mantis at x1190 feet y965 height265 including antennae; boss at x1310 feet y665 height322 including fins. All face LEFT. Keep designs from reference5, boss visibly larger, no new enemies. Exactly SIX actors. Clear central gap around x730-820.\nAll stand grounded on street with small restrained contact shadows; same upper-left daylight. Use open pavement for staging, do not add raised platforms or stairs. Camera remains horizontal with slight3/4 depth. Full bodies and all equipment inside frame with margins. Keep environment architecture, palette, skyline. Preserve crisp stepped pixel-art shapes, no smooth vector outline, blur, active attack, trails, effects, captions or UI. This is an idle squad encounter, no permanent leadership assignment.",
+      "referenced_image_paths": [
+        "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v2-ai-rangers-city/city-background.png",
+        "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-ff0768fa-32dc-40cc-9db8-afa0bbcece76.png",
+        "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-75da8b5a-8957-453f-8df7-e335135e8372.png",
+        "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-a96241af-e6d8-42e7-949a-90e2209f1460.png",
+        "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v2-ai-rangers-city/encounter.png"
+      ],
+      "transparent_background": false,
+      "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-b942831e-1ce9-48af-9bc2-5f95a8fbb88d.png"
+    },
+    {
+      "name": "formation-a-triangle-refined",
+      "prompt": "Edit this concept only to improve silhouette clearance. Preserve all six designs, weapons, sizes, city, camera, pixel style and triangular Ranger arrangement. Keep Claude and Codex unchanged. Move Gemini approximately65pixels RIGHT so BOTH entire boots are visible clear of the foreground bollard; preserve ONE blue blaster and no sword. Reposition existing enemies with more air: move foot soldier80px LEFT and20px UP; move mantis40px LEFT and70px DOWN; move boss25px RIGHT and65px UP. Do not resize or redesign them. Ensure monster pincers do not cover soldier legs or boss boots: slightly tuck pincers if necessary while preserving design. Six actors remain all fully visible; preserve recognizable staff, saber and blaster, no extra weapons, limbs or characters. No labels.",
+      "referenced_image_paths": [
+        "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-b942831e-1ce9-48af-9bc2-5f95a8fbb88d.png"
+      ],
+      "transparent_background": false,
+      "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-a4ce1313-1e25-49e9-875c-fac0ed013e3e.png"
+    },
+    {
+      "name": "formation-a-triangle-final",
+      "prompt": "Correct exactly TWO errors in reference1. 1) Codex, the purple-blue Ranger at center-left, is missing his saber: replace that Ranger with the exact saber-equipped design from reference2, at the SAME size and position, holding ONE compact silver saber with purple inset diagonally down-right. Preserve the chest >_ mark. 2) Boss at far right is partly cropped: move the ENTIRE existing boss80pixels LEFT and20pixels UP without changing size or design, so right hand, shoulder and feet have at least40pixels clear margin and no overlap with the mantis. Reference3 is boss design source. Preserve ALL OTHER pixels/designs/composition as closely as possible: Claude and his two-handed staff, Gemini and his one blaster, soldier, mantis, city, three depth lanes and triangular Ranger formation. Do not remove or duplicate any weapons. Exactly six complete actors. No labels.",
+      "referenced_image_paths": [
+        "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-a4ce1313-1e25-49e9-875c-fac0ed013e3e.png",
+        "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-ff0768fa-32dc-40cc-9db8-afa0bbcece76.png",
+        "/Users/bigbonch1k/Desktop/Personal/my projects/AI Orchestration/output/art-direction/v2-ai-rangers-city/villain-boss.png"
+      ],
+      "transparent_background": false,
+      "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-d959db05-d83c-4966-afaa-953ed76f1ffa.png"
+    },
+    {
+      "name": "formation-b-staggered",
+      "prompt": "Use case: precise-object-edit. Create OPTION B by changing ONLY actor placement in reference1 into a looser asymmetrical staggered formation. Preserve same canvas, city architecture, camera, lighting, exact actor sizes and relative scales. Preserve exactly SIX actors and weapon assignments (Codex ONE purple/silver saber, Claude ONE copper two-handed starburst staff, Gemini ONE blue sci-fi blaster). References2-4 give weapon fidelity, not new characters.\nReposition relative to reference1:\n- Claude move70px LEFT and50px UP; keep both hands on staff and full staff visible.\n- Codex move65px RIGHT and15px DOWN, saber remains clearly visible lowered diagonally.\n- Gemini move45px RIGHT and25px DOWN, keep whole blaster and both boots clear of foreground street furniture.\n- Foot soldier move45px RIGHT and20px UP.\n- Mantis move40px RIGHT and25px DOWN.\n- Boss move15px RIGHT and40px UP, full silhouette inside frame.\nThis creates a wider irregular stagger with more open space around the staff and a less rigid rear pair. Ranger feet must remain at different depth positions, never a straight line. Ranger body heights remain the SAME as reference1, not giant or tiny. All face opponent side; no permanent leader meaning. Keep broad central encounter gap. Absolutely no overlap hiding another actor's head, insignia, weapon or feet. Complete silhouettes, no clipping. Preserve crisp pixel treatment; no captions, labels, UI, particles or attack effects.",
+      "referenced_image_paths": [
+        "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-d959db05-d83c-4966-afaa-953ed76f1ffa.png",
+        "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-ff0768fa-32dc-40cc-9db8-afa0bbcece76.png",
+        "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-75da8b5a-8957-453f-8df7-e335135e8372.png",
+        "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-a96241af-e6d8-42e7-949a-90e2209f1460.png"
+      ],
+      "transparent_background": false,
+      "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-d016eb1f-b45d-47f6-97a6-9b2c7fedad94.png"
+    },
+    {
+      "name": "formation-b-staggered-final",
+      "prompt": "Make two small placement corrections to this existing image, preserving all designs, weapons, scale, city background and loose staggered formation. Move the entire Gemini Ranger (blue suit, four-color chest spark, ONE blaster, foreground left)50pixels LEFT and45pixels DOWN, so its blaster has clear empty street behind it rather than intersecting Codex's shin. Preserve full boots above the foreground plants and away from bollards. Move the entire red armored boss55pixels DOWN so both feet visibly rest on the rear street/sidewalk ground plane, not floating in front of the shop facade. Preserve all remaining positions and actors. Codex must retain ONE compact saber, Claude must retain ONE two-handed staff, Gemini must retain ONE blaster. Six characters total, all fully visible. No labels or effects.",
+      "referenced_image_paths": [
+        "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-d016eb1f-b45d-47f6-97a6-9b2c7fedad94.png"
+      ],
+      "transparent_background": false,
+      "path": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-e298a1e1-f4e5-41f3-9049-66d392191995.png"
+    }
+  ],
+  "finals": {
+    "codex-saber": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-ff0768fa-32dc-40cc-9db8-afa0bbcece76.png",
+    "claude-staff": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-75da8b5a-8957-453f-8df7-e335135e8372.png",
+    "gemini-blaster": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-a96241af-e6d8-42e7-949a-90e2209f1460.png",
+    "formation-a-triangle": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-d959db05-d83c-4966-afaa-953ed76f1ffa.png",
+    "formation-b-staggered": "/Users/bigbonch1k/.codex/generated_images/01a116ee-578a-7b83-9457-37fcde8552cd/exec-e298a1e1-f4e5-41f3-9049-66d392191995.png"
+  }
+}

@@ -5,6 +5,7 @@ import type { Connection, CreateRunInput, ModelCatalog, Run, RunEvent } from '..
 import type { Store } from './store.ts';
 import { createSchema as engineCreateSchema } from './core/protocol.ts';
 import { createModelCatalogLoader } from './adapters/models.ts';
+import type { TelegramService } from './telegram.ts';
 
 interface EngineApi {
   create(input: CreateRunInput): Run | Promise<Run>;
@@ -12,7 +13,7 @@ interface EngineApi {
   control(id: string, action: 'pause' | 'resume' | 'cancel'): Run | Promise<Run>;
   message(id: string, body: string): Run | Promise<Run>;
 }
-interface Options { store: Store; engine: EngineApi; connections: Connection[]; models?: (connection: Connection) => Promise<ModelCatalog> }
+interface Options { store: Store; engine: EngineApi; connections: Connection[]; models?: (connection: Connection) => Promise<ModelCatalog>; telegram?: TelegramService; telegramError?: string }
 class HttpError extends Error {
   statusCode: number;
   constructor(statusCode: number, message: string) { super(message); this.statusCode = statusCode; }
@@ -26,6 +27,8 @@ const createSchema = engineCreateSchema.superRefine((value, ctx) => {
 const approveSchema = z.object({ version: z.number().int().nonnegative().safe() }).strict();
 const controlSchema = z.object({ action: z.enum(['pause', 'resume', 'cancel']) }).strict();
 const messageSchema = z.object({ body: z.string().trim().min(1).max(12_000) }).strict();
+const telegramPreferencesSchema = z.object({ approval: z.boolean().optional(), completed: z.boolean().optional() }).strict()
+  .refine(value => value.approval !== undefined || value.completed !== undefined, 'Select at least one notification preference');
 const bodyLimit = 64 * 1024;
 const cookieName = 'power_agents_session';
 
@@ -140,6 +143,7 @@ async function mutate(path: string[], body: unknown, { engine }: Options): Promi
 function handleError(res: ServerResponse, error: unknown): void {
   if (res.headersSent) { res.destroy(); return; }
   if (error instanceof z.ZodError) { json(res, 400, { error: error.issues[0]?.message ?? 'Invalid request' }); return; }
+  if (error instanceof HttpError) { json(res, error.statusCode, { error: error.message }); return; }
   const status = error instanceof Error && 'statusCode' in error ? Number(error.statusCode) : 500;
   if (Number.isInteger(status) && status >= 400 && status < 500) {
     json(res, status, { error: (error as Error).message }); return;
@@ -177,6 +181,11 @@ export function createApiHandler(options: Options): (req: IncomingMessage, res: 
       if (!secureEqual(cookie, session)) throw new HttpError(401, 'Open the application to start a session');
       if (req.method === 'GET') {
         if (url.pathname === '/api/events') eventStream(req, res, options.store);
+        else if (url.pathname === '/api/telegram/status') json(res, 200, options.telegram?.status() ?? {
+          configured: !!options.telegramError, ready: false, connected: false,
+          ...(options.telegramError ? { error: options.telegramError } : {}),
+          notifications: options.store.telegramPreferences(),
+        });
         else if (path[1] === 'models' && path.length === 3) {
           const connection = options.connections.find(value => value.id === path[2]);
           if (!connection) throw new HttpError(404, 'Connection not found');
@@ -194,9 +203,32 @@ export function createApiHandler(options: Options): (req: IncomingMessage, res: 
       } else if (req.method === 'POST') {
         const token = req.headers['x-csrf-token'];
         if (typeof token !== 'string' || !secureEqual(token, csrfToken)) throw new HttpError(403, 'Invalid CSRF token');
+        if (url.pathname === '/api/telegram/pair') {
+          if (!options.telegram) throw new HttpError(503, 'Configure TELEGRAM_BOT_TOKEN to enable Telegram');
+          if (!options.telegram.status().ready) throw new HttpError(503, 'Telegram bot is unavailable. Check the token and network.');
+          z.object({}).strict().parse(await readBody(req));
+          json(res, 200, options.telegram.beginPairing()); return true;
+        }
+        if (url.pathname === '/api/telegram/test') {
+          if (!options.telegram) throw new HttpError(503, 'Telegram is not configured');
+          if (!options.telegram.status().ready) throw new HttpError(503, 'Telegram bot is unavailable. Try again shortly.');
+          z.object({}).strict().parse(await readBody(req));
+          if (!options.store.telegramRecipient()) throw new HttpError(409, 'Pair a Telegram chat first');
+          options.telegram.queueTest(); json(res, 200, { queued: true }); return true;
+        }
         if (path[1] !== 'runs') throw new HttpError(404, 'API endpoint not found');
         const run = await mutate(path, await readBody(req), options);
         json(res, path.length === 2 ? 201 : 200, { run });
+      } else if (req.method === 'PATCH' || req.method === 'DELETE') {
+        const token = req.headers['x-csrf-token'];
+        if (typeof token !== 'string' || !secureEqual(token, csrfToken)) throw new HttpError(403, 'Invalid CSRF token');
+        if (req.method === 'PATCH' && url.pathname === '/api/telegram/preferences') {
+          json(res, 200, { notifications: options.store.setTelegramPreferences(telegramPreferencesSchema.parse(await readBody(req))) });
+        } else if (req.method === 'DELETE' && url.pathname === '/api/telegram/pairing') {
+          if (options.telegram) await options.telegram.disconnect();
+          else options.store.disconnectTelegram();
+          json(res, 200, { connected: false });
+        } else throw new HttpError(404, 'API endpoint not found');
       } else throw new HttpError(405, 'Method not allowed');
     } catch (error) { handleError(res, error); }
     return true;
