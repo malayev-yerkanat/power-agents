@@ -33,3 +33,17 @@
 .encounter-scroll { background: #edf3f8; }
 .encounter-roster { justify-content: space-evenly; }
 .encounter-roster strong { color: #173973; }
+
+/* Combat is sampled on the logical pixel grid; no smooth rotations or scaling. */
+.encounter-stage { overflow: hidden; }
+.encounter-actor img { position: relative; }
+.combat-ground { position: absolute; left: 53px; top: 138px; width: 57px; height: 5px; background: #24375535; box-shadow: 5px -2px #24375520, -5px 2px #24375520; }
+.combat-badge { position: absolute; top: 29px; left: 66px; min-width: 25px; height: 22px; padding: 2px 5px; color: #31548b; background: #fffdf5; border: 2px solid #8da8ce; font: bold 12px/14px ui-monospace, monospace; text-align: center; box-shadow: 2px 2px #d2dce8; }
+.combat-badge-failed { color: #a33c32; border-color: #c56e5c; }
+.combat-badge-victory, .combat-badge-reviewing { color: #237552; }
+.combat-hit img { filter: brightness(1.25); }
+.combat-defeated img { opacity: .45; }
+.combat-dust { position: absolute; left: 40px; top: 136px; width: 8px; height: 4px; background: #d0bfa1; box-shadow: -9px 3px #d0bfa1, -17px -2px #e1d5bc; }
+.combat-controls { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin: 0 18px 16px; color: #697487; font-size: 10px; }
+.combat-controls button { border-bottom: 1px solid #8da8ce; padding: 5px 0; color: #31548b; }
+@media (prefers-reduced-motion: reduce) { .combat-dust { display: none; } }

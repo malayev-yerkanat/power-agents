@@ -36,7 +36,7 @@ async function setup(connections: Connection[] = [], models?: (connection: Conne
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   const bootstrap = await fetch(`${base}/api/bootstrap`);
   const cookie = bootstrap.headers.get('set-cookie')!.split(';')[0];
-  const state = await bootstrap.json() as { csrfToken: string; runs: Run[] };
+  const state = await bootstrap.json() as { csrfToken: string; runs: { id: string }[]; eventCursor: number };
   const headers = { Cookie: cookie, 'X-CSRF-Token': state.csrfToken, 'Content-Type': 'application/json', Origin: base };
   return {
     store, calls, base, headers, bootstrap, state, engine,
@@ -64,7 +64,8 @@ test('bootstrap issues strict session cookie and protects all remaining API read
   try {
     assert.match(app.bootstrap.headers.get('set-cookie')!, /HttpOnly/i);
     assert.match(app.bootstrap.headers.get('set-cookie')!, /SameSite=Strict/i);
-    assert.deepEqual(app.state.runs, [fixture()]);
+    assert.deepEqual(app.state.runs, [{ id: 'run-1', title: 'Research', status: 'planning', mode: 'demo',
+      createdAt: fixture().createdAt, updatedAt: fixture().updatedAt, version: 1 }]);
     assert.ok(app.state.csrfToken.length >= 32);
     assert.equal((await fetch(`${app.base}/api/health`)).status, 200);
     assert.equal((await fetch(`${app.base}/api/runs/run-1`)).status, 401);
@@ -73,6 +74,76 @@ test('bootstrap issues strict session cookie and protects all remaining API read
     assert.deepEqual(body.run, fixture());
     assert.equal(body.events.length, 1);
     assert.equal((await fetch(`${app.base}/api/runs/missing`, { headers: app.headers })).status, 404);
+  } finally { await app.close(); }
+});
+
+test('bootstrap and run history return bounded summary pages with validated cursors', async () => {
+  const app = await setup();
+  try {
+    for (let i = 0; i < 62; i += 1) app.store.createRun({ ...fixture(), id: `extra-${i}`,
+      createdAt: new Date(Date.UTC(2026, 9, 8, 0, 0, i)).toISOString(), artifacts: [] },
+    { type: 'created', message: 'Created' });
+    const first = await fetch(`${app.base}/api/bootstrap`);
+    const state = await first.json() as { runs: { id: string }[]; nextCursor?: string; eventCursor: number };
+    assert.equal(state.runs.length, 30);
+    assert.equal(state.runs[0].id, 'extra-61');
+    assert.equal(typeof state.nextCursor, 'string');
+    assert.equal(state.eventCursor, 63);
+    const second = await fetch(`${app.base}/api/runs?before=${state.nextCursor}`, { headers: app.headers });
+    const page = await second.json() as { runs: { id: string }[]; nextCursor?: string };
+    assert.equal(page.runs.length, 30);
+    assert.equal(page.runs[0].id, 'extra-31');
+    const third = await fetch(`${app.base}/api/runs?before=${page.nextCursor}`, { headers: app.headers });
+    assert.equal((await third.json() as { runs: unknown[] }).runs.length, 3);
+    assert.equal((await fetch(`${app.base}/api/runs?before=missing`, { headers: app.headers })).status, 400);
+  } finally { await app.close(); }
+});
+
+test('SSE replay is capped and emits a resync marker for historical overflow', async () => {
+  const app = await setup();
+  const abort = new AbortController();
+  try {
+    for (let i = 0; i < 110; i += 1) app.store.updateRun('run-1', value => value, { type: 'changed', message: String(i) });
+    const response = await fetch(`${app.base}/api/events?after=1`, { headers: app.headers, signal: abort.signal });
+    const reader = response.body!.getReader();
+    let output = '';
+    while (!output.includes('event: resync')) output += new TextDecoder().decode((await reader.read()).value);
+    assert.equal((output.match(/event: run/g) || []).length, 100);
+    assert.match(output, /event: resync\ndata: \{"reason":"replay_limit"\}/);
+    const detail = await fetch(`${app.base}/api/runs/run-1`, { headers: app.headers });
+    const body = await detail.json() as { eventsBefore: number };
+    assert.equal(typeof body.eventsBefore, 'number');
+  } finally { abort.abort(); await app.close(); }
+});
+
+test('bootstrap event cursor replays changes made before SSE subscribes', async () => {
+  const app = await setup();
+  const abort = new AbortController();
+  try {
+    app.store.updateRun('run-1', value => value, { type: 'changed', message: 'Between snapshot and stream' });
+    const response = await fetch(`${app.base}/api/events?after=${app.state.eventCursor}`,
+      { headers: app.headers, signal: abort.signal });
+    const reader = response.body!.getReader();
+    let output = '';
+    while (!output.includes('Between snapshot and stream')) output += new TextDecoder().decode((await reader.read()).value);
+    assert.match(output, /event: run/);
+  } finally { abort.abort(); await app.close(); }
+});
+
+test('run detail and older-event pages keep event responses bounded', async () => {
+  const app = await setup();
+  try {
+    for (let i = 0; i < 205; i += 1) app.store.updateRun('run-1', value => value, { type: 'changed', message: String(i) });
+    const response = await fetch(`${app.base}/api/runs/run-1`, { headers: app.headers });
+    const recent = await response.json() as { run: Run; events: { id: number }[]; eventsBefore?: number };
+    assert.equal(recent.events.length, 100);
+    assert.equal(recent.events.at(-1)!.id, 206);
+    assert.equal(typeof recent.eventsBefore, 'number');
+    const olderResponse = await fetch(`${app.base}/api/runs/run-1/events/history?before=${recent.eventsBefore}`, { headers: app.headers });
+    const older = await olderResponse.json() as { events: { id: number }[]; before?: number };
+    assert.equal(older.events.length, 100);
+    assert.equal(older.events.at(-1)!.id, 106);
+    assert.equal((await fetch(`${app.base}/api/runs/run-1/events/history?before=nope`, { headers: app.headers })).status, 400);
   } finally { await app.close(); }
 });
 

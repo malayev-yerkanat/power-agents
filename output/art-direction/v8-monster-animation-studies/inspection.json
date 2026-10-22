@@ -1,0 +1,810 @@
+{
+  "boss-attacks.png": {
+    "width": 1448,
+    "height": 1086,
+    "alphaRange": [
+      0,
+      255
+    ],
+    "cells": [
+      {
+        "row": 1,
+        "column": 1,
+        "cell": [
+          0,
+          0,
+          362,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          56,
+          26,
+          336,
+          347
+        ]
+      },
+      {
+        "row": 1,
+        "column": 2,
+        "cell": [
+          362,
+          0,
+          724,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          53,
+          31,
+          328,
+          362
+        ]
+      },
+      {
+        "row": 1,
+        "column": 3,
+        "cell": [
+          724,
+          0,
+          1086,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          16,
+          34,
+          362,
+          348
+        ]
+      },
+      {
+        "row": 1,
+        "column": 4,
+        "cell": [
+          1086,
+          0,
+          1448,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          0,
+          28,
+          335,
+          347
+        ]
+      },
+      {
+        "row": 2,
+        "column": 1,
+        "cell": [
+          0,
+          362,
+          362,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          33,
+          89,
+          325,
+          349
+        ]
+      },
+      {
+        "row": 2,
+        "column": 2,
+        "cell": [
+          362,
+          362,
+          724,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          36,
+          0,
+          329,
+          348
+        ]
+      },
+      {
+        "row": 2,
+        "column": 3,
+        "cell": [
+          724,
+          362,
+          1086,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          40,
+          110,
+          362,
+          350
+        ]
+      },
+      {
+        "row": 2,
+        "column": 4,
+        "cell": [
+          1086,
+          362,
+          1448,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          0,
+          36,
+          328,
+          350
+        ]
+      },
+      {
+        "row": 3,
+        "column": 1,
+        "cell": [
+          0,
+          724,
+          362,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          34,
+          34,
+          325,
+          338
+        ]
+      },
+      {
+        "row": 3,
+        "column": 2,
+        "cell": [
+          362,
+          724,
+          724,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          35,
+          12,
+          322,
+          338
+        ]
+      },
+      {
+        "row": 3,
+        "column": 3,
+        "cell": [
+          724,
+          724,
+          1086,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          20,
+          16,
+          351,
+          338
+        ]
+      },
+      {
+        "row": 3,
+        "column": 4,
+        "cell": [
+          1086,
+          724,
+          1448,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          41,
+          29,
+          335,
+          338
+        ]
+      }
+    ]
+  },
+  "boss-idle.png": {
+    "width": 1448,
+    "height": 1086,
+    "alphaRange": [
+      0,
+      255
+    ],
+    "cells": [
+      {
+        "row": 1,
+        "column": 1,
+        "cell": [
+          0,
+          0,
+          362,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          37,
+          28,
+          353,
+          358
+        ]
+      },
+      {
+        "row": 1,
+        "column": 2,
+        "cell": [
+          362,
+          0,
+          724,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          35,
+          25,
+          356,
+          358
+        ]
+      },
+      {
+        "row": 1,
+        "column": 3,
+        "cell": [
+          724,
+          0,
+          1086,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          47,
+          17,
+          350,
+          358
+        ]
+      },
+      {
+        "row": 1,
+        "column": 4,
+        "cell": [
+          1086,
+          0,
+          1448,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          37,
+          28,
+          352,
+          358
+        ]
+      },
+      {
+        "row": 2,
+        "column": 1,
+        "cell": [
+          0,
+          362,
+          362,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          42,
+          77,
+          345,
+          352
+        ]
+      },
+      {
+        "row": 2,
+        "column": 2,
+        "cell": [
+          362,
+          362,
+          724,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          26,
+          19,
+          362,
+          352
+        ]
+      },
+      {
+        "row": 2,
+        "column": 3,
+        "cell": [
+          724,
+          362,
+          1086,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          0,
+          17,
+          358,
+          352
+        ]
+      },
+      {
+        "row": 2,
+        "column": 4,
+        "cell": [
+          1086,
+          362,
+          1448,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          37,
+          24,
+          352,
+          352
+        ]
+      },
+      {
+        "row": 3,
+        "column": 1,
+        "cell": [
+          0,
+          724,
+          362,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          52,
+          14,
+          345,
+          342
+        ]
+      },
+      {
+        "row": 3,
+        "column": 2,
+        "cell": [
+          362,
+          724,
+          724,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          57,
+          2,
+          362,
+          342
+        ]
+      },
+      {
+        "row": 3,
+        "column": 3,
+        "cell": [
+          724,
+          724,
+          1086,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          0,
+          68,
+          351,
+          342
+        ]
+      },
+      {
+        "row": 3,
+        "column": 4,
+        "cell": [
+          1086,
+          724,
+          1448,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          41,
+          13,
+          348,
+          342
+        ]
+      }
+    ]
+  },
+  "mantis-attacks.png": {
+    "width": 1448,
+    "height": 1086,
+    "alphaRange": [
+      0,
+      255
+    ],
+    "cells": [
+      {
+        "row": 1,
+        "column": 1,
+        "cell": [
+          0,
+          0,
+          362,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          53,
+          62,
+          319,
+          344
+        ]
+      },
+      {
+        "row": 1,
+        "column": 2,
+        "cell": [
+          362,
+          0,
+          724,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          64,
+          56,
+          362,
+          344
+        ]
+      },
+      {
+        "row": 1,
+        "column": 3,
+        "cell": [
+          724,
+          0,
+          1086,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          0,
+          72,
+          362,
+          344
+        ]
+      },
+      {
+        "row": 1,
+        "column": 4,
+        "cell": [
+          1086,
+          0,
+          1448,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          0,
+          61,
+          337,
+          344
+        ]
+      },
+      {
+        "row": 2,
+        "column": 1,
+        "cell": [
+          0,
+          362,
+          362,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          58,
+          97,
+          337,
+          348
+        ]
+      },
+      {
+        "row": 2,
+        "column": 2,
+        "cell": [
+          362,
+          362,
+          724,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          61,
+          12,
+          315,
+          348
+        ]
+      },
+      {
+        "row": 2,
+        "column": 3,
+        "cell": [
+          724,
+          362,
+          1086,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          65,
+          116,
+          362,
+          351
+        ]
+      },
+      {
+        "row": 2,
+        "column": 4,
+        "cell": [
+          1086,
+          362,
+          1448,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          0,
+          63,
+          343,
+          351
+        ]
+      },
+      {
+        "row": 3,
+        "column": 1,
+        "cell": [
+          0,
+          724,
+          362,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          54,
+          30,
+          319,
+          319
+        ]
+      },
+      {
+        "row": 3,
+        "column": 2,
+        "cell": [
+          362,
+          724,
+          724,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          59,
+          52,
+          343,
+          319
+        ]
+      },
+      {
+        "row": 3,
+        "column": 3,
+        "cell": [
+          724,
+          724,
+          1086,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          8,
+          79,
+          362,
+          319
+        ]
+      },
+      {
+        "row": 3,
+        "column": 4,
+        "cell": [
+          1086,
+          724,
+          1448,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          0,
+          42,
+          352,
+          319
+        ]
+      }
+    ]
+  },
+  "mantis-idle.png": {
+    "width": 1448,
+    "height": 1086,
+    "alphaRange": [
+      0,
+      255
+    ],
+    "cells": [
+      {
+        "row": 1,
+        "column": 1,
+        "cell": [
+          0,
+          0,
+          362,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          50,
+          40,
+          354,
+          344
+        ]
+      },
+      {
+        "row": 1,
+        "column": 2,
+        "cell": [
+          362,
+          0,
+          724,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          55,
+          43,
+          351,
+          344
+        ]
+      },
+      {
+        "row": 1,
+        "column": 3,
+        "cell": [
+          724,
+          0,
+          1086,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          44,
+          24,
+          355,
+          344
+        ]
+      },
+      {
+        "row": 1,
+        "column": 4,
+        "cell": [
+          1086,
+          0,
+          1448,
+          362
+        ],
+        "opaqueBoundsInCell": [
+          62,
+          45,
+          355,
+          344
+        ]
+      },
+      {
+        "row": 2,
+        "column": 1,
+        "cell": [
+          0,
+          362,
+          362,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          79,
+          80,
+          357,
+          344
+        ]
+      },
+      {
+        "row": 2,
+        "column": 2,
+        "cell": [
+          362,
+          362,
+          724,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          55,
+          40,
+          362,
+          344
+        ]
+      },
+      {
+        "row": 2,
+        "column": 3,
+        "cell": [
+          724,
+          362,
+          1086,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          0,
+          25,
+          362,
+          344
+        ]
+      },
+      {
+        "row": 2,
+        "column": 4,
+        "cell": [
+          1086,
+          362,
+          1448,
+          724
+        ],
+        "opaqueBoundsInCell": [
+          0,
+          51,
+          358,
+          344
+        ]
+      },
+      {
+        "row": 3,
+        "column": 1,
+        "cell": [
+          0,
+          724,
+          362,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          52,
+          23,
+          362,
+          322
+        ]
+      },
+      {
+        "row": 3,
+        "column": 2,
+        "cell": [
+          362,
+          724,
+          724,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          56,
+          2,
+          362,
+          322
+        ]
+      },
+      {
+        "row": 3,
+        "column": 3,
+        "cell": [
+          724,
+          724,
+          1086,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          0,
+          73,
+          358,
+          322
+        ]
+      },
+      {
+        "row": 3,
+        "column": 4,
+        "cell": [
+          1086,
+          724,
+          1448,
+          1086
+        ],
+        "opaqueBoundsInCell": [
+          56,
+          28,
+          354,
+          322
+        ]
+      }
+    ]
+  }
+}

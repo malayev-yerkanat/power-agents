@@ -29,6 +29,13 @@ test('CLI parsers extract authoritative text and session ids; fail closed on pro
   ].join('\n')), { text: 'answer', sessionId: 'thread-1' });
   assert.deepEqual(parseCliResult('claude-cli', '{"type":"result","subtype":"success","result":"answer","session_id":"s1"}'), { text: 'answer', sessionId: 's1' });
   assert.deepEqual(parseCliResult('gemini-cli', '{"status":"SUCCESS","response":"answer","conversation_id":"s2"}'), { text: 'answer', sessionId: 's2' });
+  assert.deepEqual(parseCliResult('gemini-cli', [
+    '{"event":"init","conversation_id":"s2"}',
+    '{"event":"step_update","step_update":{"text_delta":"partial"}}',
+    '{"event":"result","result":{"status":"SUCCESS","response":"answer","conversation_id":"s2"}}',
+  ].join('\n')), { text: 'answer', sessionId: 's2' });
+  assert.throws(() => parseCliResult('gemini-cli', '{"event":"init","conversation_id":"s2"}'), /заверш|результ/i);
+  assert.throws(() => parseCliResult('gemini-cli', '{"event":"result","result":{"status":"ERROR","error":"failed"}}'), /failed/);
   assert.throws(() => parseCliResult('claude-cli', '{"is_error":true,"result":"login required"}'), /login required/);
   assert.throws(() => parseCliResult('gemini-cli', '{"status":"ERROR","response":"no"}'));
   assert.throws(() => parseCliResult('codex-cli', '{"type":"turn.failed","error":{"message":"auth failed"}}'), /auth failed/);
@@ -51,6 +58,11 @@ test('CLI commands constrain permission and preserve explicit session/model', ()
   const gemini = buildCliCommand({ ...turn, connection: input('gemini-cli').connection });
   assert.ok(gemini.args.includes('--sandbox'));
   assert.ok(gemini.args.includes('--conversation'));
+  assert.equal(gemini.args[gemini.args.indexOf('--input-format') + 1], 'stream-json');
+  assert.equal(gemini.args[gemini.args.indexOf('--output-format') + 1], 'stream-json');
+  assert.ok(!gemini.args.includes('Hello'));
+  assert.ok(!gemini.args.includes('--print'));
+  assert.deepEqual(JSON.parse(gemini.stdin ?? ''), { event: 'user', message: { content: 'Hello' } });
 });
 
 test('API validation requires configured key and explicit model without network access', async () => {

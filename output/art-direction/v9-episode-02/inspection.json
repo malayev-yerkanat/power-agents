@@ -1,0 +1,236 @@
+{
+  "status": "concept assets awaiting user approval; not wired into reel",
+  "inspection": "All 15 PNGs visually inspected for text, cropping, facing, transparency and pixel style; alpha and dimensions measured with Pillow. Transparent images use binary alpha. Grid alignment and scene-scale composition have not been production-validated.",
+  "files": {
+    "bg-villain-lair.png": {
+      "width": 1024,
+      "height": 1536,
+      "has_alpha": false,
+      "transparent_pixel_fraction": 0,
+      "partial_alpha_pixel_fraction": 0,
+      "content_margin_fraction": null,
+      "generation_retries": 0,
+      "visible_defects_or_design_drift": [
+        "Empty throne-like chair is present on the otherwise figure-free platform."
+      ]
+    },
+    "bg-city-battle.png": {
+      "width": 1024,
+      "height": 1536,
+      "has_alpha": false,
+      "transparent_pixel_fraction": 0,
+      "partial_alpha_pixel_fraction": 0,
+      "content_margin_fraction": null,
+      "generation_retries": 0,
+      "visible_defects_or_design_drift": [
+        "Ground is broad and usable, though its cracks and rubble add visual texture."
+      ]
+    },
+    "bg-command-desk.png": {
+      "width": 1024,
+      "height": 1536,
+      "has_alpha": false,
+      "transparent_pixel_fraction": 0,
+      "partial_alpha_pixel_fraction": 0,
+      "content_margin_fraction": null,
+      "generation_retries": 0,
+      "visible_defects_or_design_drift": [
+        "Laptop screen is blank but its warm light is not perfectly uniform."
+      ]
+    },
+    "bg-sunrise-rooftop.png": {
+      "width": 1024,
+      "height": 1536,
+      "has_alpha": false,
+      "transparent_pixel_fraction": 0,
+      "partial_alpha_pixel_fraction": 0,
+      "content_margin_fraction": null,
+      "generation_retries": 0,
+      "visible_defects_or_design_drift": []
+    },
+    "bg-title-burst.png": {
+      "width": 1024,
+      "height": 1536,
+      "has_alpha": false,
+      "transparent_pixel_fraction": 0,
+      "partial_alpha_pixel_fraction": 0,
+      "content_margin_fraction": null,
+      "generation_retries": 0,
+      "visible_defects_or_design_drift": []
+    },
+    "villain-commander.png": {
+      "width": 1176,
+      "height": 1337,
+      "has_alpha": true,
+      "transparent_pixel_fraction": 0.676055,
+      "partial_alpha_pixel_fraction": 0.0,
+      "content_margin_fraction": {
+        "left": 0.1097,
+        "top": 0.0957,
+        "right": 0.0893,
+        "bottom": 0.0898
+      },
+      "generation_retries": 2,
+      "visible_defects_or_design_drift": [
+        "Clock motif in the sceptre crystal is abstract and does not visibly tick.",
+        "Fine generated detail has not been aligned to the approved 160-pixel Ranger grid."
+      ]
+    },
+    "deadline-beast.png": {
+      "width": 1254,
+      "height": 1254,
+      "has_alpha": true,
+      "transparent_pixel_fraction": 0.697299,
+      "partial_alpha_pixel_fraction": 0.0,
+      "content_margin_fraction": {
+        "left": 0.075,
+        "top": 0.1172,
+        "right": 0.0718,
+        "bottom": 0.1124
+      },
+      "generation_retries": 2,
+      "visible_defects_or_design_drift": [
+        "Faint generic line texture on paper plates; no readable letters or numbers.",
+        "Fine generated detail has not been aligned to the approved 160-pixel Ranger grid."
+      ]
+    },
+    "deadline-beast-giant.png": {
+      "width": 1302,
+      "height": 1254,
+      "has_alpha": true,
+      "transparent_pixel_fraction": 0.648418,
+      "partial_alpha_pixel_fraction": 0.0,
+      "content_margin_fraction": {
+        "left": 0.1144,
+        "top": 0.1411,
+        "right": 0.0653,
+        "bottom": 0.0917
+      },
+      "generation_retries": 1,
+      "visible_defects_or_design_drift": [
+        "Fine generated detail has not been aligned to the approved 160-pixel Ranger grid."
+      ]
+    },
+    "minion-shield.png": {
+      "width": 1331,
+      "height": 1182,
+      "has_alpha": true,
+      "transparent_pixel_fraction": 0.734873,
+      "partial_alpha_pixel_fraction": 0.0,
+      "content_margin_fraction": {
+        "left": 0.1736,
+        "top": 0.154,
+        "right": 0.2111,
+        "bottom": 0.132
+      },
+      "generation_retries": 1,
+      "visible_defects_or_design_drift": [
+        "Simpler and coarser than the detailed Ranger and boss sprites."
+      ]
+    },
+    "agent-megabot.png": {
+      "width": 1354,
+      "height": 1354,
+      "has_alpha": true,
+      "transparent_pixel_fraction": 0.673452,
+      "partial_alpha_pixel_fraction": 0.0,
+      "content_margin_fraction": {
+        "left": 0.1603,
+        "top": 0.1145,
+        "right": 0.1115,
+        "bottom": 0.0827
+      },
+      "generation_retries": 1,
+      "visible_defects_or_design_drift": [
+        "Fine interior contour detail remains; exact logical-grid alignment to Ranger sprites is unverified."
+      ]
+    },
+    "agent-megabot-strike.png": {
+      "width": 1354,
+      "height": 1354,
+      "has_alpha": true,
+      "transparent_pixel_fraction": 0.719023,
+      "partial_alpha_pixel_fraction": 0.0,
+      "content_margin_fraction": {
+        "left": 0.1396,
+        "top": 0.1824,
+        "right": 0.0628,
+        "bottom": 0.1256
+      },
+      "generation_retries": 2,
+      "visible_defects_or_design_drift": [
+        "Distinct trailing motion pixels on the saber are subtle.",
+        "Fine interior contour detail remains; exact logical-grid alignment to Ranger sprites is unverified."
+      ]
+    },
+    "vehicle-jet.png": {
+      "width": 1354,
+      "height": 1354,
+      "has_alpha": true,
+      "transparent_pixel_fraction": 0.828217,
+      "partial_alpha_pixel_fraction": 0.0,
+      "content_margin_fraction": {
+        "left": 0.0857,
+        "top": 0.2703,
+        "right": 0.0746,
+        "bottom": 0.2688
+      },
+      "generation_retries": 0,
+      "visible_defects_or_design_drift": [
+        "Fine generated detail has not been aligned to the approved 160-pixel Ranger grid."
+      ]
+    },
+    "vehicle-truck.png": {
+      "width": 1354,
+      "height": 1354,
+      "has_alpha": true,
+      "transparent_pixel_fraction": 0.700172,
+      "partial_alpha_pixel_fraction": 0.0,
+      "content_margin_fraction": {
+        "left": 0.0753,
+        "top": 0.2866,
+        "right": 0.0753,
+        "bottom": 0.2866
+      },
+      "generation_retries": 0,
+      "visible_defects_or_design_drift": [
+        "Fine generated detail has not been aligned to the approved 160-pixel Ranger grid."
+      ]
+    },
+    "vehicle-drone.png": {
+      "width": 1636,
+      "height": 1124,
+      "has_alpha": true,
+      "transparent_pixel_fraction": 0.753237,
+      "partial_alpha_pixel_fraction": 0.0,
+      "content_margin_fraction": {
+        "left": 0.096,
+        "top": 0.1486,
+        "right": 0.0801,
+        "bottom": 0.1539
+      },
+      "generation_retries": 2,
+      "visible_defects_or_design_drift": [
+        "Background haze was removed with a color-aware alpha mask; a few dark rotor-ring underside pixels were lost.",
+        "Fine generated detail has not been aligned to the approved 160-pixel Ranger grid."
+      ]
+    },
+    "fx-sheet.png": {
+      "width": 1636,
+      "height": 1124,
+      "has_alpha": true,
+      "transparent_pixel_fraction": 0.825959,
+      "partial_alpha_pixel_fraction": 0.0,
+      "content_margin_fraction": {
+        "left": 0.0678,
+        "top": 0.1068,
+        "right": 0.0636,
+        "bottom": 0.1094
+      },
+      "generation_retries": 2,
+      "visible_defects_or_design_drift": [
+        "Background gradients were removed with a color-aware alpha mask; the orb contour is slightly flattened on its right edge."
+      ]
+    }
+  }
+}

@@ -130,6 +130,7 @@ test('background startup recovers after a transient getMe failure without restar
   pair(store);
   store.queueTelegramTest();
   let getMeCalls = 0;
+  let getUpdatesCalls = 0;
   let sendCalls = 0;
   const fetcher: typeof fetch = async (input, init) => {
     const url = String(input);
@@ -138,9 +139,13 @@ test('background startup recovers after a transient getMe failure without restar
       if (getMeCalls === 1) throw new Error('temporary offline');
       return new Response(JSON.stringify({ ok: true, result: { id: 1234, username: 'test_bot' } }));
     }
-    if (url.endsWith('/getUpdates')) return new Promise((_resolve, reject) => {
-      init?.signal?.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
-    });
+    if (url.endsWith('/getUpdates')) {
+      getUpdatesCalls += 1;
+      if (getUpdatesCalls === 1) return new Response(JSON.stringify({ ok: true, result: [] }));
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+      });
+    }
     if (url.endsWith('/sendMessage')) {
       sendCalls += 1;
       return new Response(JSON.stringify({ ok: true, result: { message_id: 1 } }));
@@ -158,6 +163,76 @@ test('background startup recovers after a transient getMe failure without restar
     assert.equal(service.status().error, undefined);
     assert.equal(sendCalls, 1);
     assert.equal(store.telegramDueMessages().length, 0);
+  } finally { await service.stop(); store.close(); }
+});
+
+test('polling failure disables readiness and recovery restores it', async () => {
+  const store = new Store(':memory:');
+  let polls = 0;
+  const pollTimeouts: number[] = [];
+  let failPoll: (() => void) | undefined;
+  let recoverPoll: (() => void) | undefined;
+  const fetcher: typeof fetch = async (input, init) => {
+    const url = String(input);
+    if (url.endsWith('/getMe')) return new Response(JSON.stringify({ ok: true, result: { id: 1234, username: 'test_bot' } }));
+    if (!url.endsWith('/getUpdates')) throw new Error('unexpected request');
+    pollTimeouts.push((JSON.parse(String(init?.body)) as { timeout: number }).timeout);
+    polls += 1;
+    if (polls === 1) return new Response(JSON.stringify({ ok: true, result: [] }));
+    if (polls === 2) return new Promise((_resolve, reject) => {
+      failPoll = () => reject(new Error('offline'));
+      init?.signal?.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+    });
+    if (polls === 3) return new Promise((resolve, reject) => {
+      recoverPoll = () => resolve(new Response(JSON.stringify({ ok: true, result: [] })));
+      init?.signal?.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+    });
+    return new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+    });
+  };
+  const service = new TelegramService(store, 'token', { fetcher, retryDelayMs: 5 });
+  const until = async (condition: () => boolean): Promise<void> => {
+    for (let count = 0; count < 100 && !condition(); count += 1) await new Promise(resolve => setTimeout(resolve, 5));
+    assert.ok(condition(), 'timed out waiting for Telegram state');
+  };
+  try {
+    service.start();
+    await until(() => service.status().ready && polls >= 2);
+    assert.deepEqual(pollTimeouts, [0, 25]);
+    failPoll!();
+    await until(() => !service.status().ready);
+    assert.match(service.status().error ?? '', /polling/);
+    await until(() => polls >= 3);
+    assert.deepEqual(pollTimeouts, [0, 25, 0]);
+    recoverPoll!();
+    await until(() => service.status().ready && polls >= 4);
+    assert.deepEqual(pollTimeouts, [0, 25, 0, 25]);
+    assert.equal(service.status().error, undefined);
+  } finally { await service.stop(); store.close(); }
+});
+
+test('polling authentication failure leaves bot unavailable', async () => {
+  const store = new Store(':memory:');
+  let polls = 0;
+  const fetcher: typeof fetch = async (input, init) => {
+    const url = String(input);
+    if (url.endsWith('/getMe')) return new Response(JSON.stringify({ ok: true, result: { id: 1234, username: 'test_bot' } }));
+    if (!url.endsWith('/getUpdates')) throw new Error('unexpected request');
+    polls += 1;
+    if (polls === 1) return new Response(JSON.stringify({ ok: true, result: [] }));
+    if (polls === 2) return new Response(JSON.stringify({ ok: false }), { status: 401 });
+    return new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+    });
+  };
+  const service = new TelegramService(store, 'token', { fetcher, retryDelayMs: 5 });
+  try {
+    service.start();
+    for (let count = 0; count < 100 && polls < 3; count += 1) await new Promise(resolve => setTimeout(resolve, 5));
+    assert.equal(polls, 3);
+    assert.equal(service.status().ready, false);
+    assert.match(service.status().error ?? '', /authentication/);
   } finally { await service.stop(); store.close(); }
 });
 

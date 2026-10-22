@@ -1,20 +1,60 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowClockwise, ArrowUpRight, CaretRight, Check, FolderSimple, List, PlugsConnected, Plus, SidebarSimple, X } from '@phosphor-icons/react';
-import type { Bootstrap, CreateRunInput, ModelCatalog, Run, RunDetail, RunEvent } from '../shared/types';
+import type { Bootstrap, CreateRunInput, EventHistoryPage, ModelCatalog, Run, RunDetail, RunEvent, RunSummary, RunSummaryPage } from '../shared/types';
 import { Composer } from './Composer';
+import { CityBackdrop } from './CityBackdrop';
+import { HistoryView } from './HistoryView';
+import type { WorkspaceLocation } from './navigation';
 import { RunWorkspace } from './RunWorkspace';
 import { api, createSessionRequest } from './session';
 import { TelegramSettings } from './TelegramSettings';
+import { useWorkspaceLocation } from './useWorkspaceLocation';
 import { dateLabel, ErrorNote, statusLabels } from './ui';
+
+function summary(run: Run): RunSummary {
+  return { id: run.id, title: run.title, status: run.status, mode: run.mode,
+    createdAt: run.createdAt, updatedAt: run.updatedAt, version: run.version };
+}
+
+function mergeSummaries(recent: RunSummary[], older: RunSummary[]): RunSummary[] {
+  const byId = new Map(older.map(run => [run.id, run]));
+  for (const run of recent) {
+    const existing = byId.get(run.id);
+    if (!existing || run.version >= existing.version) byId.set(run.id, run);
+  }
+  return [...byId.values()].sort((left, right) => right.createdAt.localeCompare(left.createdAt) || right.id.localeCompare(left.id));
+}
+
+export function mergeBootstrap(incoming: Bootstrap, current: Bootstrap | null): Bootstrap {
+  if (!current) return incoming;
+  const runs = mergeSummaries(incoming.runs, current.runs);
+  const addedRunsNeedPaging = incoming.totalRuns > current.totalRuns && runs.length < incoming.totalRuns;
+  return { ...incoming, runs, nextCursor: addedRunsNeedPaging ? incoming.nextCursor : current.nextCursor };
+}
+
+export function mergeDetail(current: RunDetail | null, incoming: RunDetail): RunDetail {
+  if (!current || current.run.id !== incoming.run.id) return incoming;
+  if (current.run.version > incoming.run.version) return current;
+  const byId = new Map(current.events.map(event => [event.id, event]));
+  for (const event of incoming.events) byId.set(event.id, event);
+  const hasOlderEvents = current.eventsBefore !== undefined
+    || (current.events.length > 0 && incoming.events.length > 0 && current.events[0].id < incoming.events[0].id);
+  return { ...incoming, events: [...byId.values()].sort((left, right) => left.id - right.id),
+    eventsBefore: hasOlderEvents ? current.eventsBefore : incoming.eventsBefore };
+}
 
 export function App() {
   const [bootstrap, setBootstrap] = useState<Bootstrap | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { location, navigate } = useWorkspaceLocation();
+  const selectedId = location.view === 'run' ? location.runId : null;
   const [detail, setDetail] = useState<RunDetail | null>(null);
   const [error, setError] = useState('');
   const [detailError, setDetailError] = useState('');
   const [settings, setSettings] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [navigationVersion, setNavigationVersion] = useState(0);
+  const pendingHeadingFocus = useRef(false);
   const historyDialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (sidebarOpen) historyDialog.current?.showModal();
@@ -26,7 +66,10 @@ export function App() {
   const selectedRef = useRef(selectedId);
   selectedRef.current = selectedId;
   const fetchBootstrap = useCallback(() => api<Bootstrap>('/api/bootstrap'), []);
-  const applyBootstrap = useCallback((data: Bootstrap) => { setBootstrap(data); setError(''); }, []);
+  const applyBootstrap = useCallback((data: Bootstrap) => {
+    setBootstrap(current => mergeBootstrap(data, current));
+    setError('');
+  }, []);
   const loadBootstrap = useCallback(async (): Promise<Bootstrap> => {
     const data = await fetchBootstrap();
     applyBootstrap(data);
@@ -45,13 +88,13 @@ export function App() {
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
     let stableTimer: ReturnType<typeof setTimeout> | undefined;
     let disposed = false;
-    const stream = new EventSource('/api/events');
+    const stream = new EventSource(`/api/events?after=${bootstrap.eventCursor}`);
     stream.onopen = () => {
       if (disposed) return;
       setStreamStatus('connected');
       stableTimer = setTimeout(() => { if (!disposed) streamRecoveryCount.current = 0; }, 30_000);
     };
-    stream.onerror = () => {
+    const recover = () => {
       if (disposed) return;
       setStreamStatus('disconnected');
       stream.close();
@@ -65,8 +108,14 @@ export function App() {
       const reconnect = async () => {
         try {
           const data = await fetchBootstrap();
+          const id = selectedRef.current;
+          const incoming = id ? await request<RunDetail>(`/api/runs/${encodeURIComponent(id)}`) : null;
           if (!disposed) {
             applyBootstrap(data);
+            if (incoming && selectedRef.current === id) {
+              setDetail(current => mergeDetail(current, incoming));
+              setDetailError('');
+            }
             reconnectTimer = setTimeout(() => {
               if (!disposed) setStreamVersion(value => value + 1);
             }, Math.min(1000 * 2 ** (attempt - 1), 8000));
@@ -79,6 +128,8 @@ export function App() {
       };
       void reconnect();
     };
+    stream.onerror = recover;
+    stream.addEventListener('resync', recover);
     const receive = (event: MessageEvent<string>) => {
       try { JSON.parse(event.data) as RunEvent; } catch { return; }
       if (timer) clearTimeout(timer);
@@ -89,42 +140,108 @@ export function App() {
         if (results[0].status === 'rejected') setError('Не удалось обновить список задач. Проверьте подключение к локальному серверу.');
         if (results[1].status === 'fulfilled' && results[1].value && selectedRef.current === id) {
           const incoming = results[1].value;
-          setDetail(current => current?.run.id === incoming.run.id && current.run.version > incoming.run.version ? current : incoming);
+          setDetail(current => mergeDetail(current, incoming));
           setDetailError('');
         }
       }, 180);
     };
     stream.addEventListener('run', receive);
-    return () => { disposed = true; if (timer) clearTimeout(timer); if (reconnectTimer) clearTimeout(reconnectTimer); if (stableTimer) clearTimeout(stableTimer); stream.removeEventListener('run', receive); stream.close(); };
+    return () => { disposed = true; if (timer) clearTimeout(timer); if (reconnectTimer) clearTimeout(reconnectTimer); if (stableTimer) clearTimeout(stableTimer); stream.removeEventListener('run', receive); stream.removeEventListener('resync', recover); stream.close(); };
   }, [!!bootstrap, applyBootstrap, fetchBootstrap, loadBootstrap, request, streamVersion]);
   useEffect(() => {
     setDetail(null); setDetailError('');
     if (!selectedId) return;
     const controller = new AbortController();
     request<RunDetail>(`/api/runs/${encodeURIComponent(selectedId)}`, { signal: controller.signal }).then(incoming => {
-      if (!controller.signal.aborted) setDetail(current => current?.run.id === incoming.run.id && current.run.version > incoming.run.version ? current : incoming);
+      if (!controller.signal.aborted) setDetail(current => mergeDetail(current, incoming));
     }).catch(cause => { if (!controller.signal.aborted) setDetailError(cause instanceof Error ? cause.message : 'Не удалось загрузить задачу.'); });
     return () => controller.abort();
   }, [selectedId, request]);
-  function select(id: string | null) { setSelectedId(id); setSidebarOpen(false); }
+  useEffect(() => {
+    pendingHeadingFocus.current = true;
+    setNavigationVersion(version => version + 1);
+  }, [location.view, selectedId]);
+  useEffect(() => {
+    if (!pendingHeadingFocus.current || sidebarOpen || !bootstrap) return;
+    if (selectedId && detail?.run.id !== selectedId) return;
+    const heading = document.getElementById('workspace-heading');
+    if (heading) { heading.focus(); pendingHeadingFocus.current = false; }
+  }, [navigationVersion, sidebarOpen, selectedId, detail?.run.id, bootstrap]);
+  function goTo(next: WorkspaceLocation) {
+    pendingHeadingFocus.current = true;
+    setNavigationVersion(version => version + 1);
+    navigate(next);
+    setSidebarOpen(false);
+  }
+  function select(id: string | null) {
+    goTo(id ? { view: 'run', runId: id } : { view: 'new' });
+  }
+  async function loadOlderRuns() {
+    if (!bootstrap?.nextCursor || loadingHistory) return;
+    setLoadingHistory(true);
+    try {
+      const page = await request<RunSummaryPage>(`/api/runs?before=${encodeURIComponent(bootstrap.nextCursor)}`);
+      setBootstrap(current => current ? { ...current, runs: mergeSummaries(current.runs, page.runs), nextCursor: page.nextCursor,
+        totalRuns: page.totalRuns } : current);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Не удалось загрузить историю запусков.'); }
+    finally { setLoadingHistory(false); }
+  }
+  async function loadOlderEvents() {
+    if (!detail?.eventsBefore) return;
+    const runId = detail.run.id;
+    const before = detail.eventsBefore;
+    const page = await request<EventHistoryPage>(`/api/runs/${encodeURIComponent(runId)}/events/history?before=${before}`);
+    setDetail(current => current?.run.id === runId && current.eventsBefore === before
+      ? { ...current, events: [...page.events, ...current.events], eventsBefore: page.before } : current);
+  }
   async function mutate(path: string, payload: unknown): Promise<Run> {
     if (!bootstrap) throw new Error('Дождитесь подключения к серверу.');
     const result = await request<{ run: Run }>(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': bootstrap.csrfToken }, body: JSON.stringify(payload) });
-    if (selectedRef.current === result.run.id) setDetail(current => ({ run: result.run, events: current?.events || [] }));
-    setBootstrap(current => current ? { ...current, runs: [result.run, ...current.runs.filter(run => run.id !== result.run.id)] } : current);
+    if (selectedRef.current === result.run.id) setDetail(current => current?.run.id === result.run.id
+      ? { ...current, run: result.run } : { run: result.run, events: [] });
+    setBootstrap(current => current ? { ...current,
+      runs: mergeSummaries([summary(result.run)], current.runs),
+      totalRuns: current.runs.some(run => run.id === result.run.id) ? current.totalRuns : current.totalRuns + 1 } : current);
     return result.run;
   }
   async function create(input: CreateRunInput) { const run = await mutate('/api/runs', input); select(run.id); }
   const connectionsReady = bootstrap?.connections.filter(connection => connection.available).length || 0;
+  const workspace = !bootstrap
+    ? <div className="bootstrap-state">{error
+        ? <><ErrorNote>{error}</ErrorNote><button className="secondary-button mt-4" onClick={() => void refresh()}><ArrowClockwise size={16} />Повторить подключение</button></>
+        : <><div className="skeleton skeleton-title" /><div className="skeleton skeleton-copy" /><div className="skeleton skeleton-composer" /><p className="text-sm text-muted mt-5">Подключаем рабочее пространство…</p></>}</div>
+    : location.view === 'history'
+      ? <HistoryView runs={bootstrap.runs} totalRuns={bootstrap.totalRuns} hasMore={!!bootstrap.nextCursor}
+          loading={loadingHistory} loadMore={() => void loadOlderRuns()} select={id => select(id)} />
+      : location.view === 'missing'
+        ? <main className="main-content history-content"><h1 id="workspace-heading" tabIndex={-1}>Страница не найдена</h1>
+            <button className="secondary-button" onClick={() => goTo({ view: 'history' })}>Открыть историю</button></main>
+        : selectedId
+          ? detail?.run.id === selectedId
+            ? <RunWorkspace key={detail.run.id} detail={detail} mutate={mutate} loadOlderEvents={loadOlderEvents}
+                tabOverride={location.view === 'run' ? location.tab : undefined}
+                onTabChange={tab => navigate({ view: 'run', runId: selectedId, tab })} />
+            : <div className="bootstrap-state">{detailError
+                ? <><ErrorNote>{detailError}</ErrorNote><button className="secondary-button mt-4" onClick={() => {
+                    const id = selectedId;
+                    setDetailError('');
+                    request<RunDetail>(`/api/runs/${encodeURIComponent(id)}`).then(incoming => {
+                      if (selectedRef.current === id) setDetail(current => mergeDetail(current, incoming));
+                    }).catch(cause => { if (selectedRef.current === id) setDetailError(cause instanceof Error ? cause.message : 'Не удалось загрузить задачу.'); });
+                  }}><ArrowClockwise size={15} />Повторить</button>
+                  <button className="secondary-button mt-4" onClick={() => goTo({ view: 'history' })}>Открыть историю</button></>
+                : <><div className="skeleton skeleton-title" /><div className="skeleton skeleton-composer" /><p className="text-sm text-muted mt-4">Загружаем задачу…</p></>}</div>
+          : <Composer connections={bootstrap.connections} onCreate={create} openSettings={() => setSettings(true)} loadModels={loadModels} />;
   return <div className="app-shell" onKeyDown={event => { if (event.key === 'Escape') setSidebarOpen(false); }}>
+    <a className="skip-link" href="#workspace-heading" onClick={event => { const heading = document.getElementById('workspace-heading'); if (heading) { event.preventDefault(); heading.focus(); } }}>Перейти к рабочей области</a>
     <dialog ref={historyDialog} id="run-navigation" className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`} aria-label="История запусков" onCancel={() => setSidebarOpen(false)} onClick={event => { if (event.target === event.currentTarget) { const bounds = event.currentTarget.getBoundingClientRect(); if (event.clientX > bounds.right || event.clientX < bounds.left) setSidebarOpen(false); } }}>
       <button className="icon-button history-close" aria-label="Закрыть историю" onClick={() => setSidebarOpen(false)}><X size={18} /></button>
       <button className="brand" onClick={() => select(null)} aria-label="Power Agents — новая задача"><span className="brand-bolt" aria-hidden="true" /><span>POWER AGENTS</span></button>
       <button className="new-task-button" onClick={() => select(null)}><Plus size={17} />Новая задача<ArrowUpRight size={15} className="ml-auto opacity-50" /></button>
       <div className="sidebar-section-title"><span>РАБОЧЕЕ ПРОСТРАНСТВО</span><SidebarSimple size={15} /></div>
-      <button className={`sidebar-nav ${!selectedId ? 'is-active' : ''}`} onClick={() => select(null)}><FolderSimple size={18} /><span>Все задачи</span><span className="sidebar-count">{bootstrap?.runs.length || 0}</span></button>
+      <button className={`sidebar-nav ${location.view === 'history' ? 'is-active' : ''}`} onClick={() => goTo({ view: 'history' })}><FolderSimple size={18} /><span>Все задачи</span><span className="sidebar-count">{bootstrap?.totalRuns || 0}</span></button>
       <div className="sidebar-section-title mt-7"><span>ИСТОРИЯ ЗАПУСКОВ</span></div>
-      <nav className="run-history" aria-label="История запусков">{bootstrap?.runs.length ? bootstrap.runs.map(run => <button key={run.id} className={`history-item ${selectedId === run.id ? 'is-selected' : ''}`} onClick={() => select(run.id)}><span className={`history-dot history-${run.status}`} /><span className="min-w-0 flex-1"><span className="history-title">{run.title}</span><span className="history-meta">{run.mode === 'demo' ? 'Демо · ' : ''}{statusLabels[run.status]}<span>{dateLabel(run.createdAt)}</span></span></span></button>) : <div className="history-empty"><p>Пока чистый лист</p><span>Ваши задачи и результаты<br />будут сохраняться здесь.</span></div>}</nav>
+      <nav className="run-history" aria-label="История запусков">{bootstrap?.runs.length ? <>{bootstrap.runs.map(run => <button key={run.id} className={`history-item ${selectedId === run.id ? 'is-selected' : ''}`} aria-current={selectedId === run.id ? 'page' : undefined} onClick={() => select(run.id)}><span className={`history-dot history-${run.status}`} /><span className="min-w-0 flex-1"><span className="history-title">{run.title}</span><span className="history-meta">{run.mode === 'demo' ? 'Демо · ' : ''}{statusLabels[run.status]}<span>{dateLabel(run.createdAt)}</span></span></span></button>)}{bootstrap.nextCursor && <button className="history-item" disabled={loadingHistory} onClick={() => void loadOlderRuns()}>{loadingHistory ? 'Загружаем…' : 'Показать более ранние запуски'}</button>}</> : <div className="history-empty"><p>Пока чистый лист</p><span>Ваши задачи и результаты<br />будут сохраняться здесь.</span></div>}</nav>
       <div className="sidebar-bottom"><button className="connection-button" onClick={() => { setSidebarOpen(false); setSettings(true); }}><PlugsConnected size={19} /><span>Подключения<small>{bootstrap ? `${connectionsReady} из ${bootstrap.connections.length} доступны` : 'Проверяем окружение'}</small></span><CaretRight size={13} /></button><div className="local-status"><span className={`connection-dot ${streamStatus === 'connected' ? 'is-connected' : ''}`} /><span>{streamStatus === 'connected' ? 'Локальное пространство' : streamStatus === 'disconnected' ? 'Переподключение…' : 'Подключаемся…'}</span><span className="ml-auto">v0.1</span></div></div>
     </dialog>
     <div className="app-main"><header className="topbar">
@@ -136,7 +253,9 @@ export function App() {
       </nav>
       <button className="primary-button header-new-task" onClick={() => select(null)}><Plus size={17} /><span>Новая задача</span></button>
     </header>
-      {!bootstrap ? <div className="bootstrap-state">{error ? <><ErrorNote>{error}</ErrorNote><button className="secondary-button mt-4" onClick={() => void refresh()}><ArrowClockwise size={16} />Повторить подключение</button></> : <><div className="skeleton skeleton-title" /><div className="skeleton skeleton-copy" /><div className="skeleton skeleton-composer" /><p className="text-sm text-muted mt-5">Подключаем рабочее пространство…</p></>}</div> : <>{error && <div className="px-8 pt-4"><ErrorNote>{error}</ErrorNote></div>}{selectedId ? detail ? <RunWorkspace key={detail.run.id} detail={detail} mutate={mutate} /> : <div className="bootstrap-state">{detailError ? <><ErrorNote>{detailError}</ErrorNote><button className="secondary-button mt-4" onClick={() => { setDetailError(''); request<RunDetail>(`/api/runs/${encodeURIComponent(selectedId)}`).then(setDetail).catch(cause => setDetailError(String(cause))); }}><ArrowClockwise size={15} />Повторить</button></> : <><div className="skeleton skeleton-title" /><div className="skeleton skeleton-composer" /><p className="text-sm text-muted mt-4">Загружаем задачу…</p></>}</div> : <Composer connections={bootstrap.connections} onCreate={create} openSettings={() => setSettings(true)} loadModels={loadModels} />}</>}
+      <CityBackdrop initiallyCollapsed />
+      {bootstrap && error && <div className="px-8 pt-4"><ErrorNote>{error}</ErrorNote></div>}
+      {workspace}
     </div>
     <Settings open={settings} bootstrap={bootstrap} close={() => setSettings(false)} refresh={refresh} request={request} />
   </div>;

@@ -16,6 +16,8 @@ tags: [module, telegram, notifications]
 
 Only two run transitions create automatic alerts: entry into `awaiting_approval` and entry into `completed`. The message contains a run ID and, for a proposed plan, its version; it does not contain the goal or artifacts. A test message can be queued from Settings. Delivery runs outside [[Orchestration Engine]] so Telegram failures do not pause the run. See [[Telegram Notification Flow]].
 
+Readiness requires successful polling. Startup and recovery use an immediate poll, followed by normal long polling when healthy. A polling outage disables pairing and test actions until the service recovers; the open Settings panel refreshes status automatically.
+
 The first release supports one private chat and notification delivery only. Plans are approved in [[Client Interface]]. It does not expose the loopback-only app on a phone, accept Telegram approval buttons, or use a public webhook.
 
 Evidence: [Telegram service](../../src/server/telegram.ts), [store](../../src/server/store.ts), [HTTP API](../../src/server/http.ts), and [tests](../../tests/telegram.test.ts).

@@ -50,6 +50,8 @@ cp .env.example .env
 
 Create a bot with BotFather, set `TELEGRAM_BOT_TOKEN` in `.env`, and restart the server. In the app's connection settings, generate a one-use pairing link and send the bot **Start** from a private chat. The bot can notify that a plan is ready for approval or that a run has completed review. Messages omit task text and artifacts. Pending alerts are saved in SQLite and retried when the app runs again; Telegram cannot approve a plan or open this loopback-only app on your phone.
 
+If Telegram polling fails, pairing and test alerts become unavailable until polling recovers. Open connection settings refresh their status automatically.
+
 ## Use the workspace
 
 1. Describe the goal, expected result, and constraints.
@@ -59,6 +61,8 @@ Create a bot with BotFather, set `TELEGRAM_BOT_TOKEN` in `.env`, and restart the
 5. Download the accepted result as Markdown.
 
 The city scene reflects current run state: team members are represented by provider sprites and outstanding tasks by numbered villains. The scene is a visualization of the workflow, not an agent-controlled game.
+
+The workspace keeps editor drafts in the current browser tab across navigation and reloads, supports direct run/tab links, and renders result documents as safe Markdown. The history view filters loaded pages and lets you fetch older ones. The decorative city opens on demand; completed runs prioritize the accepted document.
 
 ## Production mode and macOS autostart
 
@@ -78,9 +82,20 @@ npm run service:install
 
 Use `npm run service:status` to inspect the service, `npm run service:stop` and `npm run service:start` around manual development, `npm run service:restart` after changes, or `npm run service:uninstall` to remove autostart. Rebuild before restarting after client changes; restart after `.env` changes. Logs are in `.power-agents/logs/`. The LaunchAgent runs only while you are logged in and the Mac is awake. See the [prototype guide](docs/prototype.md) for the full service procedure.
 
+### Back up local state
+
+Stop the server first (`npm run service:stop` when using the LaunchAgent), then create a backup in a new directory outside `.power-agents/`:
+
+```sh
+npm run data:backup -- --to /absolute/path/power-agents-backup
+```
+
+To restore, stop the server and move any existing `.power-agents/` directory aside before running `npm run data:restore -- --from /absolute/path/power-agents-backup`. Restore verifies the backup and refuses to overwrite existing state. Start the server afterward. Backups contain run text and workspace files; store them privately. The backup excludes `.env` and logs. See the [prototype guide](docs/prototype.md) for the full procedure.
+
 ## Data and current limits
 
 - Runs, events, and Telegram delivery state live in `.power-agents/state.sqlite`; per-run workspaces live in `.power-agents/workspaces/`. These paths are ignored by Git. Task text and model responses are stored locally without encryption.
+- The app loads recent run summaries and event logs in pages; older history remains available from the workspace.
 - One team runs at a time, with up to three concurrent provider calls. After a restart, interrupted runs pause for manual continuation; an unfinished provider call may be repeated.
 - Provider API calls or CLI subscriptions may incur costs. Demo mode does not call models.
 - The prototype produces text and Markdown. General MCP tools, attachments, editing external repositories, and a monetary budget are not implemented.
@@ -90,11 +105,14 @@ Use `npm run service:status` to inspect the service, `npm run service:stop` and 
 
 ```sh
 npm test
+npm run test:e2e
 npm run test:coverage
 npm run typecheck
 npm run build
 ```
 
 Tests use mocked providers and do not spend model quota. HTTP tests need permission to bind a local loopback port.
+
+GitHub Actions runs type checking, tests with an enforced 80% overall line-coverage minimum, synthetic Chromium browser checks, the production build, and `npm audit --audit-level=high` for pull requests and pushes to `main`.
 
 Start with the [detailed prototype guide](docs/prototype.md) for behavior and operational details, then the [project wiki](wiki/index.md) for module and flow maps. The [platform design](docs/superpowers/specs/2026-10-07-agent-team-platform-design.md) describes broader intent; some of its features remain planned.

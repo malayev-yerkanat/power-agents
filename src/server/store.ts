@@ -1,7 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import type { Run, RunEvent } from '../shared/types.ts';
+import type { EventHistoryPage, Run, RunEvent, RunSummaryPage } from '../shared/types.ts';
 
 type EventInput = Pick<RunEvent, 'type' | 'message' | 'actorId'>;
 type Listener = (event: RunEvent) => void;
@@ -43,6 +43,8 @@ export class Store {
         created_at TEXT NOT NULL,
         data TEXT NOT NULL
       );
+      CREATE INDEX IF NOT EXISTS runs_created ON runs(created_at DESC, id DESC);
+      CREATE INDEX IF NOT EXISTS runs_status ON runs(json_extract(data, '$.status'));
       CREATE TABLE IF NOT EXISTS events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         run_id TEXT NOT NULL REFERENCES runs(id),
@@ -72,6 +74,43 @@ export class Store {
   listRuns(): Run[] {
     return this.db.prepare('SELECT data FROM runs ORDER BY created_at DESC, rowid DESC')
       .all().map(row => JSON.parse(row.data as string) as Run);
+  }
+
+  runSummaries(before?: string, limit = 30): RunSummaryPage {
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new Error('Invalid run page size');
+    const cursor = before ? this.db.prepare('SELECT created_at FROM runs WHERE id = ?').get(before) : undefined;
+    if (before && !cursor) throw new Error('Invalid run cursor');
+    const rows = before ? this.db.prepare(`
+      SELECT id, created_at, json_extract(data, '$.title') AS title,
+        json_extract(data, '$.status') AS status, json_extract(data, '$.mode') AS mode,
+        json_extract(data, '$.updatedAt') AS updated_at, json_extract(data, '$.version') AS version
+      FROM runs WHERE created_at < ? OR (created_at = ? AND id < ?)
+      ORDER BY created_at DESC, id DESC LIMIT ?
+    `).all(cursor!.created_at, cursor!.created_at, before, limit + 1) : this.db.prepare(`
+      SELECT id, created_at, json_extract(data, '$.title') AS title,
+        json_extract(data, '$.status') AS status, json_extract(data, '$.mode') AS mode,
+        json_extract(data, '$.updatedAt') AS updated_at, json_extract(data, '$.version') AS version
+      FROM runs ORDER BY created_at DESC, id DESC LIMIT ?
+    `).all(limit + 1);
+    const visible = rows.slice(0, limit);
+    return { totalRuns: Number(this.db.prepare('SELECT COUNT(*) AS count FROM runs').get()!.count),
+    runs: visible.map(row => ({ id: row.id as string, title: row.title as string,
+      status: row.status as Run['status'], mode: row.mode as Run['mode'],
+      createdAt: row.created_at as string, updatedAt: row.updated_at as string,
+      version: row.version as number })),
+    ...(rows.length > limit ? { nextCursor: visible.at(-1)!.id as string } : {}) };
+  }
+
+  hasRun(id: string): boolean { return !!this.db.prepare('SELECT 1 FROM runs WHERE id = ?').get(id); }
+
+  listActiveRuns(): Run[] {
+    return this.db.prepare("SELECT data FROM runs WHERE json_extract(data, '$.status') IN ('planning', 'running') ORDER BY created_at DESC, id DESC")
+      .all().map(row => JSON.parse(row.data as string) as Run);
+  }
+
+  hasActiveRun(exceptId?: string): boolean {
+    return !!this.db.prepare("SELECT 1 FROM runs WHERE json_extract(data, '$.status') IN ('planning', 'running') AND (? IS NULL OR id != ?) LIMIT 1")
+      .get(exceptId ?? null, exceptId ?? null);
   }
 
   getRun(id: string): Run | undefined {
@@ -108,14 +147,35 @@ export class Store {
     return this.db.prepare(`
       SELECT id, run_id, type, message, actor_id, created_at
       FROM events WHERE run_id = ? AND id > ? ORDER BY id ASC
-    `).all(runId, after).map(row => {
-      const value = row as unknown as EventRow;
-      return {
-        id: value.id, runId: value.run_id, type: value.type, message: value.message,
-        ...(value.actor_id === null ? {} : { actorId: value.actor_id }),
-        createdAt: value.created_at,
-      };
-    });
+    `).all(runId, after).map(row => this.eventFromRow(row as unknown as EventRow));
+  }
+
+  eventBatch(runId: string | undefined, after: number, limit = 100): RunEvent[] {
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 101) throw new Error('Invalid event page size');
+    const rows = runId ? this.db.prepare(`SELECT id, run_id, type, message, actor_id, created_at FROM events
+      WHERE run_id = ? AND id > ? ORDER BY id ASC LIMIT ?`).all(runId, after, limit)
+      : this.db.prepare(`SELECT id, run_id, type, message, actor_id, created_at FROM events
+      WHERE id > ? ORDER BY id ASC LIMIT ?`).all(after, limit);
+    return rows.map(row => this.eventFromRow(row as unknown as EventRow));
+  }
+
+  latestEventId(): number {
+    return Number(this.db.prepare('SELECT COALESCE(MAX(id), 0) AS id FROM events').get()!.id);
+  }
+
+  eventHistory(runId: string, before?: number, limit = 100): EventHistoryPage {
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new Error('Invalid event page size');
+    const rows = before === undefined ? this.db.prepare(`SELECT id, run_id, type, message, actor_id, created_at FROM events
+      WHERE run_id = ? ORDER BY id DESC LIMIT ?`).all(runId, limit + 1)
+      : this.db.prepare(`SELECT id, run_id, type, message, actor_id, created_at FROM events
+      WHERE run_id = ? AND id < ? ORDER BY id DESC LIMIT ?`).all(runId, before, limit + 1);
+    const visible = rows.slice(0, limit).reverse().map(row => this.eventFromRow(row as unknown as EventRow));
+    return { events: visible, ...(rows.length > limit ? { before: visible[0].id } : {}) };
+  }
+
+  private eventFromRow(value: EventRow): RunEvent {
+    return { id: value.id, runId: value.run_id, type: value.type, message: value.message,
+      ...(value.actor_id === null ? {} : { actorId: value.actor_id }), createdAt: value.created_at };
   }
 
   subscribe(listener: Listener): () => void {

@@ -13,7 +13,10 @@ export function buildCliCommand(input: TurnInput): { args: string[]; stdin?: str
     return { args: ['-p', '--permission-mode', 'plan', '--output-format', 'json', '--tools', '', '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}', '--disable-slash-commands', '--settings', '{"disableAllHooks":true}', ...modelArgs, ...(input.sessionId ? ['--resume', input.sessionId] : [])], stdin: input.prompt };
   }
   if (input.connection.kind === 'gemini-cli') {
-    return { args: ['--mode', 'plan', '--sandbox', '--disable-slash-commands', '--output-format', 'json', '--print-timeout', '300s', ...modelArgs, ...(input.sessionId ? ['--conversation', input.sessionId] : []), '--print', input.prompt] };
+    return {
+      args: ['--mode', 'plan', '--sandbox', '--disable-slash-commands', '--input-format', 'stream-json', '--output-format', 'stream-json', '--print-timeout', '300s', ...modelArgs, ...(input.sessionId ? ['--conversation', input.sessionId] : [])],
+      stdin: `${JSON.stringify({ event: 'user', message: { content: input.prompt } })}\n`,
+    };
   }
   throw new Error('Неизвестный CLI-провайдер.');
 }
@@ -30,12 +33,19 @@ function parseCodex(output: string): TurnResult {
 
 export function parseCliResult(kind: AdapterKind, output: string): TurnResult {
   if (kind === 'codex-cli') return parseCodex(output);
-  const result = record(parseJsonObject(output));
   if (kind === 'claude-cli') {
+    const result = record(parseJsonObject(output));
     if (result.is_error || result.subtype !== 'success') throw new Error(optionalText(result.result) ?? 'Ошибка Claude CLI. Проверьте вход в claude.');
     return { text: requiredText(result.result), sessionId: optionalText(result.session_id) };
   }
   if (kind === 'gemini-cli') {
+    const lines = output.trim().split('\n').filter(line => line.trim());
+    const events = lines.map(line => record(parseJsonObject(line)));
+    const results = events.filter(event => event.event === 'result');
+    if (results.length > 1 || (events.some(event => 'event' in event) && results.length !== 1)) {
+      throw new Error('Gemini CLI не вернул единственный результат завершения.');
+    }
+    const result = results.length === 1 ? record(results[0].result) : record(parseJsonObject(output));
     if (result.status !== 'SUCCESS') throw new Error(optionalText(result.error) ?? 'Ошибка Gemini CLI. Проверьте вход в agy.');
     return { text: requiredText(result.response), sessionId: optionalText(result.conversation_id) };
   }

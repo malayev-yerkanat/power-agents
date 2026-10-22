@@ -17,10 +17,11 @@ tags: [decision, architecture]
 | Explicit approval boundary | The user approves a plan before assigned tasks begin. |
 | Telegram alerts without remote approval | One paired private chat receives brief plan-ready and completion messages. The local app remains the approval surface. |
 | Replaceable provider adapter | Teams can choose CLI and API connections independently of the participant role. |
+| Preserve reading context | Completion announces results without forcing a tab change. Mounted drafts remain copyable; scene animation stays decorative. See [[Client Interface]]. |
 | Text-first prototype | Current implementation produces text/Markdown; code editing and general tools remain future work. |
 
 These choices are supported by the [platform design](../../docs/superpowers/specs/2026-10-07-agent-team-platform-design.md) and [current prototype](../../docs/prototype.md). Recheck code for the exact implemented scope before extending this page.
 
 ## Approved visual direction
 
-[[Pixel Art Consistency]] is the authoritative visual-style decision. The user selected v7 B Airy Pixel and C1/L1 weapons. The first implementation uses a restrained ivory/cobalt UI with actual-state city sprites; full animation sheets remain planned.
+[[Pixel Art Consistency]] is the authoritative visual-style decision. The user selected v7 B Airy Pixel and C1/L1 weapons. The first implementation uses a restrained ivory/cobalt UI with actual-state city sprites; procedural combat is implemented, while hand-drawn animation sheets remain planned.

@@ -96,7 +96,7 @@ function eventStream(req: IncomingMessage, res: ServerResponse, store: Store, ru
   if (typeof rawCursor !== 'string' || !/^\d+$/.test(rawCursor) || !Number.isSafeInteger(Number(rawCursor))) {
     throw new HttpError(400, 'Invalid event cursor');
   }
-  if (runId && !store.getRun(runId)) throw new HttpError(404, 'Run not found');
+  if (runId && !store.hasRun(runId)) throw new HttpError(404, 'Run not found');
   res.writeHead(200, {
     'Content-Type': 'text/event-stream; charset=utf-8', Connection: 'keep-alive',
     'X-Accel-Buffering': 'no',
@@ -107,11 +107,14 @@ function eventStream(req: IncomingMessage, res: ServerResponse, store: Store, ru
     if (res.destroyed || res.writableLength > 1024 * 1024) { res.destroy(); return; }
     res.write(`id: ${event.id}\nevent: run\ndata: ${JSON.stringify(event)}\n\n`);
   };
-  if (runId) store.events(runId, Number(rawCursor)).forEach(send);
-  else if (Number(rawCursor) > 0) {
-    store.listRuns().flatMap(run => store.events(run.id, Number(rawCursor)))
-      .sort((left, right) => left.id - right.id).forEach(send);
+  if (runId || Number(rawCursor) > 0) {
+    const batch = store.eventBatch(runId, Number(rawCursor), 101);
+    for (const event of batch.slice(0, 100)) send(event);
+    if (batch.length > 100 && !res.destroyed) {
+      res.write('event: resync\ndata: {"reason":"replay_limit"}\n\n');
+    }
   }
+  if (res.destroyed) return;
   const unsubscribe = store.subscribe(send);
   const heartbeat = setInterval(() => { res.write(': heartbeat\n\n'); }, 15_000);
   heartbeat.unref();
@@ -173,7 +176,8 @@ export function createApiHandler(options: Options): (req: IncomingMessage, res: 
       if (req.method === 'GET' && url.pathname === '/api/health') { json(res, 200, { ok: true }); return true; }
       if (req.method === 'GET' && url.pathname === '/api/bootstrap') {
         res.setHeader('Set-Cookie', `${cookieName}=${session}; Path=/api; HttpOnly; SameSite=Strict`);
-        json(res, 200, { connections: options.connections, runs: options.store.listRuns(), csrfToken, maxConcurrent: 3 });
+        json(res, 200, { connections: options.connections, ...options.store.runSummaries(),
+          eventCursor: options.store.latestEventId(), csrfToken, maxConcurrent: 3 });
         return true;
       }
       const cookie = req.headers.cookie?.split(';').map(value => value.trim())
@@ -181,6 +185,11 @@ export function createApiHandler(options: Options): (req: IncomingMessage, res: 
       if (!secureEqual(cookie, session)) throw new HttpError(401, 'Open the application to start a session');
       if (req.method === 'GET') {
         if (url.pathname === '/api/events') eventStream(req, res, options.store);
+        else if (url.pathname === '/api/runs') {
+          const before = url.searchParams.get('before');
+          if (before !== null && (!before || before.length > 128 || !options.store.hasRun(before))) throw new HttpError(400, 'Invalid run cursor');
+          json(res, 200, options.store.runSummaries(before ?? undefined));
+        }
         else if (url.pathname === '/api/telegram/status') json(res, 200, options.telegram?.status() ?? {
           configured: !!options.telegramError, ready: false, connected: false,
           ...(options.telegramError ? { error: options.telegramError } : {}),
@@ -194,7 +203,13 @@ export function createApiHandler(options: Options): (req: IncomingMessage, res: 
         else if (path[1] === 'runs' && path.length === 3) {
           const run = options.store.getRun(path[2]);
           if (!run) throw new HttpError(404, 'Run not found');
-          json(res, 200, { run, events: options.store.events(run.id) });
+          const history = options.store.eventHistory(run.id);
+          json(res, 200, { run, events: history.events, ...(history.before === undefined ? {} : { eventsBefore: history.before }) });
+        } else if (path[1] === 'runs' && path.length === 5 && path[3] === 'events' && path[4] === 'history') {
+          if (!options.store.hasRun(path[2])) throw new HttpError(404, 'Run not found');
+          const rawBefore = url.searchParams.get('before');
+          if (rawBefore !== null && (!/^[1-9]\d*$/.test(rawBefore) || !Number.isSafeInteger(Number(rawBefore)))) throw new HttpError(400, 'Invalid event cursor');
+          json(res, 200, options.store.eventHistory(path[2], rawBefore === null ? undefined : Number(rawBefore)));
         } else if (path[1] === 'runs' && path.length === 4 && path[3] === 'events') {
           eventStream(req, res, options.store, path[2]);
         } else if (path[1] === 'runs' && path.length === 5 && path[3] === 'artifacts') {

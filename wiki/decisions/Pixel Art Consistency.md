@@ -2,7 +2,7 @@
 type: decision
 status: approved
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-10
 tags: [decision, art-direction, pixel-art]
 ---
 
@@ -65,4 +65,43 @@ The user requested the same whole-platform pixel direction with a minimal layout
 
 ## Selected and implemented foundation
 
-The user selected **v7 B Airy Pixel** and requested implementation. The first implementation now uses ivory/cobalt surfaces, restrained pixel headings and controls, readable body copy, a single-column tabbed workspace, a modal history drawer, and the original selected C1/L1/Gemini frames. Scene state is derived from runs/tasks. The fixed logical grid scrolls on small screens. CSS idle is a one-pixel offset, not an animation sheet. Full combat/communication/review animation remains future work. See [[Client Interface]] for scope and limitations.
+The user selected **v7 B Airy Pixel** and requested implementation. The first implementation used ivory/cobalt surfaces, restrained pixel headings and controls, readable body copy, a single-column tabbed workspace, a modal history drawer, and the original selected C1/L1/Gemini frames. Scene state is derived from runs/tasks. The fixed logical grid scrolls on small screens. CSS idle initially used a one-pixel offset rather than an animation sheet; later combat choreography is recorded below. See [[Client Interface]] for current scope and limitations.
+
+## Combat choreography implementation
+
+The user requested full combat animation after approving the interface. Runtime combat choreography is now implemented using the approved static frames, integer movement and finite pixel SVG effects. This includes three provider-specific attack sequences, hit recoil, task defeat, messaging, review, synthesis and completion effects. It does not claim newly hand-drawn pose sheets or independently articulated limbs. Original C1/L1 geometry remains authoritative. Live states gate combat; animation never substitutes for actual task progress. Full-frame animation art production remains a distinct future refinement.
+
+## Design refinement — 2026-10-08
+
+The approved direction now also appears in team setup through a static squad preview using the existing 160px frames. Typography, whitespace, muted cobalt controls and quiet rules establish hierarchy; provider colors remain identity accents. The UI does not add smooth scaling, glass effects or perpetual decorative motion. Scene geometry and approved weapon designs are retained. See [[Client Interface]] for implementation details.
+
+## Ambient city extension — 2026-10-08
+
+The user requested a living city around the minimal workspace. Ambient traffic, planes and monster attack effects are now permitted outside opaque reading surfaces, with an independent pause control, OS reduced-motion support and hidden-tab pausing. This extends the preceding refinement's motion constraint. The initial ambient city used an enlarged street image and shrinking laptop monsters; the user rejected its inconsistent scale. The revised ambient skyline is a dedicated 768×224 logical scene at 2×. Monsters remain 320px frames, cars 128×56, on separate sidewalk/road baselines. Narrow screens crop the composition and never shrink actors independently. A reserved panorama above the working area replaces thin side strips. The run encounter retains its original city artwork. Vehicles/effects use crisp SVG geometry and stepped integer translation. No smooth rotation, fractional sprite scaling or new polished character art is introduced. Ambient monsters are decorative and do not represent task progress.
+
+## Detailed environment artwork — 2026-10-08
+
+The user rejected simplified city/vehicle geometry beside the detailed characters. The ambient environment now uses generated raster artwork with dark outlines, stepped material highlights, building texture and mechanical detail. See [asset guide and prompts](../../public/art/city-v2/README.md). Runtime nearest-neighbor rasterization and integer 2× display preserve a shared logical pixel grid. Do not replace these with minimal vector buildings or toy vehicle icons. The established panorama composition and monster scale remain; source generation is not proof of hand-authored pixel or animation alignment.
+
+## Vehicle minification correction — 2026-10-08
+
+The user identified severe detail loss in cars/aircraft after nearest-neighbor reduction to tiny intermediate canvases. These assets now display directly from original PNGs, using browser minification and preserved aspect ratios. Pixel style comes from the approved artwork; forcing every detailed source through a two-pixel display grid is not appropriate. Keep pixelated integer enlargement for native character sprites and the city canvas; do not apply that rule to drastic vehicle minification. Display scale, movement and source artwork remain unchanged.
+
+## Vehicles redrawn for the target grid — 2026-10-08
+
+The smooth minification workaround was rejected for looking too high-resolution. New vehicles-v3 artwork uses larger deliberate clusters before rasterization: simplified wheel hubs, broader glass planes, fewer aircraft windows and stepped material shades. Cars80×32 and planes96×32 render at2× with preserved proportions and binary-alpha edges. This supersedes direct minification as the vehicle rendering policy. Do not reuse fine-detail v2 vehicle art on the small grid or turn smooth scaling back on. The city and character sources remain unchanged.
+
+## Monster pose studies — 2026-10-08
+
+A [48-pose study pack](../../output/art-direction/v8-monster-animation-studies/README.md) now explores breathing, roaring, stomping and three attacks for each of the two ambient monsters. Four transparent 4×3 sheets and a manual/animated review viewer are saved outside runtime assets. These are studies: identity drift, cell-boundary contacts, baseline differences and unverified recovery loops remain. Existing character sprites and application animation behavior are unchanged. Production work must align a pilot idle loop before connecting new poses to the app.
+
+
+## Ambient pose integration — 2026-10-08
+
+The user approved cleanup and implementation. [Cleaned monster sheets](../../public/art/monster-motion/README.md) now run in the ambient city. Complete opaque-silhouette crop bounds replace uniform grid slicing; each monster has one fixed logical scale, a shared support-foot/ground anchor and padded attack bounds. Nearest sampling, binary alpha and integer2× display keep the scene pixel density consistent. No smooth rotation or per-pose resizing is permitted.
+
+Breathing alternates calm poses; roar, stomp and three attacks occur intermittently with distinct schedules. Dust follows the actual strike frame. Pause, collapse, reduced motion and visibility controls stop playback. Original source sprites remain fallbacks and the run Encounter retains its existing behavior. Browser inspection covered all48 aligned poses; residual generated costume/face variation and missing inbetweens remain art-production limitations, not claims of perfect hand-authored loops.
+
+## Work-first hierarchy refinement — 2026-10-10
+
+The city is now optional and initially collapsed; expanded artwork retains its approved grid, sources, and scale. Creation prioritizes the goal, completed runs prioritize the accepted document, and recovery prioritizes review context. Pixel typography remains for short identity/navigation labels; functional metadata and document prose use readable sizes. No sprite redraw or animation-geometry change is included.

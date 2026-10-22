@@ -1,0 +1,56 @@
+/* Purpose-drawn vehicle clusters and the city render on integer 2× pixel grids. */
+.city-scene {
+  position: relative;
+  z-index: 0;
+  height: 448px;
+  max-width: 1536px;
+  margin-inline: auto;
+  overflow: hidden;
+  border-bottom: 4px solid #4b6175;
+  background: #ccdfdf;
+}
+.city-backdrop { position: absolute; inset: 0; overflow: hidden; pointer-events: none; contain: strict; }
+.city-backdrop-stage { position: absolute; top: 0; left: 50%; width: 1536px; height: 448px; margin-left: -768px; image-rendering: pixelated; }
+.city-landscape { position: absolute; top: -64px; left: 0; width: 1536px; height: 512px; max-width: none; image-rendering: pixelated; }
+.city-plane { position: absolute; top: 4px; left: -192px; width: 192px; height: 64px; max-width: none; object-fit: contain; image-rendering: pixelated; animation: city-travel 82s steps(448, end) infinite; }
+.city-plane-one { animation-delay: -18s; }
+.city-plane-two { animation-duration: 104s; animation-delay: -74s; }
+.city-car { position: absolute; left: -160px; width: 160px; height: 64px; object-fit: contain; image-rendering: pixelated; max-width: none; animation: city-travel 26s steps(448, end) infinite; }
+.city-car-one { bottom: 60px; animation-delay: -6s; }
+.city-car-two { bottom: 60px; animation-duration: 32s; animation-delay: -22s; }
+.city-car-three { bottom: 4px; animation-duration: 28s; animation-direction: reverse; animation-delay: -15s; }
+.city-car-art { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.city-car-art-reverse { transform: scaleX(-1); }
+.city-monster { position: absolute; bottom: 60px; width: 320px; height: 320px; max-width: none; image-rendering: pixelated; user-select: none; }
+.city-monster-left { left: 288px; }
+.city-monster-right { right: 280px; }
+.city-motion-control { position: absolute; z-index: 1; display: flex; gap: 8px; top: 16px; right: max(16px, calc((100% - 1200px) / 2)); }
+.city-scene-collapsed { height: 52px; border-bottom: 1px solid var(--pixel-rule); background: var(--pixel-paper); }
+.city-scene-collapsed .city-motion-control { top: 4px; }
+@media (max-width: 767px) {
+  .city-backdrop-stage { margin-left: -448px; }
+}
+.city-motion-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--control-size);
+  padding: 10px 12px;
+  border: 1px solid #6e86a0;
+  background: var(--pixel-paper);
+  color: #244b79;
+  box-shadow: 2px 2px #a3b9c6;
+  font: 12px/1.4 ui-monospace, monospace;
+}
+.city-motion-toggle:focus-visible { outline: 3px solid #244b79; outline-offset: 3px; }
+.city-motion-toggle:active:not(:disabled) { transform: translate(1px, 1px); box-shadow: 1px 1px #a3b9c6; }
+.city-motion-toggle:disabled { cursor: default; opacity: 1; }
+.city-motion-icon { display: inline-block; width: 12px; text-align: center; }
+.city-backdrop-paused * { animation-play-state: paused !important; }
+@keyframes city-travel { to { transform: translateX(1792px); } }
+@media (hover: hover) and (pointer: fine) {
+  .city-motion-toggle:hover:not(:disabled) { background: #edf2f1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .city-backdrop * { animation-play-state: paused !important; }
+}

@@ -2,7 +2,7 @@
 type: index
 status: active
 created: 2026-10-07
-updated: 2026-10-08
+updated: 2026-10-20
 tags: [navigation, repository]
 ---
 
@@ -18,6 +18,7 @@ Start with [[hot|Hot Cache]] for recent changes or [[Architecture Overview]] for
 - [[Model Selection Flow]] — model lists for each connection
 - [[Telegram Notification Flow]] — private-chat pairing and durable alerts
 - [[macOS Autostart Flow]] — login startup and service controls
+- [[Backup and Restore Flow]] — offline backup and recovery of local state
 - [[Tech Stack]] — runtime and dependencies
 - [[Dependency Graph]] — module relationships
 - [[Key Decisions]] — design choices and scope
@@ -30,13 +31,21 @@ Start with [[hot|Hot Cache]] for recent changes or [[Architecture Overview]] for
 - [[Persistence Store]]
 - [[Provider Adapters]]
 - [[Local HTTP API]]
-- [[Client Interface]]
+- [[Client Interface]] — editor drafts, navigation, documents, workspace, encounter and ambient city
 - [[Shared Contracts]]
 - [[Telegram Notifications]]
 
-## Sources and navigation
+## Sources
 
 - [[sources/_index|Source Catalog]] — preserved document snapshots and canonical locations
+- [[Prototype Guide Source]] — implemented usage and limits
+- [[Platform Design Source]] — broader architecture intent, including planned capabilities
+- [[Implementation Plan Source]] — original build phases
+- [[UI Improvements Plan Source]] — work-first UI plan
+- [[Design Audits Source]] — accessibility, design and UI audit evidence
+
+## Navigation
+
 - [[modules/_index|Modules Index]], [[flows/_index|Flows Index]], [[decisions/_index|Decisions Index]], [[dependencies/_index|Dependencies Index]]
 - [[domains/_index|Domains Index]], [[entities/_index|Entities Index]], [[concepts/_index|Concepts Index]]
 - [[Wiki Conventions]] — update and source rules

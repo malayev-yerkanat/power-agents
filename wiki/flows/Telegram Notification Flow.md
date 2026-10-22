@@ -21,4 +21,6 @@ When a run enters `awaiting_approval` or `completed`, the store writes an outbox
 
 An invalid bot token, unavailable Bot API, blocked bot, or conflicting Telegram poller is surfaced as connection status. A temporary connection failure at startup is retried in the background while the local app remains available. Telegram failure does not change the run state. Delivery is at least once: after a crash between Telegram accepting a message and SQLite recording success, the user may receive a duplicate. Unpairing aborts and waits for local in-flight sends, but a message already accepted by Telegram may still arrive. The app is bound to `127.0.0.1`; Telegram alerts do not open its workspace on a phone.
 
+After initialization, polling failure marks the bot unready and Settings disables pairing and test actions. An immediate retry poll restores readiness after recovery; healthy polling uses a 25-second long poll. Open Settings refreshes this status every three seconds.
+
 Evidence: [store](../../src/server/store.ts), [service](../../src/server/telegram.ts), [settings UI](../../src/client/TelegramSettings.tsx), [tests](../../tests/telegram.test.ts).

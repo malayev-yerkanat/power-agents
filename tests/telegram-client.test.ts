@@ -40,6 +40,16 @@ test('Telegram settings show connection failure and prevent pairing until the bo
   assert.match(html, /disabled=""[^>]*>.*Подключить Telegram/);
 });
 
+test('Telegram settings prevent test messages while a paired bot is degraded', () => {
+  const html = renderToStaticMarkup(createElement(TelegramSettingsView, {
+    status: { configured: true, ready: false, connected: true, error: 'Telegram polling is unavailable.', notifications },
+    busy: false, error: '', message: '', pairUrl: '', onPair: noOp,
+    onTest: noOp, onUnpair: noOp, onToggle: noOp,
+  }));
+  assert.match(html, /disabled=""[^>]*>.*Тестовое уведомление/);
+  assert.match(html, /Не удалось подключиться к Telegram/);
+});
+
 test('Telegram pairing accepts only official HTTPS t.me bot links', () => {
   assert.equal(safeTelegramPairUrl('https://t.me/my_bot?start=abc'), 'https://t.me/my_bot?start=abc');
   assert.equal(safeTelegramPairUrl('javascript:alert(1)'), null);

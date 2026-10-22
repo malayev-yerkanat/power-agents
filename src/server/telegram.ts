@@ -41,6 +41,7 @@ export class TelegramService {
   private readonly controller = new AbortController();
   private username?: string;
   private error?: string;
+  private pollHealthy = false;
   private stopped = false;
   private deliveryTask?: Promise<void>;
   private activeSendController?: AbortController;
@@ -57,7 +58,7 @@ export class TelegramService {
 
   status(): TelegramStatus {
     return { configured: true, ready: !!this.username && this.loops.length > 0 && !this.stopped
-      && !this.error?.includes('polling conflicts'), connected: !!this.store.telegramRecipient(),
+      && this.pollHealthy, connected: !!this.store.telegramRecipient(),
       ...(this.username ? { username: this.username } : {}),
       ...(this.store.telegramPendingPairing() ? { pending: this.store.telegramPendingPairing() } : {}),
       ...(this.error ? { error: this.error } : {}), notifications: this.store.telegramPreferences() };
@@ -70,6 +71,7 @@ export class TelegramService {
       if (!parsed.success) throw new Error('Telegram bot authentication failed. Check TELEGRAM_BOT_TOKEN.');
       this.store.bindTelegramBot(String(parsed.data.result.id));
       this.username = parsed.data.result.username;
+      this.pollHealthy = false;
       this.error = undefined;
     } catch {
       this.error = 'Telegram bot could not connect. Check the token and network.';
@@ -94,9 +96,9 @@ export class TelegramService {
   }
   queueTest(): void { this.store.queueTelegramTest(); }
 
-  async pollOnce(): Promise<void> {
+  async pollOnce(timeoutSeconds: 0 | 25 = 25): Promise<void> {
     const response = await this.request('getUpdates', {
-      offset: this.store.telegramOffset(), timeout: 25, allowed_updates: ['message'], limit: 100,
+      offset: this.store.telegramOffset(), timeout: timeoutSeconds, allowed_updates: ['message'], limit: 100,
     });
     const parsed = updatesSchema.safeParse(response);
     if (!parsed.success) throw new Error('Telegram returned invalid updates');
@@ -201,14 +203,20 @@ export class TelegramService {
   private async pollLoop(): Promise<void> {
     while (!this.stopped) {
       try {
-        await this.pollOnce();
+        await this.pollOnce(this.pollHealthy ? 25 : 0);
+        this.pollHealthy = true;
         if (this.error?.startsWith('Telegram polling')) this.error = undefined;
       }
       catch (error) {
-        if (!this.stopped) this.error = error instanceof Error && error.message.includes('HTTP 409')
-          ? 'Telegram polling conflicts with an existing webhook or another poller.'
-          : 'Telegram polling is unavailable. Retrying.';
-        await delay(3000, this.controller.signal);
+        if (!this.stopped) {
+          this.pollHealthy = false;
+          this.error = error instanceof Error && /HTTP (401|403)/.test(error.message)
+            ? 'Telegram polling authentication failed. Check TELEGRAM_BOT_TOKEN.'
+            : error instanceof Error && error.message.includes('HTTP 409')
+              ? 'Telegram polling conflicts with an existing webhook or another poller.'
+              : 'Telegram polling is unavailable. Retrying.';
+        }
+        await delay(this.retryDelayMs, this.controller.signal);
       }
     }
   }

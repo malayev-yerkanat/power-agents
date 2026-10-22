@@ -17,7 +17,7 @@ export class Engine {
   private stopped = false;
   constructor(options: Options) {
     this.options = options;
-    for (const run of options.store.listRuns()) {
+    for (const run of options.store.listActiveRuns()) {
       if (run.status === 'planning' || run.status === 'running') this.change(run.id, r => ({ ...r, status: 'paused', error: 'Сервер перезапущен. Последний вызов мог завершиться у провайдера. Продолжение повторит незавершённую работу.', tasks: r.tasks.map(t => t.status === 'running' ? { ...t, status: 'pending' } : t), messages: r.messages.map(m => m.request && m.status === 'delivered' ? { ...m, status: 'queued' } : m) }), 'recovered', 'Работа приостановлена после перезапуска.');
     }
   }
@@ -27,7 +27,7 @@ export class Engine {
   }
   create(value: unknown): Run {
     const input = validateInput(value);
-    if (this.options.store.listRuns().some(r => ['planning', 'running'].includes(r.status))) throw new InputError('Сначала приостановите текущую команду.');
+    if (this.options.store.hasActiveRun()) throw new InputError('Сначала приостановите текущую команду.');
     if (input.mode === 'live') for (const member of input.members) {
       const connection = this.options.connections.find(c => c.id === member.connectionId);
       if (!connection?.available) throw new InputError(`Подключение ${member.name} недоступно.`);
@@ -74,7 +74,7 @@ export class Engine {
   }
   shutdown(): void { this.stopped = true; for (const a of this.active.values()) a.controller.abort(); }
   private ensureFree(id: string): void {
-    if (this.options.store.listRuns().some(r => r.id !== id && ['running', 'planning'].includes(r.status))) throw new InputError('Другая команда сейчас работает. Приостановите её.');
+    if (this.options.store.hasActiveRun(id)) throw new InputError('Другая команда сейчас работает. Приостановите её.');
   }
   private abort(id: string): void { for (const a of this.active.values()) if (a.runId === id) a.controller.abort(); }
   private schedule(): void {
@@ -83,8 +83,7 @@ export class Engine {
     setImmediate(() => { this.scheduled = false; if (!this.stopped) this.tick(); });
   }
   private tick(): void {
-    for (const run of this.options.store.listRuns()) {
-      if (!['planning', 'running'].includes(run.status)) continue;
+    for (const run of this.options.store.listActiveRuns()) {
       try {
         if (run.turnCount >= 100) {
           if ([...this.active.values()].some(a => a.runId === run.id)) continue;

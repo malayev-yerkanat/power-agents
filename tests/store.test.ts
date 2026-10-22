@@ -108,6 +108,59 @@ test('orders runs newest first and filters ascending event IDs exclusively per r
   } finally { store.close(); }
 });
 
+test('pages run summaries without loading large aggregates and finds only active runs', () => {
+  const store = new Store(':memory:');
+  try {
+    for (let i = 0; i < 5; i += 1) {
+      const id = `run-${i}`;
+      store.createRun({ ...run(id, `2026-10-0${i + 1}T00:00:00.000Z`),
+        title: `Run ${i}`, artifacts: [{ id: 'big', title: 'Big', body: 'x'.repeat(2000), authorId: 'leader', kind: 'work', createdAt: '2026-10-01T00:00:00.000Z' }] }, created);
+    }
+    store.updateRun('run-1', value => ({ ...value, status: 'completed' }), created);
+    const first = store.runSummaries(undefined, 2);
+    assert.deepEqual(first.runs.map(value => value.id), ['run-4', 'run-3']);
+    assert.equal(first.nextCursor, 'run-3');
+    assert.equal(first.totalRuns, 5);
+    assert.deepEqual(Object.keys(first.runs[0]).sort(), ['createdAt', 'id', 'mode', 'status', 'title', 'updatedAt', 'version']);
+    const second = store.runSummaries(first.nextCursor, 2);
+    assert.deepEqual(second.runs.map(value => value.id), ['run-2', 'run-1']);
+    assert.equal(second.nextCursor, 'run-1');
+    assert.deepEqual(store.runSummaries(second.nextCursor, 2).runs.map(value => value.id), ['run-0']);
+    assert.deepEqual(store.listActiveRuns().map(value => value.id), ['run-4', 'run-3', 'run-2', 'run-0']);
+    assert.equal(store.hasActiveRun(), true);
+    assert.equal(store.hasActiveRun('run-4'), true);
+    assert.throws(() => store.runSummaries('missing', 2), /cursor/i);
+  } finally { store.close(); }
+});
+
+test('run history cursor stays deterministic when creation timestamps tie', () => {
+  const store = new Store(':memory:');
+  try {
+    for (const id of ['a', 'c', 'b']) store.createRun(run(id), created);
+    const first = store.runSummaries(undefined, 2);
+    assert.deepEqual(first.runs.map(value => value.id), ['c', 'b']);
+    assert.deepEqual(store.runSummaries(first.nextCursor, 2).runs.map(value => value.id), ['a']);
+  } finally { store.close(); }
+});
+
+test('pages recent and older events and streams global event batches in ID order', () => {
+  const store = new Store(':memory:');
+  try {
+    store.createRun(run('a'), created);
+    store.createRun(run('b'), created);
+    for (let i = 0; i < 5; i += 1) store.updateRun('a', value => value, { type: 'changed', message: String(i) });
+    const recent = store.eventHistory('a', undefined, 2);
+    assert.deepEqual(recent.events.map(value => value.message), ['3', '4']);
+    assert.ok(recent.before);
+    const older = store.eventHistory('a', recent.before, 2);
+    assert.deepEqual(older.events.map(value => value.message), ['1', '2']);
+    assert.deepEqual(store.eventHistory('a', older.before, 2).events.map(value => value.message), ['Run created', '0']);
+    const global = store.eventBatch(undefined, 0, 3);
+    assert.deepEqual(global.map(value => value.id), [1, 2, 3]);
+    assert.deepEqual(store.eventBatch(undefined, global.at(-1)!.id, 3).map(value => value.id), [4, 5, 6]);
+  } finally { store.close(); }
+});
+
 test('notifies only after commit, isolates subscribers, and supports unsubscribe', context => {
   const store = new Store(':memory:');
   const errorLog = context.mock.method(console, 'error', () => {});

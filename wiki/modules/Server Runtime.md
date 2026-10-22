@@ -16,6 +16,8 @@ tags: [module, runtime]
 
 The data directory is `.power-agents/`; the SQLite database and per-run workspaces live there. The server handles SIGINT and SIGTERM by aborting active turns, closing connections, and closing the store.
 
+The offline [[Backup and Restore Flow]] protects local state when the server is stopped. The repository CI workflow runs type checking, the full test suite with an 80% overall line-coverage gate, a production build, and a high-severity dependency audit.
+
 On macOS, `scripts/launchd.ts` installs a per-user LaunchAgent after the client is built. It runs this entry point in production mode with the project as `WorkingDirectory`, loads the optional `.env`, supplies a PATH for local provider CLIs, and writes logs under `.power-agents/logs/`. `RunAtLoad` and `KeepAlive` start it at login and restart an exited process. See [[macOS Autostart Flow]].
 
 See [server entry](../../src/server/index.ts), [service installer](../../scripts/launchd.ts), and [prototype guide](../../docs/prototype.md).

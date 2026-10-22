@@ -90,10 +90,10 @@ export function TelegramSettings({ open, request, csrfToken }: { open: boolean; 
   }, [client]);
   useEffect(() => { if (open) void load(); }, [open, load]);
   useEffect(() => {
-    if (!open || !status || (status.ready && (!status.pending || status.connected))) return;
+    if (!open || !status?.configured) return;
     const timer = setInterval(() => { void load(); }, 3000);
     return () => clearInterval(timer);
-  }, [open, status?.ready, status?.pending?.expiresAt, status?.connected, load]);
+  }, [open, status?.configured, load]);
   const action = async (run: () => Promise<void>) => {
     setBusy(true); setError(''); setMessage('');
     try { await run(); }

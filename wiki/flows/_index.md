@@ -13,3 +13,4 @@ tags: [flows]
 - [[Model Selection Flow]] — provider catalogs and participant model choice
 - [[Telegram Notification Flow]] — pairing, outbox delivery, and recovery
 - [[macOS Autostart Flow]] — per-user startup, restart, and development controls
+- [[Backup and Restore Flow]] — SQLite and workspace backup and recovery

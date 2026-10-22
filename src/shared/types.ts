@@ -35,8 +35,11 @@ export interface Run {
   mode: 'live' | 'demo'; approvedAt?: string;
 }
 export interface RunEvent { id: number; runId: string; type: string; message: string; actorId?: string; createdAt: string }
-export interface RunDetail { run: Run; events: RunEvent[] }
-export interface Bootstrap { connections: Connection[]; runs: Run[]; csrfToken: string; maxConcurrent: number }
+export type RunSummary = Pick<Run, 'id' | 'title' | 'status' | 'mode' | 'createdAt' | 'updatedAt' | 'version'>;
+export interface RunSummaryPage { runs: RunSummary[]; nextCursor?: string; totalRuns: number }
+export interface EventHistoryPage { events: RunEvent[]; before?: number }
+export interface RunDetail { run: Run; events: RunEvent[]; eventsBefore?: number }
+export interface Bootstrap extends RunSummaryPage { connections: Connection[]; csrfToken: string; maxConcurrent: number; eventCursor: number }
 export interface CreateRunInput { goal: string; members: Member[]; leaderId: string; mode: 'live' | 'demo' }
 export type TurnPurpose = 'plan' | 'task' | 'reply' | 'synthesize' | 'review';
 export interface TurnInput {
