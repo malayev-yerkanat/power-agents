@@ -8,6 +8,11 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-22 — Failure isolation for task and reply turns
+
+- A failed task or reply turn now marks only its task `failed`; other participants keep working and their results are kept. The run pauses only when nothing else can progress, listing the failed tasks. Resume retries only them, and a task whose own question is still open returns as `waiting`. Plan, synthesis and review failures still pause at once. See [[Orchestration Engine]].
+- Verified: 135/135 Node tests (two new isolation tests), 81.20% line coverage, 35/35 Chromium tests, typecheck. No live provider run for this change.
+
 ## 2026-10-22 — Live three-provider run and its fixes
 
 - Live run with Codex CLI (leader), Claude Code and Gemini Antigravity CLI completed plan, three parallel tasks, synthesis and review for a 1,446-word Markdown guide in 12 turns and about 14 minutes. Claude Code first failed because its CLI was not signed in.

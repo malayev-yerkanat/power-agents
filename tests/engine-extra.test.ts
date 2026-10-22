@@ -83,7 +83,7 @@ test('restart recovery pauses interrupted work, requeues questions, and resumes 
   try {
     const recovered = app.engine.get(seed.id);
     assert.equal(recovered.status, 'paused');
-    assert.equal(recovered.tasks[0].status, 'pending');
+    assert.equal(recovered.tasks[0].status, 'waiting');
     assert.equal(recovered.messages[0].status, 'queued');
     assert.match(recovered.error!, /перезапущен/);
     assert.equal(calls.length, 0);
@@ -127,8 +127,9 @@ test('a failed runner pauses the run and failed task can be retried successfully
     assert.equal(paused.tasks[0].status, 'failed');
     const failure = app.store.eventBatch(run.id, 0).find(event => event.type === 'error')!;
     const failed = paused.members.find(member => member.id === failure.actorId)!;
-    assert.equal(paused.error, `${failed.name}: Scripted provider unavailable`);
-    assert.equal(failure.message, paused.error);
+    assert.equal(failure.message, `${failed.name}: Scripted provider unavailable`);
+    assert.equal(paused.tasks[0].error, failure.message);
+    assert.ok(paused.error!.includes(failure.message));
     const retry = app.engine.control(run.id, 'resume');
     assert.equal(retry.tasks[0].status, 'pending');
     assert.equal(retry.tasks[0].error, undefined);
@@ -439,5 +440,81 @@ test('participant names matching Object prototype fields do not create fake sess
     const run = app.engine.create({ ...input, leaderId: 'toString', members: [{ ...input.members[0], id: 'toString' }, input.members[1]] });
     await until(() => app.engine.get(run.id).status === 'awaiting_approval');
     assert.equal(received, undefined);
+  } finally { await app.clean(); }
+});
+
+test('a failed task does not stop or discard the work of other participants', async () => {
+  let failTask = true;
+  let releaseSlow!: () => void;
+  const slow = new Promise<void>(resolve => { releaseSlow = resolve; });
+  const tasks: TaskSpec[] = [
+    { id: 'task-fail', title: 'Fragile part', description: 'Fails once', assigneeId: 'a', dependsOn: [] },
+    { id: 'task-slow', title: 'Slow part', description: 'Finishes later', assigneeId: 'b', dependsOn: [] },
+    { id: 'task-quick', title: 'Quick part', description: 'Finishes now', assigneeId: 'c', dependsOn: [] },
+    { id: 'task-after', title: 'Needs fragile part', description: 'Waits', assigneeId: 'b', dependsOn: ['task-fail'] },
+  ];
+  const runner: TurnRunner = async value => {
+    const { run, taskId } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run, tasks);
+    if (taskId === 'task-fail' && failTask) throw new Error('Not logged in');
+    if (taskId === 'task-slow') await slow;
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create({ ...input, members: members.slice(0, 3) });
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    const task = (id: string) => app.engine.get(run.id).tasks.find(t => t.id === id)!;
+    await until(() => task('task-fail').status === 'failed' && task('task-quick').status === 'completed', 'isolated failure');
+    assert.equal(app.engine.get(run.id).status, 'running');
+    assert.equal(task('task-fail').error, 'Agent a: Not logged in');
+    assert.equal(task('task-slow').status, 'running');
+    releaseSlow();
+    await until(() => app.engine.get(run.id).status === 'paused', 'pause once nothing can progress');
+    const paused = app.engine.get(run.id);
+    assert.equal(task('task-slow').status, 'completed');
+    assert.equal(task('task-slow').output, 'Scripted report content');
+    assert.equal(task('task-after').status, 'pending');
+    assert.match(paused.error!, /Fragile part/);
+    assert.match(paused.error!, /Agent a: Not logged in/);
+    failTask = false;
+    app.engine.control(run.id, 'resume');
+    await until(() => app.engine.get(run.id).status === 'completed', 'completion after retry');
+    assert.equal(task('task-fail').turns, 2);
+    assert.equal(task('task-slow').turns, 1);
+    assert.equal(task('task-quick').turns, 1);
+  } finally { await app.clean(); }
+});
+
+test('a failed reply marks the asking task and resume retries only the reply', async () => {
+  let failReply = true;
+  const runner: TurnRunner = async value => {
+    const { run, taskId } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run);
+    if (value.purpose === 'reply') {
+      if (failReply) throw new Error('Quota exceeded');
+      return envelope({ summary: 'Use three sections' });
+    }
+    if (value.purpose === 'task' && !run.messages.some(m => m.taskId === taskId && m.request)) {
+      return envelope({ status: 'waiting', messages: [{ toId: 'b', body: 'Which sections?', request: true }] });
+    }
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => app.engine.get(run.id).status === 'paused', 'pause after failed reply');
+    const paused = app.engine.get(run.id);
+    assert.equal(paused.tasks[0].status, 'failed');
+    assert.match(paused.tasks[0].error!, /Agent b: Quota exceeded/);
+    assert.equal(paused.tasks[0].turns, 1);
+    failReply = false;
+    const resumed = app.engine.control(run.id, 'resume');
+    assert.equal(resumed.tasks[0].status, 'waiting');
+    await until(() => app.engine.get(run.id).status === 'completed', 'completion after reply retry');
+    assert.equal(app.engine.get(run.id).tasks[0].turns, 2);
   } finally { await app.clean(); }
 });

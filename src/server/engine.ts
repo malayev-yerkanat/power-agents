@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Connection, Run, TurnRunner } from '../shared/types.ts';
+import type { Connection, Run, TeamTask, TurnRunner } from '../shared/types.ts';
 import { Store } from './store.ts';
 import { runTurn } from './adapters/index.ts';
 import { redactError } from './adapters/common.ts';
@@ -9,6 +9,8 @@ import { demoRunner } from './core/demo.ts';
 import { InputError, validateInput, parseEnvelope, parsePlan } from './core/protocol.ts';
 import { promptFor } from './core/prompts.ts';
 import { applyResult, type Job } from './core/results.ts';
+/** A task returning to work waits if its own question is still open. */
+const retry = (run: Run, task: TeamTask): TeamTask => ({ ...task, status: run.messages.some(m => m.request && m.fromId === task.assigneeId && m.taskId === task.id && m.status !== 'answered') ? 'waiting' : 'pending', error: undefined });
 interface Options { store: Store; connections: Connection[]; workspaceRoot: string; runner?: TurnRunner; demoRunner?: TurnRunner }
 export class Engine {
   private readonly options: Options;
@@ -18,7 +20,7 @@ export class Engine {
   constructor(options: Options) {
     this.options = options;
     for (const run of options.store.listActiveRuns()) {
-      if (run.status === 'planning' || run.status === 'running') this.change(run.id, r => ({ ...r, status: 'paused', error: 'Сервер перезапущен. Последний вызов мог завершиться у провайдера. Продолжение повторит незавершённую работу.', tasks: r.tasks.map(t => t.status === 'running' ? { ...t, status: 'pending' } : t), messages: r.messages.map(m => m.request && m.status === 'delivered' ? { ...m, status: 'queued' } : m) }), 'recovered', 'Работа приостановлена после перезапуска.');
+      if (run.status === 'planning' || run.status === 'running') this.change(run.id, r => ({ ...r, status: 'paused', error: 'Сервер перезапущен. Последний вызов мог завершиться у провайдера. Продолжение повторит незавершённую работу.', tasks: r.tasks.map(t => t.status === 'running' ? retry(r, t) : t), messages: r.messages.map(m => m.request && m.status === 'delivered' ? { ...m, status: 'queued' } : m) }), 'recovered', 'Работа приостановлена после перезапуска.');
     }
   }
   get(id: string): Run { const run = this.options.store.getRun(id); if (!run) throw new InputError('Команда не найдена.'); return run; }
@@ -56,7 +58,7 @@ export class Engine {
       if ([...this.active.values()].some(a => a.runId === id)) throw new InputError('Ожидается остановка предыдущих вызовов. Повторите продолжение через несколько секунд.');
       this.ensureFree(id);
       if (run.turnCount >= 100) throw new InputError('Достигнут лимит 100 ходов. Создайте новую задачу с более узкой целью.');
-      const next = this.change(id, r => ({ ...r, status: r.phase === 'plan' ? 'planning' : 'running', error: undefined, tasks: r.tasks.map(t => ['failed', 'running'].includes(t.status) ? { ...t, status: 'pending', error: undefined } : t), messages: r.messages.map(m => m.request && m.status === 'delivered' ? { ...m, status: 'queued' } : m) }), 'resumed', 'Работа продолжена.');
+      const next = this.change(id, r => ({ ...r, status: r.phase === 'plan' ? 'planning' : 'running', error: undefined, tasks: r.tasks.map(t => ['failed', 'running'].includes(t.status) ? retry(r, t) : t), messages: r.messages.map(m => m.request && m.status === 'delivered' ? { ...m, status: 'queued' } : m) }), 'resumed', 'Работа продолжена.');
       this.schedule(); return next;
     }
     if (action !== 'pause' && action !== 'cancel') throw new InputError('Неизвестное действие.');
@@ -112,7 +114,12 @@ export class Engine {
       if (latest.tasks.every(t => t.status === 'completed') && !latest.messages.some(m => m.request && m.status !== 'answered')) {
         const next = this.change(run.id, r => ({ ...r, phase: 'synthesize' }), 'synthesis', 'Руководитель собирает итог команды.');
         this.launch(next, { memberId: next.leaderId, purpose: 'synthesize' });
-      } else throw new Error('Команда не может продолжить: остались заблокированные задачи.');
+      } else {
+        const failed = latest.tasks.filter(t => t.status === 'failed');
+        throw new Error(failed.length
+          ? `Не выполнены задачи: ${failed.map(t => `«${t.title}» — ${t.error}`).join('; ')}. Готовые результаты сохранены; «Продолжить» повторит только эти задачи.`
+          : 'Команда не может продолжить: остались заблокированные задачи.');
+      }
       return;
     }
     const memberId = run.phase === 'review' ? run.members.find(m => m.id !== run.leaderId)!.id : run.leaderId;
@@ -125,7 +132,7 @@ export class Engine {
     this.active.set(key, { runId: run.id, memberId: job.memberId, controller });
     const snapshot = this.change(run.id, r => ({ ...r, turnCount: r.turnCount + 1, tasks: r.tasks.map(t => t.id === job.taskId ? { ...t, status: 'running', turns: t.turns + 1 } : t), messages: r.messages.map(m => m.id === job.requestId || (!m.request && m.toId === job.memberId && m.status === 'queued') ? { ...m, status: 'delivered' } : m) }), 'turn_started', `Начат ход: ${job.purpose}.`, job.memberId);
     void this.execute(snapshot, job, controller).catch(error => {
-      if (!controller.signal.aborted && !this.stopped) this.fail(run.id, error, job.memberId);
+      if (!controller.signal.aborted && !this.stopped) this.failTurn(run.id, job, error);
     }).finally(() => { this.active.delete(key); this.schedule(); });
   }
   private async execute(snapshot: Run, job: Job, controller: AbortController): Promise<void> {
@@ -149,9 +156,20 @@ export class Engine {
       return { ...next, sessions: result.sessionId ? { ...next.sessions, [member.id]: result.sessionId } : next.sessions };
     }, 'turn_completed', plan ? 'План готов к согласованию.' : answer!.summary.slice(0, 600), member.id);
   }
+  /** Task and reply failures stay with their task so other participants keep working. */
+  private failTurn(id: string, job: Job, error: unknown): void {
+    const run = this.get(id);
+    const taskId = job.purpose === 'task' ? job.taskId : job.purpose === 'reply' ? run.messages.find(m => m.id === job.requestId)?.taskId : undefined;
+    if (!taskId || run.status !== 'running') { this.fail(id, error, job.memberId); return; }
+    const message = this.named(run, job.memberId, error);
+    this.change(id, r => ({ ...r, tasks: r.tasks.map(t => t.id === taskId ? { ...t, status: 'failed', error: message } : t) }), 'error', message, job.memberId);
+  }
+  private named(run: Run, memberId: string | undefined, error: unknown): string {
+    const name = memberId && run.members.find(m => m.id === memberId)?.name;
+    return name ? `${name}: ${redactError(error)}` : redactError(error);
+  }
   private fail(id: string, error: unknown, memberId?: string): void {
-    const name = memberId && this.get(id).members.find(m => m.id === memberId)?.name;
-    const message = name ? `${name}: ${redactError(error)}` : redactError(error);
+    const message = this.named(this.get(id), memberId, error);
     this.change(id, r => ({ ...r, status: 'paused', error: message, tasks: r.tasks.map(t => t.status === 'running' ? { ...t, status: 'failed', error: 'Вызов прерван; потребуется повтор.' } : t) }), 'error', message, memberId);
     this.abort(id);
   }

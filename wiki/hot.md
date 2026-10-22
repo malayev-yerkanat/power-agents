@@ -11,11 +11,11 @@ tags: [context]
 
 ## Last Updated
 
-2026-10-22. A live Codex + Claude Code + Gemini run completed the full flow. Fixes from it: CLI error reasons surface, errors name the participant, and the leader no longer plans duplicate synthesis/review tasks. Open: one failure interrupts all participants; peer messaging was not exercised.
+2026-10-22. A live Codex + Claude Code + Gemini run completed the full flow. Fixes from it: CLI error reasons surface, errors name the participant, and the leader no longer plans duplicate synthesis/review tasks. A failed task or reply now affects only its task; others keep working and the run pauses only when stuck. Open: peer messaging was not exercised.
 
 ## Repository State
 
-All work through the review fixes is pushed to `main` (CI green). The live-run fixes are being committed on 2026-10-22. Local checks: 133/133 Node tests, 81.03% line coverage, 35/35 Chromium tests, typecheck.
+All work through the review fixes is pushed to `main` (CI green). Failure isolation is being committed on 2026-10-22. Local checks: 135/135 Node tests, 81.20% line coverage, 35/35 Chromium tests, typecheck.
 
 ## Current System
 
