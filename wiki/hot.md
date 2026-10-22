@@ -31,7 +31,7 @@ All work through the review fixes is pushed to `main` (CI green). Failure isolat
 
 Task entry comes before a compact team summary and optional preview. Ambient city art loads on first expansion; the approved expanded pixel scale is unchanged. Completed runs show the accepted result above the optional encounter. Documents support safe Markdown, source view, copying and downloads. Paused/failed runs expose latest-review context when present and a clarification focus action; sending feedback and resuming remain separate.
 
-Creation and run-specific steering drafts survive navigation/reload within one tab through validated `sessionStorage`. Fragment routes preserve run/tab context and browser history. The history page searches only loaded pages and retains older-page loading. [[Pixel Art Consistency]] remains authoritative for visuals.
+Drafts survive reload within one tab (`sessionStorage`). Fragment routes keep run/tab context. History search covers loaded pages; older pages load on request. [[Pixel Art Consistency]] remains authoritative for visuals.
 
 ## Scope Boundaries
 
