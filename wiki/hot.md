@@ -3,7 +3,7 @@ type: meta
 title: "Hot Cache"
 status: active
 created: 2026-10-07
-updated: 2026-10-20
+updated: 2026-10-22
 tags: [context]
 ---
 
@@ -11,11 +11,11 @@ tags: [context]
 
 ## Last Updated
 
-2026-10-20. Wiki cleanup only: current source snapshots and source pages for the [[UI Improvements Plan Source|UI plan]] and [[Design Audits Source|design audits]]. The latest implementation remains the 2026-10-10 work-first UI pass: drafts, run links, history, recovery and responsive controls, verified in the [UI audit](../docs/audits/2026-10-10-ui-improvements.md).
+2026-10-22. Turn context is bounded per purpose, and CLIs no longer receive the app's API keys. See [[Orchestration Engine]] and [[Provider Adapters]].
 
 ## Repository State
 
-Everything since commit `55d8f05` (2026-10-08) (CI, backup, UI pass, art, wiki) is uncommitted. Local checks on 2026-10-20: 128/128 Node tests, 80.90% line coverage against an 80% gate, 35/35 Chromium tests, typecheck, build with a bundle-size warning, and a clean audit.
+Earlier work is committed and pushed as `c583001` (2026-10-22). The context and billing fixes are uncommitted. Local checks on 2026-10-22: 130/130 Node tests, 80.89% line coverage against an 80% gate, 35/35 Chromium tests, typecheck.
 
 ## Current System
 
@@ -24,7 +24,7 @@ Everything since commit `55d8f05` (2026-10-08) (CI, backup, UI pass, art, wiki) 
 - `/api/bootstrap` returns 30 recent run summaries and an event cursor. Older runs and journal events load in pages; SSE replay requests a snapshot resync for gaps over 100 events.
 - SQLite stores runs, events, Telegram settings and a durable alert outbox. [[Backup and Restore Flow]] captures SQLite and workspaces only while the server is stopped. Backups contain private task content; `.env` and logs are excluded.
 - Telegram pairs one private chat with a one-use `/start` link for brief plan-ready and completion alerts. Approval stays in the local app; polling failure disables pairing and test controls until recovery.
-- Codex, Claude and Antigravity CLI plus OpenAI/Anthropic APIs are available when configured. Gemini receives prompts through CLI stdin. CLI plan/read-only controls are not an OS isolation boundary. Automated provider tests use mocks; a small Codex/Gemini live run passed on 2026-10-07.
+- Codex, Claude and Antigravity CLI plus OpenAI/Anthropic APIs are available when configured. CLIs use their own sign-in and never receive `OPENAI_API_KEY`/`ANTHROPIC_API_KEY`. Each turn receives only the documents it needs. Gemini receives prompts through CLI stdin. CLI plan/read-only controls are not an OS isolation boundary. Automated provider tests use mocks; a small Codex/Gemini live run passed on 2026-10-07.
 - A user LaunchAgent can start the built server at macOS login while the Mac is awake. CI checks tests with an 80% line-coverage gate, synthetic Chromium flows, type checking, build and dependency audit.
 
 ## Current UI

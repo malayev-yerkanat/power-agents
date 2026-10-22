@@ -2,11 +2,17 @@
 type: log
 status: active
 created: 2026-10-07
-updated: 2026-10-20
+updated: 2026-10-22
 tags: [history]
 ---
 
 # Operation Log
+
+## 2026-10-22 — Bounded turn context and CLI billing guard
+
+- `promptFor` now sends each turn only the documents it needs, each once. Previously every turn resent all task outputs and documents twice, so five 30,000-character results stalled the run at synthesis. See [[Orchestration Engine]].
+- `cliEnvironment` no longer forwards `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN` to CLIs, so API keys in `.env` cannot switch Codex or Claude Code to API billing. See [[Provider Adapters]].
+- Verified: 130/130 Node tests, 80.89% line coverage, 35/35 Chromium tests, typecheck. No live provider run.
 
 ## 2026-10-20 — Project folder cleanup
 

@@ -62,3 +62,23 @@ test('cyclic plan and duplicate members rejected', () => {
   try { assert.throws(() => engine.create({ ...input, members: [input.members[0], input.members[0]] }), /уникальные/); }
   finally { clean(); }
 });
+test('long task documents fit the shared context through synthesis and review', async () => {
+  const body = 'д'.repeat(30_000);
+  const runner: TurnRunner = async value => {
+    if (value.purpose === 'plan') return { text: JSON.stringify({ summary: 'План', successCriteria: ['Готово'],
+      roles: [{ memberId: 'a', role: 'Итог' }, { memberId: 'b', role: 'Проверка' }],
+      tasks: [1, 2, 3, 4, 5].map(i => ({ id: `t${i}`, title: `Часть ${i}`, description: 'Раздел', assigneeId: i % 2 ? 'a' : 'b', dependsOn: [] })) }) };
+    const review = value.purpose === 'review';
+    return { text: JSON.stringify({ summary: 'Готово', status: 'done', messages: [],
+      artifact: review ? { title: 'Проверка', body: 'Принято' } : { title: value.purpose, body }, ...(review ? { verdict: 'pass' } : {}) }) };
+  };
+  const { engine, store, clean } = setup(runner);
+  try {
+    const created = engine.create(input);
+    const get = () => store.getRun(created.id)!;
+    engine.approve(created.id, (await until(get, r => r.status === 'awaiting_approval')).version);
+    const done = await until(get, r => r.status === 'completed' || r.status === 'paused');
+    assert.equal(done.error, undefined);
+    assert.equal(done.status, 'completed');
+  } finally { clean(); }
+});

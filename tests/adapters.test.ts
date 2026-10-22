@@ -190,16 +190,18 @@ test('API rejects oversized, invalid and truncated responses and forwards cancel
 });
 
 
-test('CLI environment preserves own auth and hides unrelated secrets from children', async () => {
-  const saved = { OPENAI_API_KEY: process.env.OPENAI_API_KEY, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY, SENTINEL_SECRET: process.env.SENTINEL_SECRET };
-  process.env.OPENAI_API_KEY = 'openai-auth';
-  process.env.ANTHROPIC_API_KEY = 'anthropic-auth';
-  process.env.SENTINEL_SECRET = 'unrelated';
+test('CLI environment keeps CLI sign-in and never forwards the app API keys', async () => {
+  const names = ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'CODEX_HOME', 'CLAUDE_CODE_OAUTH_TOKEN', 'SENTINEL_SECRET'];
+  const saved = Object.fromEntries(names.map(name => [name, process.env[name]]));
+  Object.assign(process.env, { OPENAI_API_KEY: 'openai-auth', ANTHROPIC_API_KEY: 'anthropic-auth', ANTHROPIC_AUTH_TOKEN: 'gateway-auth',
+    CODEX_HOME: '/codex-home', CLAUDE_CODE_OAUTH_TOKEN: 'subscription-auth', SENTINEL_SECRET: 'unrelated' });
   try {
-    assert.equal(cliEnvironment('codex-cli').OPENAI_API_KEY, 'openai-auth');
-    assert.equal(cliEnvironment('codex-cli').ANTHROPIC_API_KEY, undefined);
-    assert.equal(cliEnvironment('claude-cli').ANTHROPIC_API_KEY, 'anthropic-auth');
-    assert.equal(cliEnvironment('claude-cli').OPENAI_API_KEY, undefined);
+    for (const kind of ['codex-cli', 'claude-cli', 'gemini-cli'] as const) {
+      const env = cliEnvironment(kind);
+      assert.deepEqual([env.OPENAI_API_KEY, env.ANTHROPIC_API_KEY, env.ANTHROPIC_AUTH_TOKEN], [undefined, undefined, undefined], kind);
+    }
+    assert.equal(cliEnvironment('codex-cli').CODEX_HOME, '/codex-home');
+    assert.equal(cliEnvironment('claude-cli').CLAUDE_CODE_OAUTH_TOKEN, 'subscription-auth');
     const stdout = await runProcess(process.execPath, ['-e', 'process.stdout.write(String(process.env.SENTINEL_SECRET))'], { cwd: process.cwd(), signal: new AbortController().signal });
     assert.equal(stdout, 'undefined');
   } finally {

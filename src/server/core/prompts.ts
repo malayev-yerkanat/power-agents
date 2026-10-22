@@ -1,8 +1,20 @@
-import type { Run, TurnPurpose } from '../../shared/types.ts';
+import type { Artifact, Run, TeamTask, TurnPurpose } from '../../shared/types.ts';
 export interface Context { run: Run; memberId: string; purpose: TurnPurpose; taskId?: string; requestId?: string }
+const latest = (artifacts: Artifact[], keep: (artifact: Artifact) => boolean) => artifacts.filter(keep).at(-1);
+/** Each turn sees only the work it needs, once: resending every document outgrows the limit on long runs. */
+function sharedRun({ run: { sessions: _sessions, ...run }, memberId, purpose, taskId }: Context): Omit<Run, 'sessions'> {
+  const current = run.tasks.find(t => t.id === taskId);
+  const visible = (task: TeamTask) => purpose === 'synthesize' || task.id === current?.id || !!current?.dependsOn.includes(task.id)
+    || (purpose === 'reply' && task.assigneeId === memberId);
+  const work = run.tasks.filter(visible).flatMap(t => latest(run.artifacts, a => a.kind === 'work' && a.taskId === t.id) ?? []);
+  const documents = purpose === 'synthesize' || purpose === 'review'
+    ? (['final', 'review'] as const).flatMap(kind => latest(run.artifacts, a => a.kind === kind) ?? []) : [];
+  return { ...run, artifacts: [...work, ...documents],
+    tasks: run.tasks.map(({ output, ...task }) => visible(task) && output !== undefined && !work.some(a => a.taskId === task.id && a.body === output) ? { ...task, output } : task),
+    messages: run.messages.filter(m => m.fromId === 'user' || m.fromId === memberId || m.toId === memberId) };
+}
 export function promptFor(context: Context): string {
-  const { sessions: _sessions, ...sharedRun } = context.run;
-  const serialized = JSON.stringify({ ...context, run: sharedRun });
+  const serialized = JSON.stringify({ ...context, run: sharedRun(context) });
   if (serialized.length > 300000) throw new Error('Контекст превысил лимит прототипа. Создайте новую задачу с кратким итогом текущей работы.');
   const shape = context.purpose === 'plan'
     ? '{"summary":"подход","successCriteria":["критерий"],"roles":[{"memberId":"ID","role":"роль под задачу"}],"tasks":[{"id":"task-1","title":"название","description":"результат","assigneeId":"ID","dependsOn":[]}]}'

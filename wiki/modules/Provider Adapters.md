@@ -6,7 +6,7 @@ status: active
 language: typescript
 purpose: "Discover configured providers and run agent turns"
 created: 2026-10-07
-updated: 2026-10-08
+updated: 2026-10-22
 tags: [module, providers]
 ---
 
@@ -19,6 +19,8 @@ At startup, `discoverConnections` looks for `codex`, `claude`, and `agy` executa
 `runTurn` selects CLI or API execution. CLI adapters run official clients in a constrained mode; API adapters call provider endpoints. The engine may pass a saved session ID to continue a turn. Errors are redacted before reaching users. Demo mode uses `src/server/core/demo.ts` instead of provider calls.
 
 The Gemini adapter uses Antigravity CLI's `stream-json` input through stdin, so task text is absent from command arguments. The CLI processes still access their selected workspace and provider authentication environment. Their plan/read-only settings are provider controls, not a separate OS or container isolation boundary.
+
+`cliEnvironment` forwards only each CLI's own sign-in variables (`CODEX_HOME`, `CLAUDE_CONFIG_DIR`, `CLAUDE_CODE_OAUTH_TOKEN`, and the Gemini/Google credentials). `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` stay with the API adapters, so configuring an API connection never moves Codex or Claude Code participants onto paid API billing.
 
 Automated adapter tests use mocks. A small live collaboration run completed with Codex CLI and Gemini Antigravity CLI on 2026-10-07, but provider login/model access may change and the other connections have not been smoke tested here.
 

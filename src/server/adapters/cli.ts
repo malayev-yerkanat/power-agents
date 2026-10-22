@@ -52,9 +52,10 @@ export function parseCliResult(kind: AdapterKind, output: string): TurnResult {
   throw new Error('Неизвестный CLI-провайдер.');
 }
 
+/** CLIs keep their own sign-in; the app's API keys would silently switch them to paid API billing. */
 export function cliEnvironment(kind: AdapterKind): NodeJS.ProcessEnv {
-  const keys = kind === 'codex-cli' ? ['CODEX_HOME', 'OPENAI_API_KEY', 'OPENAI_ORG_ID']
-    : kind === 'claude-cli' ? ['CLAUDE_CONFIG_DIR', 'ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'CLAUDE_CODE_OAUTH_TOKEN']
+  const keys = kind === 'codex-cli' ? ['CODEX_HOME']
+    : kind === 'claude-cli' ? ['CLAUDE_CONFIG_DIR', 'CLAUDE_CODE_OAUTH_TOKEN']
       : ['GEMINI_API_KEY', 'GOOGLE_API_KEY', 'GOOGLE_APPLICATION_CREDENTIALS'];
   return { ...runtimeEnvironment(), ...Object.fromEntries(keys.filter(key => process.env[key] !== undefined).map(key => [key, process.env[key]])) };
 }
