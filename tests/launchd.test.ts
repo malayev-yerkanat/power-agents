@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { createServer } from 'node:net';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -26,7 +27,8 @@ test('launch agent runs the production server from this checkout and preserves C
   assert.match(plist, /<key>StandardErrorPath<\/key>/);
 });
 
-test('ownership compares the exact plist working directory', () => {
+const noPlutil = spawnSync('plutil', ['-help']).error ? 'plutil is macOS-only' : false;
+test('ownership compares the exact plist working directory', { skip: noPlutil }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'power-agents-plist-'));
   const path = join(dir, 'agent.plist');
   try {
