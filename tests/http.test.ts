@@ -5,6 +5,10 @@ import { test } from 'node:test';
 import type { AddressInfo } from 'node:net';
 import { createApiHandler } from '../src/server/http.ts';
 import { Store } from '../src/server/store.ts';
+import { Engine } from '../src/server/engine.ts';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { Connection, CreateRunInput, ModelCatalog, Run } from '../src/shared/types.ts';
 
 function fixture(): Run {
@@ -257,4 +261,33 @@ test('maps expected engine errors to 4xx and hides internal failure details', as
     assert.equal(response.status, 500);
     assert.doesNotMatch(await response.text(), /secret internal token/);
   } finally { await app.close(); }
+});
+
+test('run creation rejects duplicate member IDs and an outside leader through the engine', async () => {
+  const workspace = mkdtempSync(join(tmpdir(), 'power-http-engine-'));
+  const store = new Store(':memory:');
+  const engine = new Engine({ store, connections: [], workspaceRoot: workspace });
+  const handler = createApiHandler({ store, engine, connections: [] });
+  const server = createServer((req, res) => { void handler(req, res); });
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  try {
+    const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    const bootstrap = await fetch(`${base}/api/bootstrap`);
+    const { csrfToken } = await bootstrap.json() as { csrfToken: string };
+    const headers = { Cookie: bootstrap.headers.get('set-cookie')!.split(';')[0], 'X-CSRF-Token': csrfToken, 'Content-Type': 'application/json', Origin: base };
+    const member = (id: string) => ({ id, name: id, connectionId: 'demo', model: '', role: '' });
+    const create = (body: object) => fetch(`${base}/api/runs`, { method: 'POST', headers, body: JSON.stringify({ goal: 'Подготовить короткий план', mode: 'demo', ...body }) });
+    const duplicate = await create({ leaderId: 'a', members: [member('a'), member('a')] });
+    assert.equal(duplicate.status, 400);
+    assert.match((await duplicate.json() as { error: string }).error, /уникальные/);
+    const outsider = await create({ leaderId: 'z', members: [member('a'), member('b')] });
+    assert.equal(outsider.status, 400);
+    assert.match((await outsider.json() as { error: string }).error, /руководителя/);
+    assert.equal(store.runSummaries().totalRuns, 0);
+  } finally {
+    engine.shutdown(); server.closeAllConnections();
+    await new Promise<void>(resolve => server.close(() => resolve()));
+    store.close(); rmSync(workspace, { recursive: true, force: true });
+  }
 });

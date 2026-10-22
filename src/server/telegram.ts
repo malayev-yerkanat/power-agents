@@ -87,10 +87,6 @@ export class TelegramService {
     return { url: `https://t.me/${this.username}?start=${nonce}`, expiresAt };
   }
 
-  setPreferences(update: Partial<TelegramPreferences>): TelegramPreferences {
-    return this.store.setTelegramPreferences(update);
-  }
-
   async disconnect(): Promise<void> {
     await this.changeRecipient(() => { this.store.disconnectTelegram(); });
   }

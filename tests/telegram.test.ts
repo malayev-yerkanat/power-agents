@@ -23,7 +23,7 @@ const hash = (value: string) => createHash('sha256').update(value).digest('hex')
 
 function pair(store: Store): void {
   store.createTelegramPairing(hash('nonce'), new Date(Date.now() + 60_000).toISOString());
-  assert.equal(store.consumeTelegramPairing(hash('nonce'), '123', '123'), true);
+  assert.equal(store.processTelegramUpdate(undefined, hash('nonce'), '123', '123'), true);
 }
 
 test('outbox is transactionally created only on relevant transitions and survives restart', () => {
@@ -58,9 +58,9 @@ test('pairing is one-use, private-chat bound by caller, and preferences suppress
   const store = new Store(':memory:');
   try {
     store.createTelegramPairing(hash('old'), new Date(Date.now() - 1).toISOString());
-    assert.equal(store.consumeTelegramPairing(hash('old'), '1', '1'), false);
+    assert.equal(store.processTelegramUpdate(undefined, hash('old'), '1', '1'), false);
     pair(store);
-    assert.equal(store.consumeTelegramPairing(hash('nonce'), '456', '456'), false);
+    assert.equal(store.processTelegramUpdate(undefined, hash('nonce'), '456', '456'), false);
     store.setTelegramPreferences({ approval: false, completed: true });
     store.createRun(initial(), event);
     store.updateRun('run-1', run => ({ ...run, status: 'awaiting_approval' }), event);

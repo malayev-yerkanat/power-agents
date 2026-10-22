@@ -3,7 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { z } from 'zod';
 import type { Connection, CreateRunInput, ModelCatalog, Run, RunEvent } from '../shared/types.ts';
 import type { Store } from './store.ts';
-import { createSchema as engineCreateSchema } from './core/protocol.ts';
+import { createSchema } from './core/protocol.ts';
 import { createModelCatalogLoader } from './adapters/models.ts';
 import type { TelegramService } from './telegram.ts';
 
@@ -19,11 +19,6 @@ class HttpError extends Error {
   constructor(statusCode: number, message: string) { super(message); this.statusCode = statusCode; }
 }
 
-const createSchema = engineCreateSchema.superRefine((value, ctx) => {
-  const ids = new Set(value.members.map(member => member.id));
-  if (ids.size !== value.members.length) ctx.addIssue({ code: 'custom', message: 'Member IDs must be unique' });
-  if (!ids.has(value.leaderId)) ctx.addIssue({ code: 'custom', message: 'Leader must be a team member' });
-});
 const approveSchema = z.object({ version: z.number().int().nonnegative().safe() }).strict();
 const controlSchema = z.object({ action: z.enum(['pause', 'resume', 'cancel']) }).strict();
 const messageSchema = z.object({ body: z.string().trim().min(1).max(12_000) }).strict();

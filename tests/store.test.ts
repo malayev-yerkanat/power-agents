@@ -28,9 +28,9 @@ test('creates parent directories and persists aggregates and events across reope
     const reopened = new Store(path);
     try {
       assert.deepEqual(reopened.getRun(original.id), original);
-      assert.equal(reopened.events(original.id).length, 1);
-      assert.equal(reopened.events(original.id)[0].actorId, 'leader');
-      assert.equal(reopened.events(original.id)[0].message, created.message);
+      assert.equal(reopened.eventBatch(original.id, 0).length, 1);
+      assert.equal(reopened.eventBatch(original.id, 0)[0].actorId, 'leader');
+      assert.equal(reopened.eventBatch(original.id, 0)[0].message, created.message);
     } finally { reopened.close(); }
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
@@ -46,7 +46,7 @@ test('duplicate creation and failed updates roll back without publishing events'
     assert.throws(() => store.updateRun('missing', value => value, created), /not found/i);
     assert.throws(() => store.updateRun('run-1', value => ({ ...value, id: 'changed' }), created));
     assert.deepEqual(store.getRun('run-1'), run());
-    assert.equal(store.events('run-1').length, 1);
+    assert.equal(store.eventBatch('run-1', 0).length, 1);
     assert.equal(notifications, 1);
     assert.equal(store.updateRun('run-1', value => ({ ...value, title: 'Retry' }), created).title, 'Retry');
   } finally { store.close(); }
@@ -58,11 +58,11 @@ test('an event insert failure rolls back its aggregate insert or update', () => 
   try {
     assert.throws(() => store.createRun(run(), invalidEvent));
     assert.equal(store.getRun('run-1'), undefined);
-    assert.deepEqual(store.events('run-1'), []);
+    assert.deepEqual(store.eventBatch('run-1', 0), []);
     store.createRun(run(), created);
     assert.throws(() => store.updateRun('run-1', value => ({ ...value, title: 'Must roll back' }), invalidEvent));
     assert.deepEqual(store.getRun('run-1'), run());
-    assert.equal(store.events('run-1').length, 1);
+    assert.equal(store.eventBatch('run-1', 0).length, 1);
   } finally { store.close(); }
 });
 
@@ -75,7 +75,6 @@ test('updates versions and timestamps while preserving caller and stored snapsho
     original.sessions.bad = 'original';
     const read = store.getRun(original.id)!;
     read.sessions.bad = 'read';
-    store.listRuns()[0].sessions.bad = 'listed';
     assert.deepEqual(store.getRun(original.id)?.sessions, {});
     const updated = store.updateRun(original.id, value => ({
       ...value, version: 999, updatedAt: 'old', status: 'running',
@@ -98,13 +97,13 @@ test('orders runs newest first and filters ascending event IDs exclusively per r
     store.createRun(run('old'), created);
     store.createRun(run('new', '2026-10-08T00:00:00.000Z'), created);
     store.updateRun('old', value => value, { type: 'changed', message: 'Changed' });
-    assert.deepEqual(store.listRuns().map(value => value.id), ['new', 'old']);
-    const events = store.events('old');
+    assert.deepEqual(store.runSummaries().runs.map(value => value.id), ['new', 'old']);
+    const events = store.eventBatch('old', 0);
     assert.equal(events.length, 2);
     assert.ok(events[0].id < events[1].id);
-    assert.deepEqual(store.events('old', events[0].id), [events[1]]);
-    assert.deepEqual(store.events('old', events[1].id), []);
-    assert.deepEqual(store.events('missing'), []);
+    assert.deepEqual(store.eventBatch('old', events[0].id), [events[1]]);
+    assert.deepEqual(store.eventBatch('old', events[1].id), []);
+    assert.deepEqual(store.eventBatch('missing', 0), []);
   } finally { store.close(); }
 });
 
@@ -169,7 +168,7 @@ test('notifies only after commit, isolates subscribers, and supports unsubscribe
     let committedBeforeNotification = false;
     const unsubscribe = store.subscribe(event => {
       committedBeforeNotification = !!store.getRun(event.runId)
-        && store.events(event.runId).at(-1)?.id === event.id;
+        && store.eventBatch(event.runId, 0).at(-1)?.id === event.id;
       event.message = 'subscriber mutation';
       throw new Error('listener failure');
     });
@@ -178,7 +177,7 @@ test('notifies only after commit, isolates subscribers, and supports unsubscribe
     assert.ok(committedBeforeNotification);
     assert.equal(errorLog.mock.callCount(), 1);
     assert.deepEqual(received, ['Run created']);
-    assert.equal(store.events('run-1')[0].message, 'Run created');
+    assert.equal(store.eventBatch('run-1', 0)[0].message, 'Run created');
     unsubscribe();
     store.updateRun('run-1', value => value, { type: 'next', message: 'Next event' });
     assert.deepEqual(received, ['Run created', 'Next event']);

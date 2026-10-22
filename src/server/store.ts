@@ -71,11 +71,6 @@ export class Store {
     `); } catch (error) { this.db.close(); throw error; }
   }
 
-  listRuns(): Run[] {
-    return this.db.prepare('SELECT data FROM runs ORDER BY created_at DESC, rowid DESC')
-      .all().map(row => JSON.parse(row.data as string) as Run);
-  }
-
   runSummaries(before?: string, limit = 30): RunSummaryPage {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new Error('Invalid run page size');
     const cursor = before ? this.db.prepare('SELECT created_at FROM runs WHERE id = ?').get(before) : undefined;
@@ -141,13 +136,6 @@ export class Store {
       this.db.prepare('UPDATE runs SET data = ? WHERE id = ?').run(data, id);
       return { run: JSON.parse(data) as Run, previous };
     }, event);
-  }
-
-  events(runId: string, after = 0): RunEvent[] {
-    return this.db.prepare(`
-      SELECT id, run_id, type, message, actor_id, created_at
-      FROM events WHERE run_id = ? AND id > ? ORDER BY id ASC
-    `).all(runId, after).map(row => this.eventFromRow(row as unknown as EventRow));
   }
 
   eventBatch(runId: string | undefined, after: number, limit = 100): RunEvent[] {
@@ -229,10 +217,6 @@ export class Store {
   createTelegramPairing(nonceHash: string, expiresAt: string): void {
     this.db.prepare('UPDATE telegram_settings SET pair_hash = ?, pair_expires_at = ? WHERE id = 1')
       .run(nonceHash, expiresAt);
-  }
-
-  consumeTelegramPairing(nonceHash: string, userId: string, chatId: string): boolean {
-    return this.processTelegramUpdate(undefined, nonceHash, userId, chatId);
   }
 
   processTelegramUpdate(updateId?: number, nonceHash?: string, userId?: string, chatId?: string): boolean {

@@ -96,7 +96,7 @@ test('restart recovery pauses interrupted work, requeues questions, and resumes 
     assert.ok(complete.messages.some(message => message.replyTo === 'question'));
     assert.equal(calls.find(call => call.member.id === 'a')?.sessionId, 'prior-session');
     assert.equal(complete.sessions.a, 'renewed-a');
-    assert.ok(app.store.events(seed.id).some(event => event.type === 'recovered'));
+    assert.ok(app.store.eventBatch(seed.id, 0).some(event => event.type === 'recovered'));
   } finally { await app.clean(); }
 });
 
@@ -126,7 +126,7 @@ test('a failed runner pauses the run and failed task can be retried successfully
     const paused = app.engine.get(run.id);
     assert.match(paused.error!, /Scripted provider unavailable/);
     assert.equal(paused.tasks[0].status, 'failed');
-    assert.ok(app.store.events(run.id).some(event => event.type === 'error'));
+    assert.ok(app.store.eventBatch(run.id, 0).some(event => event.type === 'error'));
     const retry = app.engine.control(run.id, 'resume');
     assert.equal(retry.tasks[0].status, 'pending');
     assert.equal(retry.tasks[0].error, undefined);
@@ -398,7 +398,7 @@ for (const purpose of ['plan', 'synthesize', 'review'] as const) {
       const repeated = contexts.filter(ctx => ctx.purpose === purpose);
       assert.equal(repeated.length, 2);
       assert.ok(repeated[1].run.messages.some(message => message.body === 'Include the newly supplied requirement'));
-      assert.ok(app.store.events(run.id).some(event => event.type === 'superseded'));
+      assert.ok(app.store.eventBatch(run.id, 0).some(event => event.type === 'superseded'));
     } finally { release?.(); await app.clean(); }
   });
 }
