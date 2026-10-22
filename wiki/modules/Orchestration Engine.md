@@ -20,4 +20,6 @@ The scheduler queries indexed active runs instead of parsing every historical ru
 
 `promptFor` in `src/server/core/prompts.ts` sends each turn a trimmed run: a task sees its dependencies' latest results, synthesis sees every task's latest result plus the latest final and review, and review sees the latest final. Each document appears once, and messages are limited to the participant's own correspondence and user notes. The 300,000-character per-turn cap remains a safety net.
 
+A failed turn pauses the run with an error prefixed by the participant's name and an `error` event whose actor is that participant. The plan prompt tells the leader not to add assembly, overall review or final-polish tasks, because synthesis and review run automatically after all tasks.
+
 The engine limits runs to 100 turns and tasks to 20 turns. See [engine](../../src/server/engine.ts), [protocol](../../src/server/core/protocol.ts), and [[Data Flow]].

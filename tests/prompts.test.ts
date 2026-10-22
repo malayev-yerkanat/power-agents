@@ -30,3 +30,8 @@ test('each turn receives only the documents and messages it needs, once', () => 
   const review = seen({ run: full, memberId: 'b', purpose: 'review' });
   assert.ok(review.includes('body-final-2') && !review.includes('body-t1-v2') && !review.includes('summary-only-t3'));
 });
+test('the plan prompt tells the leader that synthesis and review are automatic', () => {
+  const plan = promptFor({ run, memberId: 'a', purpose: 'plan' });
+  assert.match(plan, /Не добавляй задачи на сборку итога, общую проверку или финальную доработку/);
+  assert.match(plan, /платформа сама поручит руководителю synthesize, а другому участнику review/);
+});

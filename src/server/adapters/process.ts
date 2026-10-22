@@ -1,6 +1,11 @@
 import { spawn } from 'node:child_process';
 import { MAX_OUTPUT_BYTES, TURN_TIMEOUT_MS, redactError } from './common.js';
 
+/** A non-zero exit that keeps stdout: some CLIs report the reason there, not on stderr. */
+export class ProcessExitError extends Error {
+  constructor(message: string, readonly output: string) { super(message); }
+}
+
 interface ProcessOptions { cwd: string; signal: AbortSignal; stdin?: string; timeoutMs?: number; env?: NodeJS.ProcessEnv }
 
 export function runtimeEnvironment(): NodeJS.ProcessEnv {
@@ -37,7 +42,8 @@ export function runProcess(executable: string, args: string[], options: ProcessO
       settled = true;
       clearTimeout(timeout);
       options.signal.removeEventListener('abort', onAbort);
-      if (error) reject(new Error(redactError(error))); else resolve(output);
+      if (error instanceof ProcessExitError) reject(new ProcessExitError(redactError(error), error.output));
+      else if (error) reject(new Error(redactError(error))); else resolve(output);
     };
     options.signal.addEventListener('abort', onAbort, { once: true });
     if (options.signal.aborted) onAbort();
@@ -50,7 +56,7 @@ export function runProcess(executable: string, args: string[], options: ProcessO
     });
     child.stderr.on('data', (chunk: string) => { stderr = (stderr + chunk).slice(-8000); });
     child.on('error', error => finish(error));
-    child.on('close', (code, signal) => finish(failure ?? (code === 0 ? undefined : new Error(`CLI завершился с ошибкой (${code ?? signal}): ${stderr.trim() || 'нет подробностей'}`))));
+    child.on('close', (code, signal) => finish(failure ?? (code === 0 ? undefined : new ProcessExitError(`CLI завершился с ошибкой (${code ?? signal}): ${stderr.trim() || 'нет подробностей'}`, output))));
     child.stdin.on('error', error => { if ((error as NodeJS.ErrnoException).code !== 'EPIPE') stop('Не удалось передать запрос агенту.'); });
     child.stdin.end(options.stdin ?? '');
   });

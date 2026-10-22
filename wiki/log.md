@@ -8,6 +8,13 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-22 — Live three-provider run and its fixes
+
+- Live run with Codex CLI (leader), Claude Code and Gemini Antigravity CLI completed plan, three parallel tasks, synthesis and review for a 1,446-word Markdown guide in 12 turns and about 14 minutes. Claude Code first failed because its CLI was not signed in.
+- Fixed from the run: CLI failures now show the CLI's own reason from stdout; run errors name the failing participant; the plan prompt keeps the leader from planning assembly/review/final tasks that duplicate synthesis and review. A follow-up live plan had three work tasks instead of six.
+- Still open: one failed turn pauses and interrupts every participant; no peer messages occurred in this task. See [[Provider Adapters]] and [[Orchestration Engine]].
+- Verified: 133/133 Node tests, 81.03% line coverage, 35/35 Chromium tests, typecheck.
+
 ## 2026-10-22 — Bounded turn context and CLI billing guard
 
 - `promptFor` now sends each turn only the documents it needs, each once. Previously every turn resent all task outputs and documents twice, so five 30,000-character results stalled the run at synthesis. See [[Orchestration Engine]].

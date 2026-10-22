@@ -22,6 +22,8 @@ The Gemini adapter uses Antigravity CLI's `stream-json` input through stdin, so 
 
 `cliEnvironment` forwards only each CLI's own sign-in variables (`CODEX_HOME`, `CLAUDE_CONFIG_DIR`, `CLAUDE_CODE_OAUTH_TOKEN`, and the Gemini/Google credentials). `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` stay with the API adapters, so configuring an API connection never moves Codex or Claude Code participants onto paid API billing.
 
-Automated adapter tests use mocks. A small live collaboration run completed with Codex CLI and Gemini Antigravity CLI on 2026-10-07, but provider login/model access may change and the other connections have not been smoke tested here.
+When a CLI exits non-zero, `runProcess` keeps its stdout in a `ProcessExitError`, and `runCli` reports the CLI's own error from that output (for example Claude Code's "Not logged in") instead of a generic "no details".
+
+Automated adapter tests use mocks. A live Codex CLI + Claude Code + Gemini Antigravity CLI run completed the full plan-to-review flow on 2026-10-22 (a 1,446-word document task, 12 turns, about 14 minutes). It found and led to fixes for hidden CLI error reasons, unnamed failing participants and leader plans that duplicated synthesis and review. OpenAI/Anthropic API connections and larger tasks remain unverified live.
 
 See [adapter discovery](../../src/server/adapters/index.ts), [model catalog](../../src/server/adapters/models.ts), [CLI adapter](../../src/server/adapters/cli.ts), [API adapter](../../src/server/adapters/api.ts), and [demo](../../src/server/core/demo.ts).

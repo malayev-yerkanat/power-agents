@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { parseJsonObject, runTurn, discoverConnections } from '../src/server/adapters/index.js';
-import { buildCliCommand, cliEnvironment, parseCliResult } from '../src/server/adapters/cli.js';
+import { buildCliCommand, cliEnvironment, parseCliResult, runCli } from '../src/server/adapters/cli.js';
 import { runProcess } from '../src/server/adapters/process.js';
 import type { TurnInput } from '../src/shared/types.js';
 
@@ -207,4 +207,19 @@ test('CLI environment keeps CLI sign-in and never forwards the app API keys', as
   } finally {
     for (const [key, value] of Object.entries(saved)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
   }
+});
+
+test('a failing CLI reports its own reason from stdout instead of "no details"', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'power-cli-exit-'));
+  const fake = async (name: string, stdout: string) => {
+    const path = join(directory, name);
+    await writeFile(path, `#!/bin/sh\ncat >/dev/null\nprintf '%s' '${stdout}'\nexit 1\n`);
+    await chmod(path, 0o755);
+    return { ...input('claude-cli'), cwd: directory, connection: { ...input('claude-cli').connection, executable: path } };
+  };
+  try {
+    await assert.rejects(runCli(await fake('claude-logged-out', '{"is_error":true,"subtype":"success","result":"Not logged in · Please run /login"}')),
+      (error: Error) => error.message === 'Not logged in · Please run /login');
+    await assert.rejects(runCli(await fake('claude-garbage', 'not json')), /CLI завершился с ошибкой \(1\): нет подробностей/);
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });

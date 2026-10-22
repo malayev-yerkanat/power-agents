@@ -11,11 +11,11 @@ tags: [context]
 
 ## Last Updated
 
-2026-10-22. Turn context is bounded per purpose, and CLIs no longer receive the app's API keys. See [[Orchestration Engine]] and [[Provider Adapters]].
+2026-10-22. A live Codex + Claude Code + Gemini run completed the full flow. Fixes from it: CLI error reasons surface, errors name the participant, and the leader no longer plans duplicate synthesis/review tasks. Open: one failure interrupts all participants; peer messaging was not exercised.
 
 ## Repository State
 
-Earlier work is committed and pushed as `c583001` (2026-10-22). The context and billing fixes are uncommitted. Local checks on 2026-10-22: 130/130 Node tests, 80.89% line coverage against an 80% gate, 35/35 Chromium tests, typecheck.
+All work through the review fixes is pushed to `main` (CI green). The live-run fixes are being committed on 2026-10-22. Local checks: 133/133 Node tests, 81.03% line coverage, 35/35 Chromium tests, typecheck.
 
 ## Current System
 
@@ -31,8 +31,8 @@ Earlier work is committed and pushed as `c583001` (2026-10-22). The context and 
 
 Task entry comes before a compact team summary and optional preview. Ambient city art loads on first expansion; the approved expanded pixel scale is unchanged. Completed runs show the accepted result above the optional encounter. Documents support safe Markdown, source view, copying and downloads. Paused/failed runs expose latest-review context when present and a clarification focus action; sending feedback and resuming remain separate.
 
-Creation and run-specific steering drafts survive navigation/reload within one tab through validated `sessionStorage`. Fragment routes preserve run/tab context and browser history. The history page searches only loaded pages and retains older-page loading. Validation expands and focuses the affected field. Mobile targets and narrow-screen layout have browser checks. [[Pixel Art Consistency]] remains authoritative for visuals.
+Creation and run-specific steering drafts survive navigation/reload within one tab through validated `sessionStorage`. Fragment routes preserve run/tab context and browser history. The history page searches only loaded pages and retains older-page loading. [[Pixel Art Consistency]] remains authoritative for visuals.
 
 ## Scope Boundaries
 
-No server schema, provider execution, Telegram delivery, or SSE contract changed in this UI pass. Full-history search, archive/rename, named team presets, provider diagnostics, dark mode, new sprite production, and full screen-reader verification remain separate work. Larger live tasks and Telegram delivery need separate validation.
+No server schema, provider execution, Telegram delivery, or SSE contract changed in this UI pass. Full-history search, archive/rename, Telegram delivery checks, named team presets, provider diagnostics, dark mode, new sprite production, and full screen-reader verification remain separate work.

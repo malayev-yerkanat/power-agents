@@ -2,7 +2,7 @@
 type: overview
 status: active
 created: 2026-10-07
-updated: 2026-10-10
+updated: 2026-10-22
 tags: [product, architecture]
 ---
 
@@ -24,7 +24,7 @@ Optional [[Telegram Notifications]] pair one private chat and send brief alerts 
 - Text and Markdown results; providers do not edit external repositories.
 - Runtime state is local under `.power-agents/`, excluded from Git.
 - The current prototype has no universal MCP tool layer, browser attachments, or paid usage budget. The broader design describes some of these as future capabilities.
-- Automated tests use provider mocks. A small live Codex CLI + Gemini Antigravity CLI run completed the full plan-to-review flow on 2026-10-07; this does not verify the other providers or broader task types.
+- Automated tests use provider mocks. A live Codex CLI + Claude Code + Gemini Antigravity CLI run completed the full plan-to-review flow on 2026-10-22 (a 1,446-word document task, 12 turns, about 14 minutes). It found and led to fixes for hidden CLI error reasons, unnamed failing participants and leader plans that duplicated synthesis and review. OpenAI/Anthropic API connections and larger tasks remain unverified live.
 
 Canonical current behavior: [prototype guide](../docs/prototype.md), then live `src/` and `tests/`. Broader intent: [[Platform Design Source]].
 

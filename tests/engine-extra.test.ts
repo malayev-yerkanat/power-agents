@@ -124,9 +124,11 @@ test('a failed runner pauses the run and failed task can be retried successfully
     app.engine.approve(run.id, app.engine.get(run.id).version);
     await until(() => app.engine.get(run.id).status === 'paused');
     const paused = app.engine.get(run.id);
-    assert.match(paused.error!, /Scripted provider unavailable/);
     assert.equal(paused.tasks[0].status, 'failed');
-    assert.ok(app.store.eventBatch(run.id, 0).some(event => event.type === 'error'));
+    const failure = app.store.eventBatch(run.id, 0).find(event => event.type === 'error')!;
+    const failed = paused.members.find(member => member.id === failure.actorId)!;
+    assert.equal(paused.error, `${failed.name}: Scripted provider unavailable`);
+    assert.equal(failure.message, paused.error);
     const retry = app.engine.control(run.id, 'resume');
     assert.equal(retry.tasks[0].status, 'pending');
     assert.equal(retry.tasks[0].error, undefined);

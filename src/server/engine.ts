@@ -125,7 +125,7 @@ export class Engine {
     this.active.set(key, { runId: run.id, memberId: job.memberId, controller });
     const snapshot = this.change(run.id, r => ({ ...r, turnCount: r.turnCount + 1, tasks: r.tasks.map(t => t.id === job.taskId ? { ...t, status: 'running', turns: t.turns + 1 } : t), messages: r.messages.map(m => m.id === job.requestId || (!m.request && m.toId === job.memberId && m.status === 'queued') ? { ...m, status: 'delivered' } : m) }), 'turn_started', `Начат ход: ${job.purpose}.`, job.memberId);
     void this.execute(snapshot, job, controller).catch(error => {
-      if (!controller.signal.aborted && !this.stopped) this.fail(run.id, error);
+      if (!controller.signal.aborted && !this.stopped) this.fail(run.id, error, job.memberId);
     }).finally(() => { this.active.delete(key); this.schedule(); });
   }
   private async execute(snapshot: Run, job: Job, controller: AbortController): Promise<void> {
@@ -149,8 +149,10 @@ export class Engine {
       return { ...next, sessions: result.sessionId ? { ...next.sessions, [member.id]: result.sessionId } : next.sessions };
     }, 'turn_completed', plan ? 'План готов к согласованию.' : answer!.summary.slice(0, 600), member.id);
   }
-  private fail(id: string, error: unknown): void {
-    this.change(id, r => ({ ...r, status: 'paused', error: redactError(error), tasks: r.tasks.map(t => t.status === 'running' ? { ...t, status: 'failed', error: 'Вызов прерван; потребуется повтор.' } : t) }), 'error', redactError(error));
+  private fail(id: string, error: unknown, memberId?: string): void {
+    const name = memberId && this.get(id).members.find(m => m.id === memberId)?.name;
+    const message = name ? `${name}: ${redactError(error)}` : redactError(error);
+    this.change(id, r => ({ ...r, status: 'paused', error: message, tasks: r.tasks.map(t => t.status === 'running' ? { ...t, status: 'failed', error: 'Вызов прерван; потребуется повтор.' } : t) }), 'error', message, memberId);
     this.abort(id);
   }
 }
