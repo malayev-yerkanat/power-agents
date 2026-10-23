@@ -117,7 +117,7 @@ export class Engine {
       } else {
         const failed = latest.tasks.filter(t => t.status === 'failed');
         throw new Error(failed.length
-          ? `Не выполнены задачи: ${failed.map(t => `«${t.title}» — ${t.error}`).join('; ')}. Готовые результаты сохранены; «Продолжить» повторит только эти задачи.`
+          ? `Не выполнены задачи: ${failed.map(t => `«${t.title}» — ${t.error?.replace(/\.$/, '')}`).join('; ')}. Готовые результаты сохранены; «Продолжить» повторит только эти задачи.`
           : 'Команда не может продолжить: остались заблокированные задачи.');
       }
       return;

@@ -8,6 +8,12 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-23 — Messaging experiment and Gemini hang fix
+
+- Live run on a task with shared recipe, price and promo facts: the leader chained the three tasks, and agents again sent zero peer messages; consistency came from dependencies.
+- Gemini timed out three times inside the LaunchAgent service. A replay with the service's environment showed Antigravity printing a complete result after about 64 seconds and then staying open. The Gemini adapter now ends the turn at the first complete result line and stops the process. The pause summary no longer ends a task error with a double period. See [[Provider Adapters]].
+- Verified: 136/136 Node tests, 81.39% line coverage, 35/35 Chromium tests, typecheck.
+
 ## 2026-10-22 — Failure isolation for task and reply turns
 
 - A failed task or reply turn now marks only its task `failed`; other participants keep working and their results are kept. The run pauses only when nothing else can progress, listing the failed tasks. Resume retries only them, and a task whose own question is still open returns as `waiting`. Plan, synthesis and review failures still pause at once. See [[Orchestration Engine]].

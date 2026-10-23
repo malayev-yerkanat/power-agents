@@ -223,3 +223,27 @@ test('a failing CLI reports its own reason from stdout instead of "no details"',
     await assert.rejects(runCli(await fake('claude-garbage', 'not json')), /CLI завершился с ошибкой \(1\): нет подробностей/);
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
+
+test('a CLI that prints its result but stays open is finished and stopped', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'power-cli-linger-'));
+  try {
+    const pidPath = join(directory, 'pid');
+    const script = `require('fs').writeFileSync(process.argv[1], String(process.pid)); process.stdout.write('{"event":"init"}\\n{"event":"result","result":{"status":"SUCCESS","response":"done"}}\\n'); setInterval(() => {}, 1000);`;
+    const started = Date.now();
+    const output = await runProcess(process.execPath, ['-e', script, pidPath], { cwd: directory, signal: new AbortController().signal, timeoutMs: 20_000,
+      isComplete: text => text.includes('"event":"result"') });
+    assert.ok(Date.now() - started < 5_000);
+    assert.match(output, /"response":"done"/);
+    const pid = Number(await readFile(pidPath, 'utf8'));
+    await delay(700);
+    assert.throws(() => process.kill(pid, 0), /ESRCH/);
+
+    const gemini = join(directory, 'agy');
+    await writeFile(gemini, `#!/bin/sh\ncat >/dev/null\nprintf '%s\\n' '{"event":"result","result":{"status":"SUCCESS","response":"promo","conversation_id":"g1"}}'\nsleep 60\n`);
+    await chmod(gemini, 0o755);
+    const cliStarted = Date.now();
+    const result = await runCli({ ...input('gemini-cli'), cwd: directory, connection: { ...input('gemini-cli').connection, executable: gemini } });
+    assert.deepEqual(result, { text: 'promo', sessionId: 'g1' });
+    assert.ok(Date.now() - cliStarted < 5_000);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});

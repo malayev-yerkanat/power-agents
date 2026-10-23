@@ -456,7 +456,7 @@ test('a failed task does not stop or discard the work of other participants', as
   const runner: TurnRunner = async value => {
     const { run, taskId } = contextOf(value);
     if (value.purpose === 'plan') return plan(run, tasks);
-    if (taskId === 'task-fail' && failTask) throw new Error('Not logged in');
+    if (taskId === 'task-fail' && failTask) throw new Error('Not logged in.');
     if (taskId === 'task-slow') await slow;
     return successfulRunner(value);
   };
@@ -468,7 +468,7 @@ test('a failed task does not stop or discard the work of other participants', as
     const task = (id: string) => app.engine.get(run.id).tasks.find(t => t.id === id)!;
     await until(() => task('task-fail').status === 'failed' && task('task-quick').status === 'completed', 'isolated failure');
     assert.equal(app.engine.get(run.id).status, 'running');
-    assert.equal(task('task-fail').error, 'Agent a: Not logged in');
+    assert.equal(task('task-fail').error, 'Agent a: Not logged in.');
     assert.equal(task('task-slow').status, 'running');
     releaseSlow();
     await until(() => app.engine.get(run.id).status === 'paused', 'pause once nothing can progress');
@@ -477,7 +477,8 @@ test('a failed task does not stop or discard the work of other participants', as
     assert.equal(task('task-slow').output, 'Scripted report content');
     assert.equal(task('task-after').status, 'pending');
     assert.match(paused.error!, /Fragile part/);
-    assert.match(paused.error!, /Agent a: Not logged in/);
+    assert.match(paused.error!, /Agent a: Not logged in\. Готовые результаты/);
+    assert.doesNotMatch(paused.error!, /\.\./);
     failTask = false;
     app.engine.control(run.id, 'resume');
     await until(() => app.engine.get(run.id).status === 'completed', 'completion after retry');

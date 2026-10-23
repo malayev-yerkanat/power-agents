@@ -11,11 +11,11 @@ tags: [context]
 
 ## Last Updated
 
-2026-10-22. A live Codex + Claude Code + Gemini run completed the full flow. Fixes from it: CLI error reasons surface, errors name the participant, and the leader no longer plans duplicate synthesis/review tasks. A failed task or reply now affects only its task; others keep working and the run pauses only when stuck. Open: peer messaging was not exercised.
+2026-10-23. Gemini turns now end at the first complete result line, because Antigravity can stay open after answering when started from the service. A messaging experiment again produced no peer messages: the leader chained dependent tasks instead.
 
 ## Repository State
 
-All work through the review fixes is pushed to `main` (CI green). Failure isolation is being committed on 2026-10-22. Local checks: 135/135 Node tests, 81.20% line coverage, 35/35 Chromium tests, typecheck.
+All work through the review fixes is pushed to `main` (CI green). The Gemini fix is being committed on 2026-10-23. Local checks: 136/136 Node tests, 81.39% line coverage, 35/35 Chromium tests, typecheck.
 
 ## Current System
 

@@ -6,7 +6,8 @@ export class ProcessExitError extends Error {
   constructor(message: string, readonly output: string) { super(message); }
 }
 
-interface ProcessOptions { cwd: string; signal: AbortSignal; stdin?: string; timeoutMs?: number; env?: NodeJS.ProcessEnv }
+/** isComplete lets a caller accept output from a CLI that answers but never exits; the process group is then stopped. */
+interface ProcessOptions { cwd: string; signal: AbortSignal; stdin?: string; timeoutMs?: number; env?: NodeJS.ProcessEnv; isComplete?: (output: string) => boolean }
 
 export function runtimeEnvironment(): NodeJS.ProcessEnv {
   const keys = ['PATH', 'HOME', 'USER', 'LOGNAME', 'SHELL', 'TMPDIR', 'TMP', 'TEMP', 'LANG', 'LC_ALL', 'LC_CTYPE', 'TERM', 'SYSTEMROOT', 'WINDIR', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'SSL_CERT_FILE', 'SSL_CERT_DIR', 'NODE_EXTRA_CA_CERTS', 'HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'no_proxy'];
@@ -52,7 +53,14 @@ export function runProcess(executable: string, args: string[], options: ProcessO
     child.stdout.on('data', (chunk: string) => {
       outputBytes += Buffer.byteLength(chunk);
       if (outputBytes > MAX_OUTPUT_BYTES) stop('Ответ агента превысил лимит 2 МиБ.');
-      else if (!failure) output += chunk;
+      else if (!failure) {
+        output += chunk;
+        if (!settled && options.isComplete?.(output)) {
+          finish();
+          kill('SIGTERM');
+          setTimeout(() => kill('SIGKILL'), 500).unref();
+        }
+      }
     });
     child.stderr.on('data', (chunk: string) => { stderr = (stderr + chunk).slice(-8000); });
     child.on('error', error => finish(error));

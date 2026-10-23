@@ -55,6 +55,11 @@ export function parseCliResult(kind: AdapterKind, output: string): TurnResult {
   throw new Error('Неизвестный CLI-провайдер.');
 }
 
+/** Antigravity can print its final result and keep running, so its turn ends at the first complete result line. */
+const geminiResultLine = (output: string) => output.includes('"result"') && output.split('\n').slice(0, -1).some(line => {
+  try { return record(JSON.parse(line)).event === 'result'; } catch { return false; }
+});
+
 function reportedFailure(kind: AdapterKind, output: string): Error | undefined {
   try { parseCliResult(kind, output); } catch (error) { if (error instanceof CliReportedError) return error; }
   return undefined;
@@ -71,7 +76,7 @@ export function cliEnvironment(kind: AdapterKind): NodeJS.ProcessEnv {
 export async function runCli(input: TurnInput): Promise<TurnResult> {
   if (!input.connection.executable) throw new Error('CLI не найден. Установите его и выполните вход.');
   const command = buildCliCommand(input);
-  const output = await runProcess(input.connection.executable, command.args, { cwd: input.cwd, signal: input.signal, stdin: command.stdin, env: cliEnvironment(input.connection.kind) })
+  const output = await runProcess(input.connection.executable, command.args, { cwd: input.cwd, signal: input.signal, stdin: command.stdin, env: cliEnvironment(input.connection.kind), ...(input.connection.kind === 'gemini-cli' ? { isComplete: geminiResultLine } : {}) })
     .catch((error: unknown) => { throw error instanceof ProcessExitError ? reportedFailure(input.connection.kind, error.output) ?? error : error; });
   const result = parseCliResult(input.connection.kind, output);
   return { ...result, sessionId: result.sessionId ?? input.sessionId };
