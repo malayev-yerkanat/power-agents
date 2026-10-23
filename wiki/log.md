@@ -8,6 +8,11 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-23 — One automatic retry for unreadable answers
+
+- Plan and answer parsing now throw `AnswerFormatError` for any rejected answer. The engine asks the same agent once more in the same session with the reason, logs `format_retry`, and counts the extra turn; a second rejection fails the turn. Most pauses in the 2026-10-23 live runs were such format errors. See [[Orchestration Engine]].
+- Verified: 146/146 Node tests, 81.58% line coverage, 35/35 Chromium tests, typecheck. Not yet exercised in a live run.
+
 ## 2026-10-23 — Parallel tasks with fact owners
 
 - Plans now prefer parallel tasks with a named owner for each shared fact. A live run produced six real messages, including answered questions from Gemini to Codex and Claude.

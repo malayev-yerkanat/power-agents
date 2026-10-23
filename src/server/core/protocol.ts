@@ -3,6 +3,12 @@ import type { AgentEnvelope, CreateRunInput, TeamPlan } from '../../shared/types
 import { parseJsonObject } from '../adapters/index.ts';
 
 export class InputError extends Error { readonly statusCode = 400; }
+/** The agent's answer could not be read or validated; asking the agent again may fix it. */
+export class AnswerFormatError extends Error {}
+function asAnswerFormat<T>(read: () => T): T {
+  try { return read(); }
+  catch (error) { throw error instanceof AnswerFormatError ? error : new AnswerFormatError(error instanceof Error ? error.message : String(error)); }
+}
 
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/);
 const text = (max: number) => z.string().trim().min(1).max(max);
@@ -23,6 +29,9 @@ const planSchema = z.object({
   tasks: z.array(z.object({ id, title: text(200), description: text(4000), assigneeId: id, dependsOn: z.array(id).max(12) })).min(1).max(12),
 });
 export function parsePlan(raw: string, members: string[]): TeamPlan {
+  return asAnswerFormat(() => readPlan(raw, members));
+}
+function readPlan(raw: string, members: string[]): TeamPlan {
   const plan = shaped(planSchema, parseJsonObject(raw));
   const ids = plan.tasks.map(t => t.id);
   if (new Set(ids).size !== ids.length) throw new Error('План содержит повторяющиеся задачи.');
@@ -71,6 +80,9 @@ function leadingObject(raw: string): { json: string; rest: string } | undefined 
   return undefined;
 }
 export function parseEnvelope(raw: string, memberIds: string[], senderId: string): AgentEnvelope {
+  return asAnswerFormat(() => readEnvelope(raw, memberIds, senderId));
+}
+function readEnvelope(raw: string, memberIds: string[], senderId: string): AgentEnvelope {
   let value: unknown;
   try { value = parseJsonObject(raw); }
   catch (error) {

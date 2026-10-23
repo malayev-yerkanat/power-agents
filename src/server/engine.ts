@@ -6,11 +6,21 @@ import { Store } from './store.ts';
 import { runTurn } from './adapters/index.ts';
 import { redactError } from './adapters/common.ts';
 import { demoRunner } from './core/demo.ts';
-import { InputError, validateInput, parseEnvelope, parsePlan } from './core/protocol.ts';
+import { AnswerFormatError, InputError, validateInput, parseEnvelope, parsePlan } from './core/protocol.ts';
 import { promptFor } from './core/prompts.ts';
 import { applyResult, type Job } from './core/results.ts';
 /** A task returning to work waits if its own question is still open. */
 const retry = (run: Run, task: TeamTask): TeamTask => ({ ...task, status: run.messages.some(m => m.request && m.fromId === task.assigneeId && m.taskId === task.id && m.status !== 'answered') ? 'waiting' : 'pending', error: undefined });
+/** Reads an agent's answer for its turn; every rejection is an AnswerFormatError so the turn can be retried. */
+function read(job: Job, text: string, snapshot: Run, memberId: string) {
+  const ids = snapshot.members.map(m => m.id);
+  if (job.purpose === 'plan') return { plan: parsePlan(text, ids), answer: undefined };
+  const parsed = parseEnvelope(text, ids, memberId);
+  // A reply keeps its answer even if it also asks something; the extra questions travel as notes.
+  const answer = job.purpose === 'reply' ? { ...parsed, messages: parsed.messages.map(m => ({ ...m, request: false })) } : parsed;
+  if (['review', 'synthesize'].includes(job.purpose) && answer.messages.length) throw new AnswerFormatError('На этапе итога и проверки верните результат без новых запросов.');
+  return { plan: undefined, answer };
+}
 interface Options { store: Store; connections: Connection[]; workspaceRoot: string; runner?: TurnRunner; demoRunner?: TurnRunner }
 export class Engine {
   private readonly options: Options;
@@ -144,19 +154,28 @@ export class Engine {
     const member = snapshot.members.find(m => m.id === job.memberId)!;
     const connection = this.options.connections.find(c => c.id === member.connectionId) ?? { id: 'demo', name: 'Демо', kind: 'demo' as const, available: true, detail: '' };
     const runner = snapshot.mode === 'demo' ? this.options.demoRunner ?? demoRunner : this.options.runner ?? runTurn;
-    const result = await runner({ runId: snapshot.id, member, connection, purpose: job.purpose, prompt: promptFor({ run: snapshot, ...job }), cwd: join(this.options.workspaceRoot, snapshot.id), sessionId: Object.hasOwn(snapshot.sessions, member.id) ? snapshot.sessions[member.id] : undefined, signal: controller.signal, onProgress: () => {} });
-    if (controller.signal.aborted || this.stopped || !['planning', 'running'].includes(this.get(snapshot.id).status)) return;
+    const input = { runId: snapshot.id, member, connection, purpose: job.purpose, prompt: promptFor({ run: snapshot, ...job }), cwd: join(this.options.workspaceRoot, snapshot.id), sessionId: Object.hasOwn(snapshot.sessions, member.id) ? snapshot.sessions[member.id] : undefined, signal: controller.signal, onProgress: () => {} };
+    const stale = () => controller.signal.aborted || this.stopped || !['planning', 'running'].includes(this.get(snapshot.id).status);
+    let result = await runner(input);
+    if (stale()) return;
     const current = this.get(snapshot.id);
     const userNotes = (run: Run) => run.messages.filter(m => m.fromId === 'user').length;
     if (['plan', 'synthesize', 'review'].includes(job.purpose) && userNotes(current) !== userNotes(snapshot)) {
       this.change(snapshot.id, run => ({ ...run, phase: job.purpose === 'plan' ? 'plan' : 'synthesize', sessions: result.sessionId ? { ...run.sessions, [member.id]: result.sessionId } : run.sessions }), 'superseded', 'Получены новые уточнения. Этап будет выполнен заново с актуальным контекстом.');
       return;
     }
-    const plan = job.purpose === 'plan' ? parsePlan(result.text, snapshot.members.map(m => m.id)) : undefined;
-    const parsed = job.purpose !== 'plan' ? parseEnvelope(result.text, snapshot.members.map(m => m.id), member.id) : undefined;
-    // A reply keeps its answer even if it also asks something; the extra questions travel as notes.
-    const answer = job.purpose === 'reply' && parsed ? { ...parsed, messages: parsed.messages.map(m => ({ ...m, request: false })) } : parsed;
-    if (['review', 'synthesize'].includes(job.purpose) && answer?.messages.length) throw new Error('На этапе итога и проверки верните результат без новых запросов.');
+    let reading: ReturnType<typeof read>;
+    try { reading = read(job, result.text, snapshot, member.id); }
+    catch (error) {
+      if (!(error instanceof AnswerFormatError)) throw error;
+      // One retry in the same session, with the reason, fixes most malformed answers without pausing the team.
+      const firstSession = result.sessionId;
+      this.change(snapshot.id, r => ({ ...r, turnCount: r.turnCount + 1, sessions: firstSession ? { ...r.sessions, [member.id]: firstSession } : r.sessions }), 'format_retry', `Ответ не принят, запрошен повтор: ${error.message}`.slice(0, 600), member.id);
+      result = await runner({ ...input, sessionId: firstSession ?? input.sessionId, prompt: input.prompt.replace('\nCONTEXT:\n', `\nТвой предыдущий ответ не принят: ${error.message} Верни заново полный ответ одним JSON-объектом строго по схеме, без текста до или после него.\nCONTEXT:\n`) });
+      if (stale()) return;
+      reading = read(job, result.text, snapshot, member.id);
+    }
+    const { plan, answer } = reading;
     this.change(snapshot.id, current => {
       const next = plan ? { ...current, plan, status: 'awaiting_approval' as const } : applyResult(current, job, answer!);
       return { ...next, sessions: result.sessionId ? { ...next.sessions, [member.id]: result.sessionId } : next.sessions };

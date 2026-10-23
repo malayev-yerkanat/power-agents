@@ -648,3 +648,63 @@ test('an answer with text after its JSON keeps that text instead of failing', ()
   assert.throws(() => parseEnvelope('{"summary":"x","status":"done","messages":[]} {"summary":"y"}', ['a', 'b'], 'a'), /некорректный JSON/);
   assert.throws(() => parseEnvelope('Intro {"summary":"x","status":"done","messages":[]}', ['a', 'b'], 'a'), /некорректный JSON/);
 });
+
+test('a badly formatted answer is retried once with the reason, then accepted', async () => {
+  const prompts: string[] = [];
+  let taskCalls = 0;
+  const runner: TurnRunner = async value => {
+    const { run } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run);
+    if (value.purpose === 'task') {
+      prompts.push(value.prompt);
+      if (++taskCalls === 1) return { text: 'Sure! Here is my work: not json', sessionId: 'first-try' };
+    }
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => app.engine.get(run.id).status === 'completed', 'completion after retry');
+    assert.equal(taskCalls, 2);
+    assert.match(prompts[1], /Твой предыдущий ответ не принят: Провайдер вернул некорректный JSON-объект/);
+    const retry = app.store.eventBatch(run.id, 0).find(event => event.type === 'format_retry');
+    assert.ok(retry && retry.actorId === 'a');
+    assert.equal(app.engine.get(run.id).tasks[0].turns, 1);
+  } finally { await app.clean(); }
+});
+
+test('a second badly formatted answer fails the task without a third call', async () => {
+  let taskCalls = 0;
+  const runner: TurnRunner = async value => {
+    const { run } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run);
+    if (value.purpose === 'task') { taskCalls++; return { text: '{"summary":"x","status":"maybe","messages":[]}' }; }
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => app.engine.get(run.id).status === 'paused', 'pause after second bad answer');
+    assert.equal(taskCalls, 2);
+    assert.match(app.engine.get(run.id).tasks[0].error!, /Agent a: Ответ агента не соответствует формату: status/);
+  } finally { await app.clean(); }
+});
+
+test('an invalid plan is retried once before asking the user', async () => {
+  let planCalls = 0;
+  const runner: TurnRunner = async value => {
+    const { run } = contextOf(value);
+    if (value.purpose === 'plan' && ++planCalls === 1) return plan(run, [{ ...defaultTasks[0], dependsOn: ['task-a'] }]);
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval', 'plan after retry');
+    assert.equal(planCalls, 2);
+  } finally { await app.clean(); }
+});

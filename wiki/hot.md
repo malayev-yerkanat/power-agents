@@ -11,11 +11,11 @@ tags: [context]
 
 ## Last Updated
 
-2026-10-23. Plans prefer parallel tasks with named owners for shared facts; agents now ask owners real questions. Replies wait until the owner has its own inputs. Gemini turns end at the first complete result line.
+2026-10-23. An unreadable agent answer is retried once automatically with the reason. Plans prefer parallel tasks with named fact owners; replies wait until the owner has its inputs. Gemini turns end at the first complete result line.
 
 ## Repository State
 
-All work through the review fixes is pushed to `main` (CI green). Parallel fact ownership is being committed on 2026-10-23. Local checks: 143/143 Node tests, 81.54% line coverage, 35/35 Chromium tests, typecheck.
+All work through the review fixes is pushed to `main` (CI green). Automatic format retry is being committed on 2026-10-23. Local checks: 146/146 Node tests, 81.58% line coverage, 35/35 Chromium tests, typecheck.
 
 ## Current System
 
