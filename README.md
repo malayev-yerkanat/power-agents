@@ -115,4 +115,4 @@ Tests use mocked providers and do not spend model quota. HTTP tests need permiss
 
 GitHub Actions runs type checking, tests with an enforced 80% overall line-coverage minimum, synthetic Chromium browser checks, the production build, and `npm audit --audit-level=high` for pull requests and pushes to `main`.
 
-Start with the [detailed prototype guide](docs/prototype.md) for behavior and operational details, then the [project wiki](wiki/index.md) for module and flow maps. The [platform design](docs/superpowers/specs/2026-10-07-agent-team-platform-design.md) describes broader intent; some of its features remain planned.
+The [roadmap](docs/roadmap.md) lists what is done against the design and the next milestones. Start with the [detailed prototype guide](docs/prototype.md) for behavior and operational details, then the [project wiki](wiki/index.md) for module and flow maps. The [platform design](docs/superpowers/specs/2026-10-07-agent-team-platform-design.md) describes broader intent; some of its features remain planned.

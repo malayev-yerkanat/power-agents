@@ -13,6 +13,10 @@ tags: [context]
 
 2026-10-23. Connection failures show their reason (for example a rejected OpenAI key). An unreadable agent answer is retried once automatically with the reason. Plans prefer parallel tasks with named fact owners; replies wait until the owner has its inputs. Gemini turns end at the first complete result line.
 
+## Direction
+
+[Roadmap](../docs/roadmap.md): M1 finishes the core loop (review rework, shared facts, safe resume), then M2 file/code output, M3 MCP team tools.
+
 ## Repository State
 
 All work through the review fixes is pushed to `main` (CI green). Connection failure reasons are being committed on 2026-10-23. Local checks: 147/147 Node tests, 81.52% line coverage, 35/35 Chromium tests, typecheck.
@@ -35,4 +39,4 @@ Drafts survive reload within one tab (`sessionStorage`). Fragment routes keep ru
 
 ## Scope Boundaries
 
-No server schema, provider execution, Telegram delivery, or SSE contract changed in this UI pass. Full-history search, archive/rename, Telegram delivery checks, named team presets, provider diagnostics, dark mode, new sprite production, and full screen-reader verification remain separate work.
+See the roadmap backlog. Archive/rename, Telegram delivery checks, dark mode, new sprites and full screen-reader verification also remain open.

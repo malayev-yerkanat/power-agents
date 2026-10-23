@@ -26,7 +26,7 @@ Optional [[Telegram Notifications]] pair one private chat and send brief alerts 
 - The current prototype has no universal MCP tool layer, browser attachments, or paid usage budget. The broader design describes some of these as future capabilities.
 - Automated tests use provider mocks. A live Codex CLI + Claude Code + Gemini Antigravity CLI run completed the full plan-to-review flow on 2026-10-22 (a 1,446-word document task, 12 turns, about 14 minutes). It found and led to fixes for hidden CLI error reasons, unnamed failing participants and leader plans that duplicated synthesis and review. OpenAI/Anthropic API connections and larger tasks remain unverified live.
 
-Canonical current behavior: [prototype guide](../docs/prototype.md), then live `src/` and `tests/`. Broader intent: [[Platform Design Source]].
+Canonical current behavior: [prototype guide](../docs/prototype.md), then live `src/` and `tests/`. Broader intent: [[Platform Design Source]]. Order of remaining work: [roadmap](../docs/roadmap.md) — M1 finishes the core loop (review rework, shared facts board, safe resume), M2 adds file and code output, M3 adds MCP team tools.
 
 ## Visual workspace
 

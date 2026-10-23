@@ -8,6 +8,11 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-23 — Roadmap
+
+- Added [roadmap](../docs/roadmap.md): status of the design's 12 acceptance criteria and three milestones. North star chosen by the user: finish the core loop first (M1: review rework, shared facts board, safe resume), then file and code output (M2), then MCP team tools (M3). Each milestone ends with a live three-provider run; small items wait in the backlog.
+- Documentation only.
+
 ## 2026-10-23 — Connection failures explain themselves
 
 - Model lists and API turns now say why a connection failed: a rejected key names the `.env` variable, and quota, missing-model, outage, no-connection and empty-list cases have their own messages. CLI failures show a sign-in hint without raw CLI output. Live check: the current invalid OpenAI key now reads "OpenAI отклонил ключ (HTTP 401)". See [[Provider Adapters]].
