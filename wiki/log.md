@@ -8,6 +8,11 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-23 — M1.1 review remarks reach task owners
+
+- Review answers may list `revisions` per task. On `changes_requested` those tasks reopen, owners receive the remark as a note, and synthesis repeats after their rework; unknown task IDs trigger the format retry. See [[Orchestration Engine]] and the [roadmap](../docs/roadmap.md).
+- Verified: 149/149 Node tests, 81.50% line coverage, 35/35 Chromium tests, typecheck. A live three-provider run completed cleanly, but its review passed on the first round, so live rework is still unobserved.
+
 ## 2026-10-23 — Roadmap
 
 - Added [roadmap](../docs/roadmap.md): status of the design's 12 acceptance criteria and three milestones. North star chosen by the user: finish the core loop first (M1: review rework, shared facts board, safe resume), then file and code output (M2), then MCP team tools (M3). Each milestone ends with a live three-provider run; small items wait in the backlog.

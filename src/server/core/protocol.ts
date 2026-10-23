@@ -58,6 +58,7 @@ const envelopeSchema = z.object({
   messages: z.array(z.object({ toId: id, body: text(12000), request: z.boolean(), replyTo: optional(id) })).max(8),
   artifact: optional(z.object({ title: text(200), body: text(80000) })),
   verdict: optional(z.enum(['pass', 'changes_requested'])),
+  revisions: optional(z.array(z.object({ taskId: id, remark: text(4000) })).max(12)),
 });
 /** Schema failures become one readable line instead of raw validator JSON. */
 function shaped<T>(schema: z.ZodType<T>, value: unknown): T {

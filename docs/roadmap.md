@@ -22,7 +22,7 @@ remains the source of intent; this roadmap orders the remaining work.
 | --- | --- | --- |
 | 1 | No main work before plan approval | Done |
 | 2 | Agents exchange material across providers without the user | Done; live run on 2026-10-23 |
-| 3 | A reviewer's remark reaches the author, who revises; the final cites the revision | Partial: the leader re-synthesizes, task owners never rework |
+| 3 | A reviewer's remark reaches the author, who revises; the final cites the revision | Done in code (M1.1, 2026-10-23); live acceptance pending |
 | 4 | Independent tasks run in parallel; dependent tasks wait | Done |
 | 5 | Messages to a busy participant are queued; delivery states are visible | Done |
 | 6 | A changed shared decision triggers rework of affected tasks | Missing: no shared decisions store |
@@ -37,7 +37,7 @@ remains the source of intent; this roadmap orders the remaining work.
 
 ### M1 — Finish the core loop (criteria 3, 6, 8)
 
-1. A reviewer's `changes_requested` remarks go to the owners of the affected tasks,
+1. Done in code on 2026-10-23: a reviewer's `changes_requested` remarks go to the owners of the affected tasks,
    who revise their work before the leader re-synthesizes.
 2. A shared facts board: owners publish values (prices, names, terms); other
    participants read them from context instead of asking repeatedly.

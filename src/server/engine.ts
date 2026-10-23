@@ -19,6 +19,7 @@ function read(job: Job, text: string, snapshot: Run, memberId: string) {
   // A reply keeps its answer even if it also asks something; the extra questions travel as notes.
   const answer = job.purpose === 'reply' ? { ...parsed, messages: parsed.messages.map(m => ({ ...m, request: false })) } : parsed;
   if (['review', 'synthesize'].includes(job.purpose) && answer.messages.length) throw new AnswerFormatError('На этапе итога и проверки верните результат без новых запросов.');
+  if (answer.revisions?.some(r => !snapshot.tasks.some(t => t.id === r.taskId))) throw new AnswerFormatError('Замечания проверки ссылаются на неизвестную задачу. Используй id задач из плана.');
   return { plan: undefined, answer };
 }
 interface Options { store: Store; connections: Connection[]; workspaceRoot: string; runner?: TurnRunner; demoRunner?: TurnRunner }

@@ -28,9 +28,14 @@ export function applyResult(run: Run, job: Job, answer: AgentEnvelope): Run {
   if (job.purpose === 'review') {
     if (!answer.verdict || !artifact) throw new Error('Проверяющий не вернул заключение и аргументы.');
     const reviewRound = run.reviewRound + 1;
+    const revisions = answer.verdict === 'changes_requested' ? answer.revisions ?? [] : [];
+    // Remarks on specific tasks go back to their owners; the leader re-synthesizes once those tasks are done again.
+    if (revisions.length) next = { ...next,
+      tasks: next.tasks.map(t => revisions.some(r => r.taskId === t.id) ? { ...t, status: 'pending' as const, error: undefined } : t),
+      messages: [...next.messages, ...revisions.map(r => ({ id: randomUUID(), fromId: job.memberId, toId: run.tasks.find(t => t.id === r.taskId)!.assigneeId, body: `Замечание проверки, раунд ${reviewRound}: ${r.remark}`, taskId: r.taskId, request: false, status: 'queued' as const, createdAt }))] };
     next = answer.verdict === 'pass'
       ? { ...next, reviewRound, phase: 'done', status: 'completed' }
-      : { ...next, reviewRound, phase: 'synthesize', ...(reviewRound >= 3 ? { status: 'paused' as const, error: 'После трёх проверок остались замечания. Уточните задачу перед продолжением.' } : {}) };
+      : { ...next, reviewRound, phase: revisions.length ? 'tasks' : 'synthesize', ...(reviewRound >= 3 ? { status: 'paused' as const, error: 'После трёх проверок остались замечания. Уточните задачу перед продолжением.' } : {}) };
   }
   return next;
 }

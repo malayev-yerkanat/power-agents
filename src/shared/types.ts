@@ -55,4 +55,6 @@ export interface AgentEnvelope {
   messages: { toId: string; body: string; request: boolean; replyTo?: string }[];
   artifact?: { title: string; body: string };
   verdict?: 'pass' | 'changes_requested';
+  /** Review only: the tasks whose owners must revise, with a concrete remark each. */
+  revisions?: { taskId: string; remark: string }[];
 }

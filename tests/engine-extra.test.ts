@@ -708,3 +708,65 @@ test('an invalid plan is retried once before asking the user', async () => {
     assert.equal(planCalls, 2);
   } finally { await app.clean(); }
 });
+
+test('review remarks go to the task owner, who revises before the leader re-synthesizes', async () => {
+  const calls: string[] = [];
+  const seen: { revisionPrompt?: string; resynthesis?: string[] } = {};
+  const tasks: TaskSpec[] = [
+    { id: 'task-a', title: 'Prices', description: 'Price table', assigneeId: 'b', dependsOn: [] },
+    { id: 'task-b', title: 'Recipe', description: 'Recipe', assigneeId: 'a', dependsOn: [] },
+  ];
+  const runner: TurnRunner = async value => {
+    const { run, taskId } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run, tasks);
+    calls.push(`${value.purpose}:${taskId ?? value.member.id}`);
+    if (value.purpose === 'task') {
+      const revising = run.reviewRound > 0;
+      if (revising && taskId === 'task-a') seen.revisionPrompt = value.prompt;
+      return envelope({ artifact: { title: taskId!, body: `${taskId} v${revising ? 2 : 1}` } });
+    }
+    if (value.purpose === 'synthesize') {
+      if (run.reviewRound > 0) seen.resynthesis = run.artifacts.filter(a => a.kind === 'work').map(a => a.body);
+      return envelope({ artifact: { title: 'Final', body: 'Final document' } });
+    }
+    if (value.purpose === 'review') return run.reviewRound === 0
+      ? envelope({ verdict: 'changes_requested', artifact: { title: 'Review', body: 'Prices are wrong' }, revisions: [{ taskId: 'task-a', remark: 'Use the 50% minimum markup' }] } as never)
+      : envelope({ verdict: 'pass', artifact: { title: 'Review', body: 'Fixed' } });
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => ['completed', 'paused'].includes(app.engine.get(run.id).status), 'finish');
+    const done = app.engine.get(run.id);
+    assert.equal(done.status, 'completed', done.error);
+    assert.deepEqual(calls.filter(call => call.startsWith('task:')).sort(), ['task:task-a', 'task:task-a', 'task:task-b']);
+    assert.ok(calls.indexOf('synthesize:a') < calls.lastIndexOf('task:task-a') && calls.lastIndexOf('task:task-a') < calls.lastIndexOf('synthesize:a'), calls.join(', '));
+    assert.match(seen.revisionPrompt!, /Use the 50% minimum markup/);
+    assert.deepEqual(seen.resynthesis, ['task-a v2', 'task-b v1']);
+    const note = done.messages.find(m => m.taskId === 'task-a' && m.toId === 'b' && m.fromId === 'b');
+    assert.ok(note && !note.request && /Use the 50% minimum markup/.test(note.body));
+  } finally { await app.clean(); }
+});
+
+test('review remarks for an unknown task are rejected and retried', async () => {
+  let reviews = 0;
+  const runner: TurnRunner = async value => {
+    const { run } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run);
+    if (value.purpose === 'review' && ++reviews === 1) {
+      return envelope({ verdict: 'changes_requested', artifact: { title: 'Review', body: 'Fix' }, revisions: [{ taskId: 'missing-task', remark: 'Fix it' }] } as never);
+    }
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => app.engine.get(run.id).status === 'completed', 'completion after review retry');
+    assert.equal(reviews, 2);
+  } finally { await app.clean(); }
+});
