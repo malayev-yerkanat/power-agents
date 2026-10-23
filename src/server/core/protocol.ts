@@ -23,7 +23,7 @@ const planSchema = z.object({
   tasks: z.array(z.object({ id, title: text(200), description: text(4000), assigneeId: id, dependsOn: z.array(id).max(12) })).min(1).max(12),
 });
 export function parsePlan(raw: string, members: string[]): TeamPlan {
-  const plan = planSchema.parse(parseJsonObject(raw));
+  const plan = shaped(planSchema, parseJsonObject(raw));
   const ids = plan.tasks.map(t => t.id);
   if (new Set(ids).size !== ids.length) throw new Error('План содержит повторяющиеся задачи.');
   if (new Set(plan.roles.map(r => r.memberId)).size !== members.length || plan.roles.length !== members.length || plan.roles.some(r => !members.includes(r.memberId))) throw new Error('План должен назначить роль каждому участнику.');
@@ -42,14 +42,45 @@ export function parsePlan(raw: string, members: string[]): TeamPlan {
   ids.forEach(taskId => visit(taskId, []));
   return plan;
 }
+/** Models often send null for an omitted optional field; treat it as absent. */
+const optional = <T extends z.ZodType>(schema: T) => schema.nullish().transform(value => value ?? undefined);
 const envelopeSchema = z.object({
   summary: text(12000), status: z.enum(['done', 'working', 'waiting']),
-  messages: z.array(z.object({ toId: id, body: text(12000), request: z.boolean(), replyTo: id.optional() })).max(8),
-  artifact: z.object({ title: text(200), body: text(80000) }).optional(),
-  verdict: z.enum(['pass', 'changes_requested']).optional(),
+  messages: z.array(z.object({ toId: id, body: text(12000), request: z.boolean(), replyTo: optional(id) })).max(8),
+  artifact: optional(z.object({ title: text(200), body: text(80000) })),
+  verdict: optional(z.enum(['pass', 'changes_requested'])),
 });
+/** Schema failures become one readable line instead of raw validator JSON. */
+function shaped<T>(schema: z.ZodType<T>, value: unknown): T {
+  const result = schema.safeParse(value);
+  if (result.success) return result.data;
+  throw new Error(`Ответ агента не соответствует формату: ${result.error.issues.slice(0, 3).map(issue => `${issue.path.join('.') || 'ответ'} — ${issue.message}`).join('; ')}.`);
+}
+/** Splits "{...} trailing prose" at the end of the first top-level object; undefined if raw does not start with one. */
+function leadingObject(raw: string): { json: string; rest: string } | undefined {
+  const text = raw.trim();
+  if (!text.startsWith('{')) return undefined;
+  let depth = 0, inString = false, escaped = false;
+  for (let index = 0; index < text.length; index++) {
+    const char = text[index];
+    if (inString) { if (escaped) escaped = false; else if (char === '\\') escaped = true; else if (char === '"') inString = false; continue; }
+    if (char === '"') inString = true;
+    else if (char === '{') depth++;
+    else if (char === '}' && --depth === 0) return { json: text.slice(0, index + 1), rest: text.slice(index + 1).trim() };
+  }
+  return undefined;
+}
 export function parseEnvelope(raw: string, memberIds: string[], senderId: string): AgentEnvelope {
-  const result = envelopeSchema.parse(parseJsonObject(raw));
+  let value: unknown;
+  try { value = parseJsonObject(raw); }
+  catch (error) {
+    // Agents sometimes put the details after their JSON; keep them in the summary rather than lose the answer.
+    const lead = leadingObject(raw);
+    if (!lead?.rest || lead.rest.startsWith('{')) throw error;
+    const parsed = parseJsonObject(lead.json) as Record<string, unknown>;
+    value = typeof parsed.summary === 'string' ? { ...parsed, summary: `${parsed.summary}\n\n${lead.rest}`.slice(0, 12000) } : parsed;
+  }
+  const result = shaped(envelopeSchema, value);
   if (result.messages.some(m => !memberIds.includes(m.toId) || m.toId === senderId)) throw new Error('Сообщение адресовано неизвестному участнику или самому себе.');
   return result;
 }

@@ -519,3 +519,132 @@ test('a failed reply marks the asking task and resume retries only the reply', a
     assert.equal(app.engine.get(run.id).tasks[0].turns, 2);
   } finally { await app.clean(); }
 });
+
+test('agent answers tolerate null optional fields and format errors read clearly', () => {
+  const answer = parseEnvelope(JSON.stringify({ summary: 'Done', status: 'done', messages: [{ toId: 'b', body: 'Note', request: false, replyTo: null }], artifact: null, verdict: null }), ['a', 'b'], 'a');
+  assert.equal(answer.artifact, undefined);
+  assert.equal(answer.verdict, undefined);
+  assert.equal(answer.messages[0].replyTo, undefined);
+  assert.throws(() => parseEnvelope(JSON.stringify({ summary: 'Done', status: 'done', messages: [], artifact: 'text' }), ['a', 'b'], 'a'),
+    (error: Error) => /Ответ агента не соответствует формату: artifact/.test(error.message) && !error.message.includes('"code"'));
+  assert.throws(() => parseEnvelope('Here is the result: {"summary"', ['a', 'b'], 'a'), /Начало ответа: «Here is the result: \{"summary"»/);
+});
+
+test('an owner waiting on its own inputs answers questions only after it has them', async () => {
+  const calls: string[] = [];
+  const tasks: TaskSpec[] = [
+    { id: 'recipe', title: 'Recipe', description: 'Owns grams', assigneeId: 'a', dependsOn: [] },
+    { id: 'price', title: 'Price', description: 'Owns price, needs grams', assigneeId: 'b', dependsOn: [] },
+    { id: 'promo', title: 'Promo', description: 'Needs price', assigneeId: 'c', dependsOn: [] },
+  ];
+  const asks: Record<string, string> = { price: 'a', promo: 'b' };
+  let ownerSawInput: boolean | undefined;
+  const runner: TurnRunner = async value => {
+    const { run, taskId } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run, tasks);
+    calls.push(`${value.purpose}:${value.member.id}`);
+    if (value.purpose === 'reply') {
+      if (value.member.id === 'b') ownerSawInput = run.messages.some(m => m.fromId === 'a' && m.toId === 'b' && m.body === 'Answer from a');
+      return envelope({ summary: `Answer from ${value.member.id}` });
+    }
+    if (value.purpose === 'task' && taskId && asks[taskId] && !run.messages.some(m => m.taskId === taskId && m.request)) {
+      return envelope({ status: 'waiting', messages: [{ toId: asks[taskId], body: 'Your fact?', request: true }] });
+    }
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create({ ...input, members: members.slice(0, 3) });
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => app.engine.get(run.id).status === 'completed', 'completion');
+    assert.ok(calls.indexOf('reply:b') > calls.indexOf('reply:a'), `b answered before getting its own input: ${calls.join(', ')}`);
+    assert.equal(ownerSawInput, true);
+  } finally { await app.clean(); }
+});
+
+test('two owners asking each other still get answers instead of blocking', async () => {
+  const tasks: TaskSpec[] = [
+    { id: 'left', title: 'Left', description: 'Needs right', assigneeId: 'a', dependsOn: [] },
+    { id: 'right', title: 'Right', description: 'Needs left', assigneeId: 'b', dependsOn: [] },
+  ];
+  const runner: TurnRunner = async value => {
+    const { run, taskId } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run, tasks);
+    if (value.purpose === 'reply') return envelope({ summary: 'Provisional answer' });
+    if (value.purpose === 'task' && !run.messages.some(m => m.taskId === taskId && m.request)) {
+      return envelope({ status: 'waiting', messages: [{ toId: value.member.id === 'a' ? 'b' : 'a', body: 'Your fact?', request: true }] });
+    }
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => ['completed', 'paused'].includes(app.engine.get(run.id).status), 'finish');
+    assert.equal(app.engine.get(run.id).error, undefined);
+    assert.equal(app.engine.get(run.id).status, 'completed');
+  } finally { await app.clean(); }
+});
+
+test('a reply that also asks something keeps its answer and sends the question as a note', async () => {
+  const runner: TurnRunner = async value => {
+    const { run, taskId } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run);
+    if (value.purpose === 'reply') return envelope({ summary: 'Use three sections', messages: [{ toId: 'a', body: 'Which audience?', request: true }] });
+    if (value.purpose === 'task' && !run.messages.some(m => m.taskId === taskId && m.request)) {
+      return envelope({ status: 'waiting', messages: [{ toId: 'b', body: 'Which sections?', request: true }] });
+    }
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => ['completed', 'paused'].includes(app.engine.get(run.id).status), 'finish');
+    const done = app.engine.get(run.id);
+    assert.equal(done.error, undefined);
+    assert.ok(done.messages.some(m => m.fromId === 'b' && m.body === 'Use three sections'));
+    assert.ok(done.messages.some(m => m.fromId === 'b' && m.body === 'Which audience?' && !m.request));
+  } finally { await app.clean(); }
+});
+
+test('an owner whose own question failed does not answer others with a guess', async () => {
+  const calls: string[] = [];
+  const tasks: TaskSpec[] = [
+    { id: 'price', title: 'Price', description: 'Needs grams from b', assigneeId: 'a', dependsOn: [] },
+    { id: 'recipe', title: 'Recipe', description: 'Owns grams', assigneeId: 'b', dependsOn: [] },
+    { id: 'promo', title: 'Promo', description: 'Needs price from a', assigneeId: 'c', dependsOn: [] },
+  ];
+  const asks: Record<string, string> = { price: 'b', promo: 'a' };
+  const runner: TurnRunner = async value => {
+    const { run, taskId } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run, tasks);
+    calls.push(`${value.purpose}:${value.member.id}`);
+    if (value.purpose === 'reply' && value.member.id === 'b') throw new Error('Quota exceeded');
+    if (value.purpose === 'reply') return envelope({ summary: 'Guess' });
+    if (value.purpose === 'task' && taskId && asks[taskId] && !run.messages.some(m => m.taskId === taskId && m.request)) {
+      return envelope({ status: 'waiting', messages: [{ toId: asks[taskId], body: 'Your fact?', request: true }] });
+    }
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create({ ...input, members: members.slice(0, 3) });
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => app.engine.get(run.id).status === 'paused', 'pause');
+    assert.ok(!calls.includes('reply:a'), `a answered while its own question was unanswered: ${calls.join(', ')}`);
+    assert.match(app.engine.get(run.id).error!, /Price/);
+  } finally { await app.clean(); }
+});
+
+test('an answer with text after its JSON keeps that text instead of failing', () => {
+  const raw = '{"summary":"Prices fixed.","status":"done","messages":[],"artifact":null,"verdict":null}\n\nPrice 1 200 ₸; second drink 960 ₸.';
+  const answer = parseEnvelope(raw, ['a', 'b'], 'a');
+  assert.equal(answer.summary, 'Prices fixed.\n\nPrice 1 200 ₸; second drink 960 ₸.');
+  assert.throws(() => parseEnvelope('{"summary":"x","status":"done","messages":[]} {"summary":"y"}', ['a', 'b'], 'a'), /некорректный JSON/);
+  assert.throws(() => parseEnvelope('Intro {"summary":"x","status":"done","messages":[]}', ['a', 'b'], 'a'), /некорректный JSON/);
+});

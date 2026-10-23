@@ -100,8 +100,10 @@ export class Engine {
     const busy = (memberId: string) => [...this.active.values()].some(a => a.runId === run.id && a.memberId === memberId);
     if (run.phase === 'plan') { if (!busy(run.leaderId)) this.launch(run, { memberId: run.leaderId, purpose: 'plan' }); return; }
     if (run.phase === 'tasks') {
+      // An owner still waiting on its own answers would reply with guesses, so its replies wait too.
+      const awaitingInputs = (memberId: string) => this.get(run.id).messages.some(m => m.request && m.fromId === memberId && m.status !== 'answered');
       for (const request of run.messages.filter(m => m.request && m.status === 'queued')) {
-        if (!busy(request.toId) && this.active.size < 3) this.launch(this.get(run.id), { memberId: request.toId, purpose: 'reply', requestId: request.id });
+        if (!busy(request.toId) && this.active.size < 3 && !awaitingInputs(request.toId)) this.launch(this.get(run.id), { memberId: request.toId, purpose: 'reply', requestId: request.id });
       }
       for (const task of this.get(run.id).tasks) {
         if (task.status !== 'pending' || busy(task.assigneeId) || this.active.size >= 3) continue;
@@ -111,6 +113,9 @@ export class Engine {
       }
       if ([...this.active.values()].some(a => a.runId === run.id)) return;
       const latest = this.get(run.id);
+      // Owners asking each other would wait forever; with nothing else running or failed, the oldest held question goes through.
+      const held = !latest.tasks.some(t => t.status === 'failed') && latest.messages.find(m => m.request && m.status === 'queued');
+      if (held) { this.launch(latest, { memberId: held.toId, purpose: 'reply', requestId: held.id }); return; }
       if (latest.tasks.every(t => t.status === 'completed') && !latest.messages.some(m => m.request && m.status !== 'answered')) {
         const next = this.change(run.id, r => ({ ...r, phase: 'synthesize' }), 'synthesis', 'Руководитель собирает итог команды.');
         this.launch(next, { memberId: next.leaderId, purpose: 'synthesize' });
@@ -148,8 +153,9 @@ export class Engine {
       return;
     }
     const plan = job.purpose === 'plan' ? parsePlan(result.text, snapshot.members.map(m => m.id)) : undefined;
-    const answer = job.purpose !== 'plan' ? parseEnvelope(result.text, snapshot.members.map(m => m.id), member.id) : undefined;
-    if (job.purpose === 'reply' && answer?.messages.length) throw new Error('Ответ на вопрос не должен создавать новые запросы.');
+    const parsed = job.purpose !== 'plan' ? parseEnvelope(result.text, snapshot.members.map(m => m.id), member.id) : undefined;
+    // A reply keeps its answer even if it also asks something; the extra questions travel as notes.
+    const answer = job.purpose === 'reply' && parsed ? { ...parsed, messages: parsed.messages.map(m => ({ ...m, request: false })) } : parsed;
     if (['review', 'synthesize'].includes(job.purpose) && answer?.messages.length) throw new Error('На этапе итога и проверки верните результат без новых запросов.');
     this.change(snapshot.id, current => {
       const next = plan ? { ...current, plan, status: 'awaiting_approval' as const } : applyResult(current, job, answer!);

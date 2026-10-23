@@ -11,7 +11,7 @@ export function parseJsonObject(text: string): unknown {
   const trimmed = text.trim();
   const fence = /^```(?:json)?\s*\n([\s\S]*?)\n```$/i.exec(trimmed);
   try { return record(JSON.parse(fence ? fence[1] : trimmed)); }
-  catch { throw new Error('Провайдер вернул некорректный JSON-объект.'); }
+  catch { throw new Error(`Провайдер вернул некорректный JSON-объект. Начало ответа: «${trimmed.slice(0, 160)}»`); }
 }
 
 export function requiredText(value: unknown): string {

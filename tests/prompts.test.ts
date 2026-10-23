@@ -35,3 +35,8 @@ test('the plan prompt tells the leader that synthesis and review are automatic',
   assert.match(plan, /Не добавляй задачи на сборку итога, общую проверку или финальную доработку/);
   assert.match(plan, /платформа сама поручит руководителю synthesize, а другому участнику review/);
 });
+test('prompts ask for parallel tasks with owned shared facts confirmed by question', () => {
+  assert.match(promptFor({ run, memberId: 'a', purpose: 'plan' }), /Предпочитай параллельные задачи.*какой участник владеет каким фактом/);
+  assert.match(promptFor({ run, memberId: 'a', purpose: 'task' }), /общий факт, которым владеет коллега по параллельной задаче, не придумывай его: спроси владельца/);
+  assert.match(promptFor({ run, memberId: 'a', purpose: 'reply' }), /назови точное значение и придерживайся его в своей задаче/);
+});

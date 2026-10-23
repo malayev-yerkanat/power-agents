@@ -8,6 +8,12 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-23 — Parallel tasks with fact owners
+
+- Plans now prefer parallel tasks with a named owner for each shared fact. A live run produced six real messages, including answered questions from Gemini to Codex and Claude.
+- Fixed from those runs: `null` optional fields no longer fail a turn; schema and JSON errors are readable and show the start of a bad answer; a reply is held while its owner has its own unanswered question, with a fallback for mutual waits that never fires after a failure; a reply that also asks something keeps its answer and sends the question as a note; text after a complete JSON answer is kept in its summary. See [[Orchestration Engine]].
+- Verified: 143/143 Node tests, 81.54% line coverage, 35/35 Chromium tests, typecheck.
+
 ## 2026-10-23 — Messaging experiment and Gemini hang fix
 
 - Live run on a task with shared recipe, price and promo facts: the leader chained the three tasks, and agents again sent zero peer messages; consistency came from dependencies.

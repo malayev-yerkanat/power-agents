@@ -11,11 +11,11 @@ tags: [context]
 
 ## Last Updated
 
-2026-10-23. Gemini turns now end at the first complete result line, because Antigravity can stay open after answering when started from the service. A messaging experiment again produced no peer messages: the leader chained dependent tasks instead.
+2026-10-23. Plans prefer parallel tasks with named owners for shared facts; agents now ask owners real questions. Replies wait until the owner has its own inputs. Gemini turns end at the first complete result line.
 
 ## Repository State
 
-All work through the review fixes is pushed to `main` (CI green). The Gemini fix is being committed on 2026-10-23. Local checks: 136/136 Node tests, 81.39% line coverage, 35/35 Chromium tests, typecheck.
+All work through the review fixes is pushed to `main` (CI green). Parallel fact ownership is being committed on 2026-10-23. Local checks: 143/143 Node tests, 81.54% line coverage, 35/35 Chromium tests, typecheck.
 
 ## Current System
 
