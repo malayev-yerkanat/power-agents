@@ -11,11 +11,11 @@ tags: [context]
 
 ## Last Updated
 
-2026-10-23. An unreadable agent answer is retried once automatically with the reason. Plans prefer parallel tasks with named fact owners; replies wait until the owner has its inputs. Gemini turns end at the first complete result line.
+2026-10-23. Connection failures show their reason (for example a rejected OpenAI key). An unreadable agent answer is retried once automatically with the reason. Plans prefer parallel tasks with named fact owners; replies wait until the owner has its inputs. Gemini turns end at the first complete result line.
 
 ## Repository State
 
-All work through the review fixes is pushed to `main` (CI green). Automatic format retry is being committed on 2026-10-23. Local checks: 146/146 Node tests, 81.58% line coverage, 35/35 Chromium tests, typecheck.
+All work through the review fixes is pushed to `main` (CI green). Connection failure reasons are being committed on 2026-10-23. Local checks: 147/147 Node tests, 81.52% line coverage, 35/35 Chromium tests, typecheck.
 
 ## Current System
 

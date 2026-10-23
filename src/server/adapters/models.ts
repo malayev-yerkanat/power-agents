@@ -1,5 +1,6 @@
 import type { Connection, ModelCatalog, ModelOption } from '../../shared/types.js';
 import { cliEnvironment } from './cli.js';
+import { providerRejection } from './common.js';
 import { runProcess } from './process.js';
 
 const timeoutMs = 15_000;
@@ -7,6 +8,9 @@ const cacheMs = 5 * 60_000;
 const maxBytes = 2 * 1024 * 1024;
 const maxModels = 500;
 const modelIdPattern = /^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,119}$/;
+
+/** A failure whose message is safe and useful to show beside the model picker. */
+class CatalogError extends Error {}
 
 interface Dependencies {
   runCommand?: typeof runProcess;
@@ -89,8 +93,10 @@ async function apiModels(connection: Connection, fetcher: typeof fetch): Promise
   let all: ModelOption[] = [];
   for (let page = 0; page < 10; page += 1) {
     const url = cursor ? `${base}?after_id=${encodeURIComponent(cursor)}&limit=100` : `${base}${openai ? '' : '?limit=100'}`;
-    const response = await fetcher(url, { headers, signal });
-    if (!response.ok) throw new Error('Provider rejected model discovery');
+    const response = await fetcher(url, { headers, signal }).catch(() => {
+      throw new CatalogError(`Нет связи с ${openai ? 'OpenAI' : 'Anthropic'}. Проверьте интернет и повторите попытку.`);
+    });
+    if (!response.ok) throw new CatalogError(providerRejection(openai ? 'openai' : 'anthropic', response.status));
     const data = await boundedJson(response);
     const models = parseApiModels(data);
     all = uniqueModels([...all, ...models]);
@@ -125,10 +131,14 @@ async function discover(connection: Connection, dependencies: Dependencies): Pro
     } else if (connection.kind === 'openai-api' || connection.kind === 'anthropic-api') {
       models = await apiModels(connection, dependencies.fetcher ?? fetch);
     } else throw new Error('Unsupported provider');
-    if (!models.length) throw new Error('Empty model list');
+    if (!models.length) throw new CatalogError('Провайдер вернул пустой список моделей.');
     return { ...base, models, status: 'ready', note: '' };
-  } catch {
-    return { ...base, models: [], status: 'error', note: 'Не удалось загрузить модели. Проверьте подключение и повторите попытку.' };
+  } catch (error) {
+    // CLI output may contain account details, so CLI failures get a fixed hint rather than their raw text.
+    const note = error instanceof CatalogError ? error.message
+      : connection.kind.endsWith('-cli') ? `${connection.name} не вернул список моделей. Проверьте вход в CLI и повторите попытку.`
+        : 'Не удалось загрузить модели. Проверьте подключение и повторите попытку.';
+    return { ...base, models: [], status: 'error', note };
   }
 }
 

@@ -22,6 +22,8 @@ The Gemini adapter uses Antigravity CLI's `stream-json` input through stdin, so 
 
 `cliEnvironment` forwards only each CLI's own sign-in variables (`CODEX_HOME`, `CLAUDE_CONFIG_DIR`, `CLAUDE_CODE_OAUTH_TOKEN`, and the Gemini/Google credentials). `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` stay with the API adapters, so configuring an API connection never moves Codex or Claude Code participants onto paid API billing.
 
+`providerRejection` in `common.ts` turns API HTTP failures into plain reasons (rejected key with the `.env` variable, rate limit or quota, missing model, provider outage). The model catalog shows those reasons, a no-connection or empty-list message, or a fixed "check the CLI sign-in" hint for CLIs, whose raw output may contain account details; API turn errors use the same wording.
+
 `runProcess` accepts an `isComplete` check. Antigravity CLI started from the LaunchAgent can print its final `result` line and keep running, so the Gemini adapter ends the turn at the first complete result line and stops the process group instead of waiting for the 5-minute timeout.
 
 When a CLI exits non-zero, `runProcess` keeps its stdout in a `ProcessExitError`, and `runCli` reports the CLI's own error from that output (for example Claude Code's "Not logged in") instead of a generic "no details".

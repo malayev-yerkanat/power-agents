@@ -96,7 +96,8 @@ test('API parses text blocks, sends explicit model, and redacts provider errors'
     assert.deepEqual(await runTurn(input('anthropic-api')), { text: 'anthropic answer' });
     t.mock.restoreAll();
     t.mock.method(globalThis, 'fetch', async () => Response.json({ error: { message: 'bad secret-openai-key secret-anthropic-key' } }, { status: 401 }));
-    await assert.rejects(runTurn(input()), (error: Error) => error.message.includes('[REDACTED]') && !error.message.includes('secret-'));
+    await assert.rejects(runTurn(input()), (error: Error) => error.message.includes('[REDACTED]') && !error.message.includes('secret-')
+      && error.message.startsWith('OpenAI отклонил ключ (HTTP 401). Проверьте OPENAI_API_KEY в .env'));
     t.mock.restoreAll();
     t.mock.method(globalThis, 'fetch', async () => Response.json({ status: 'incomplete', output: [{ type: 'message', content: [{ type: 'output_text', text: 'partial' }] }] }));
     await assert.rejects(runTurn(input()), /incomplete/);

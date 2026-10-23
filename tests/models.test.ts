@@ -121,3 +121,25 @@ test('Anthropic discovery follows bounded model-list pages', async () => {
     else process.env.ANTHROPIC_API_KEY = before;
   }
 });
+
+test('model list failures explain the reason without exposing secrets', async () => {
+  const saved = { OPENAI_API_KEY: process.env.OPENAI_API_KEY, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY };
+  Object.assign(process.env, { OPENAI_API_KEY: 'sk-test-secret', ANTHROPIC_API_KEY: 'ant-test-secret' });
+  const openai: Connection = { ...codex, id: 'openai-api', kind: 'openai-api' };
+  const anthropic: Connection = { ...codex, id: 'anthropic-api', kind: 'anthropic-api' };
+  const respond = (response: () => Promise<Response>) => createModelCatalogLoader({ fetcher: response });
+  try {
+    const rejected = await respond(async () => Response.json({ error: { message: 'Incorrect API key sk-test-secret' } }, { status: 401 }))(openai);
+    assert.equal(rejected.status, 'error');
+    assert.match(rejected.note, /OpenAI отклонил ключ \(HTTP 401\)\. Проверьте OPENAI_API_KEY в \.env/);
+    assert.doesNotMatch(rejected.note, /secret/);
+    assert.match((await respond(async () => new Response('{}', { status: 429 }))(anthropic)).note, /Anthropic: превышен лимит запросов или исчерпана квота \(HTTP 429\)/);
+    assert.match((await respond(async () => { throw new TypeError('fetch failed'); })(openai)).note, /Нет связи с OpenAI/);
+    assert.match((await respond(async () => Response.json({ data: [] }))(openai)).note, /пустой список моделей/);
+    const cli = await createModelCatalogLoader({ runCommand: async () => { throw new Error('token abc123'); } })(codex);
+    assert.match(cli.note, /Codex CLI не вернул список моделей\. Проверьте вход в CLI/);
+    assert.doesNotMatch(cli.note, /abc123/);
+  } finally {
+    for (const [key, value] of Object.entries(saved)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
+  }
+});

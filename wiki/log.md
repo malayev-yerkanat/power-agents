@@ -8,6 +8,11 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-23 — Connection failures explain themselves
+
+- Model lists and API turns now say why a connection failed: a rejected key names the `.env` variable, and quota, missing-model, outage, no-connection and empty-list cases have their own messages. CLI failures show a sign-in hint without raw CLI output. Live check: the current invalid OpenAI key now reads "OpenAI отклонил ключ (HTTP 401)". See [[Provider Adapters]].
+- Verified: 147/147 Node tests, 81.52% line coverage, 35/35 Chromium tests, typecheck.
+
 ## 2026-10-23 — One automatic retry for unreadable answers
 
 - Plan and answer parsing now throw `AnswerFormatError` for any rejected answer. The engine asks the same agent once more in the same session with the reason, logs `format_retry`, and counts the extra turn; a second rejection fails the turn. Most pauses in the 2026-10-23 live runs were such format errors. See [[Orchestration Engine]].

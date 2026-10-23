@@ -23,6 +23,16 @@ export function optionalText(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined;
 }
 
+/** A plain-language reason for an API provider's HTTP failure, naming what to check. */
+export function providerRejection(provider: 'openai' | 'anthropic', status: number): string {
+  const name = provider === 'openai' ? 'OpenAI' : 'Anthropic';
+  if (status === 401 || status === 403) return `${name} отклонил ключ (HTTP ${status}). Проверьте ${provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY'} в .env и перезапустите приложение.`;
+  if (status === 429) return `${name}: превышен лимит запросов или исчерпана квота (HTTP 429).`;
+  if (status === 404) return `${name}: модель или адрес не найдены (HTTP 404).`;
+  if (status >= 500) return `${name} временно недоступен (HTTP ${status}). Повторите позже.`;
+  return `${name} вернул ошибку HTTP ${status}.`;
+}
+
 export function redactError(value: unknown): string {
   let message = value instanceof Error ? value.message : String(value);
   for (const [name, secret] of Object.entries(process.env)) {

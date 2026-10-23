@@ -1,5 +1,5 @@
 import type { TurnInput, TurnResult } from '../../shared/types.js';
-import { MAX_OUTPUT_BYTES, TURN_TIMEOUT_MS, optionalText, record, requiredText } from './common.js';
+import { MAX_OUTPUT_BYTES, TURN_TIMEOUT_MS, optionalText, providerRejection, record, requiredText } from './common.js';
 
 async function boundedJson(response: Response): Promise<Record<string, unknown>> {
   if (!response.body) throw new Error('Пустой HTTP-ответ провайдера.');
@@ -50,7 +50,7 @@ export async function runApi(input: TurnInput): Promise<TurnResult> {
   const data = await boundedJson(response);
   if (!response.ok || data.error) {
     const error = typeof data.error === 'object' && data.error ? record(data.error) : {};
-    throw new Error(`API HTTP ${response.status}: ${optionalText(error.message) ?? 'Проверьте ключ, модель и лимиты провайдера.'}`);
+    throw new Error(`${providerRejection(openai ? 'openai' : 'anthropic', response.status)} ${optionalText(error.message) ?? ''}`.trim());
   }
   const text = responseText(data, openai);
   return openai ? { text, sessionId: optionalText(data.id) } : { text };
