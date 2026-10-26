@@ -8,6 +8,10 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-26 — Gemini terminal commands
+
+- Live acceptance runs `90eb09d1` (files) and `44eb9911` (code) paused because Gemini tried a terminal command, which its headless mode denies, leaving an empty answer. In the code run Claude's change still merged and `npm test` passed on the result branch, with the user's branch untouched. Writable turns are now told not to use terminal commands, any denied action (`DeniedActionError`) gets one retry with that hint, and the error names the action. agy offers no per-run allow rule short of `--dangerously-skip-permissions`, which stays off.
+
 ## 2026-10-26 — M2 step 5: code-run UI, docs, denied writes
 
 - The composer has an optional "Изменить код в git-проекте" section (repo path, check command); the run page shows the result branch, conflicts, the check result and the diff stat. Docs: new "Файлы и код" section in the prototype guide.

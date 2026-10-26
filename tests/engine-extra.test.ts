@@ -968,6 +968,7 @@ test('task turns write files in their own folder; later turns can read them and 
     assert.deepEqual(edit.readDirs, [draft.cwd]);
     assert.match(edit.prompt, /Твоя рабочая папка/);
     assert.match(edit.prompt, /обязательно сохрани их на диск в этой папке своими инструментами записи: текст в ответе файлом не считается/);
+    assert.match(edit.prompt, /не запускай команды терминала: читай и меняй файлы инструментами работы с файлами/);
     assert.ok(!combine.writable && !review.writable);
     assert.deepEqual(combine.readDirs, [draft.cwd, edit.cwd]);
     const work = app.engine.get(run.id).artifacts.find(a => a.kind === 'work' && a.taskId === 'draft')!;
@@ -1005,7 +1006,7 @@ test('a CLI conversation is resumed only from the folder it started in', async (
 });
 
 test('a write outside the task folder is retried once with a hint about the folder', async () => {
-  const { WriteDeniedError } = await import('../src/server/adapters/common.ts');
+  const { DeniedActionError } = await import('../src/server/adapters/common.ts');
   const prompts: string[] = [];
   const tasks: TaskSpec[] = [{ id: 'promo', title: 'Promo', description: 'Write promo.md', assigneeId: 'a', dependsOn: [] }];
   const runner: TurnRunner = async value => {
@@ -1013,7 +1014,7 @@ test('a write outside the task folder is retried once with a hint about the fold
     if (value.purpose === 'plan') return plan(run, tasks);
     if (taskId === 'promo') {
       prompts.push(value.prompt);
-      if (prompts.length === 1) throw new WriteDeniedError('write_file /elsewhere/promo.md');
+      if (prompts.length === 1) throw new DeniedActionError('write_file /elsewhere/promo.md');
     }
     return successfulRunner(value);
   };
@@ -1025,6 +1026,6 @@ test('a write outside the task folder is retried once with a hint about the fold
     await until(() => ['completed', 'paused'].includes(app.engine.get(run.id).status), 'finish');
     assert.equal(app.engine.get(run.id).status, 'completed', app.engine.get(run.id).error);
     assert.equal(prompts.length, 2);
-    assert.match(prompts[1], /вне рабочей папки запрещена \(write_file \/elsewhere\/promo\.md\)\. Сохраняй файлы только в .*tasks[/\\]promo/);
+    assert.match(prompts[1], /CLI запретил действие: write_file \/elsewhere\/promo\.md\. Команды терминала недоступны: .*сохраняй их только в .*tasks[/\\]promo/);
   } finally { await app.clean(); }
 });

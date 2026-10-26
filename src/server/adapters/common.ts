@@ -1,8 +1,10 @@
 import type { TurnPurpose } from '../../shared/types.js';
 export const MAX_OUTPUT_BYTES = 2 * 1024 * 1024;
 export const TURN_TIMEOUT_MS = 5 * 60 * 1000;
-/** The CLI refused a write outside the task folder; the turn may be retried with a hint. */
-export class WriteDeniedError extends Error {}
+/** The CLI refused an action (a write outside the folder, a terminal command); the turn may be retried with a hint. */
+export class DeniedActionError extends Error {
+  constructor(detail: string) { super(`CLI запретил действие: ${detail}`); }
+}
 /** Combining and reviewing read every result, so they get the design's 15-minute ceiling. */
 export const turnTimeoutMs = (purpose: TurnPurpose) => purpose === 'synthesize' || purpose === 'review' ? 15 * 60 * 1000 : TURN_TIMEOUT_MS;
 

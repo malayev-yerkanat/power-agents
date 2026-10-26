@@ -11,7 +11,7 @@ tags: [context]
 
 ## Last Updated
 
-2026-10-23. M1 accepted live 2026-10-26: review rework, facts board (changed facts reopen tasks that used them), safe resume. Combine/review calls get 15 minutes. M2 in code: task files and git worktree code runs; live acceptance pending. Connection failures show their reason (for example a rejected OpenAI key). Unreadable answers get one automatic retry. Plans prefer parallel tasks with fact owners. Gemini turns end at the first result line.
+2026-10-23. M1 accepted live 2026-10-26: review rework, facts board (changed facts reopen tasks that used them), safe resume. Combine/review calls get 15 minutes. M2 in code: task files and git worktree code runs; live acceptance pending. Connection failures show their reason; unreadable answers get one retry.
 
 ## Direction
 

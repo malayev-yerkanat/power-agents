@@ -279,10 +279,12 @@ test('writable turns edit only inside their folder; readable folders are added; 
 });
 
 test('a Gemini write outside its folder is reported with the denied path', async () => {
-  const { WriteDeniedError } = await import('../src/server/adapters/common.js');
+  const { DeniedActionError } = await import('../src/server/adapters/common.js');
   const output = [
     JSON.stringify({ event: 'step_update', step_update: { state: 'ERROR', step_type: 'tool', tool_name: 'write_file', tool_info: { name: 'write_file', parameters: { Path: '/work/run/promo.md' } }, error: { type: 'TOOL_ERROR', message: 'permission check failed' } } }),
     JSON.stringify({ event: 'result', result: { conversation_id: 'c1', status: 'SUCCESS', response: '', denied_actions: [{ action: 'write_file', display_name: 'WriteFile' }] } }),
   ].join('\n');
-  assert.throws(() => parseCliResult('gemini-cli', output), (error: Error) => error instanceof WriteDeniedError && /write_file/.test(error.message) && /\/work\/run\/promo\.md/.test(error.message));
+  assert.throws(() => parseCliResult('gemini-cli', output), (error: Error) => error instanceof DeniedActionError && /write_file/.test(error.message) && /\/work\/run\/promo\.md/.test(error.message));
+  const command = JSON.stringify({ event: 'result', result: { conversation_id: 'c1', status: 'SUCCESS', response: '', denied_actions: [{ action: 'command' }] } });
+  assert.throws(() => parseCliResult('gemini-cli', command), /^Error: CLI запретил действие: command$|CLI запретил действие: command/);
 });

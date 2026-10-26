@@ -5,7 +5,7 @@ import type { Connection, InFlightCall, Run, TeamTask, TurnPurpose, TurnRunner }
 import { abortMerge, commitTask, conflictsResolved, createResultWorktree, createTaskWorktree, diffStat, finishMerge, mergeTask, removeWorktrees, runCheck } from './workspace.ts';
 import { Store } from './store.ts';
 import { runTurn } from './adapters/index.ts';
-import { WriteDeniedError, redactError } from './adapters/common.ts';
+import { DeniedActionError, redactError } from './adapters/common.ts';
 import { demoRunner } from './core/demo.ts';
 import { AnswerFormatError, InputError, validateInput, parseEnvelope, parsePlan } from './core/protocol.ts';
 import { promptFor } from './core/prompts.ts';
@@ -208,10 +208,10 @@ export class Engine {
     const input = { runId: snapshot.id, member, connection, purpose: job.purpose, prompt: promptFor({ run: snapshot, ...job, folders }), cwd: folders.own ?? runDir, writable: !!folders.own, readDirs: folders.read, sessionId: Object.hasOwn(snapshot.sessions, sessionKey) ? snapshot.sessions[sessionKey] : undefined, signal: controller.signal, onProgress: () => {} };
     const stale = () => controller.signal.aborted || this.stopped || !['planning', 'running'].includes(this.get(snapshot.id).status);
     let result = await runner(input).catch(async (error: unknown) => {
-      if (!(error instanceof WriteDeniedError) || !folders.own || stale()) throw error;
-      // An agent that tried to write elsewhere usually succeeds once told where its folder is.
-      this.change(snapshot.id, r => ({ ...r, turnCount: r.turnCount + 1 }), 'format_retry', `Запись вне рабочей папки запрещена, запрошен повтор: ${error.message}`.slice(0, 600), member.id);
-      return runner({ ...input, prompt: input.prompt.replace('\nCONTEXT:\n', `\nПредыдущая попытка записи вне рабочей папки запрещена (${error.message}). Сохраняй файлы только в ${folders.own}.\nCONTEXT:\n`) });
+      if (!(error instanceof DeniedActionError) || !folders.own || stale()) throw error;
+      // An agent that tried a terminal command or a write elsewhere usually succeeds once told what it may do.
+      this.change(snapshot.id, r => ({ ...r, turnCount: r.turnCount + 1 }), 'format_retry', `Действие запрещено, запрошен повтор. ${error.message}`.slice(0, 600), member.id);
+      return runner({ ...input, prompt: input.prompt.replace('\nCONTEXT:\n', `\nПредыдущая попытка не выполнена: ${error.message}. Команды терминала недоступны: читай и изменяй файлы только инструментами работы с файлами и сохраняй их только в ${folders.own}.\nCONTEXT:\n`) });
     });
     if (stale()) return;
     const current = this.get(snapshot.id);

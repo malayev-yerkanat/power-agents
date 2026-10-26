@@ -13,6 +13,12 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-26 11:29 UTC - Gemini terminal commands
+
+Writable turns are told to use file tools instead of terminal commands, and any action a CLI denies is retried once with that hint and reported by name.
+
+Note: [[changes/20261026-112944-gemini-terminal-commands|Gemini terminal commands]]
+
 ### 2026-10-26 11:23 UTC - M2 step 5: code-run UI, docs, denied writes
 
 The run form takes an optional git project and check command, the run page shows the result branch and check, and a Gemini write outside its folder is reported and retried once.

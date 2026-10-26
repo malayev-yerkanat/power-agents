@@ -31,6 +31,7 @@ This catalog is updated by completed knowledge operations.
 
 ## Changes
 
+- 2026-10-26: [[changes/20261026-112944-gemini-terminal-commands|Gemini terminal commands]]
 - 2026-10-26: [[changes/20261026-112326-m2-step-5-code-run-ui-docs-denied-writes|M2 step 5: code-run UI, docs, denied writes]]
 - 2026-10-26: [[changes/20261026-111627-m2-step-4-code-runs-in-git-worktrees|M2 step 4: code runs in git worktrees]]
 - 2026-10-26: [[changes/20261026-110756-m2-steps-1-3-write-mode-task-files-git-module|M2 steps 1-3: write mode, task files, git module]]
