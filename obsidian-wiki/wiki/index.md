@@ -31,4 +31,5 @@ This catalog is updated by completed knowledge operations.
 
 ## Changes
 
+- 2026-10-26: [[changes/20261026-091828-safe-resume-after-restart-m1-3|Safe resume after restart (M1.3)]]
 - 2026-10-26: [[changes/20261026-085212-shared-facts-board-m1-2|Shared facts board (M1.2)]]

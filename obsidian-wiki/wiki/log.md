@@ -13,6 +13,12 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-26 09:18 UTC - Safe resume after restart (M1.3)
+
+Calls cut off by a server restart are listed as outcome unknown and repeat only after the user confirms, instead of being silently re-run.
+
+Note: [[changes/20261026-091828-safe-resume-after-restart-m1-3|Safe resume after restart (M1.3)]]
+
 ### 2026-10-26 08:52 UTC - Shared facts board (M1.2)
 
 Agents publish owner-tagged facts that every turn reads; only owners change them. Tasks may also wait for colleagues who are still working instead of failing.
