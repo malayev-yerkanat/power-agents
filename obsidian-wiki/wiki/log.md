@@ -13,6 +13,12 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-26 09:22 UTC - zod security update
+
+Raised zod to 4.6.7 to fix advisory GHSA-mrhx-c7xc-m3w5, which failed CI's npm audit.
+
+Note: [[changes/20261026-092227-zod-security-update|zod security update]]
+
 ### 2026-10-26 09:18 UTC - Safe resume after restart (M1.3)
 
 Calls cut off by a server restart are listed as outcome unknown and repeat only after the user confirms, instead of being silently re-run.

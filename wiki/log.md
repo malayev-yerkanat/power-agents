@@ -8,6 +8,10 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-26 — zod security update
+
+- CI's `npm audit` failed on advisory GHSA-mrhx-c7xc-m3w5 (zod below 4.6.6 can exhaust memory on oversized constrained collections). Raised zod to ^4.6.7. Verified: 0 audit findings, 155/155 Node tests, 35/35 Chromium tests, typecheck, build.
+
 ## 2026-10-26 — M1.3 safe resume after restart
 
 - The engine records every running call. After a restart, cut-off calls are listed as "outcome unknown", their tasks fail, and resume needs `confirmRepeat` (the Continue button asks). See [[Orchestration Engine]] and the [roadmap](../docs/roadmap.md).

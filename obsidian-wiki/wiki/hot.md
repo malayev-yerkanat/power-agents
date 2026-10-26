@@ -21,6 +21,7 @@ Vault initialized. No knowledge operations have completed yet.
 
 ## Recent Changes
 
+- 2026-10-26: zod security update (wiki/changes/20261026-092227-zod-security-update.md)
 - 2026-10-26: Safe resume after restart (M1.3) (wiki/changes/20261026-091828-safe-resume-after-restart-m1-3.md)
 - 2026-10-26: Shared facts board (M1.2) (wiki/changes/20261026-085212-shared-facts-board-m1-2.md)
 - Created the vault foundation.
