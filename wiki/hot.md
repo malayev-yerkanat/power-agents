@@ -11,7 +11,7 @@ tags: [context]
 
 ## Last Updated
 
-2026-10-23. M1 accepted live 2026-10-26: review remarks reopen owners' tasks, a shared facts board, safe resume after restart. Connection failures show their reason (for example a rejected OpenAI key). Unreadable answers get one automatic retry. Plans prefer parallel tasks with fact owners. Gemini turns end at the first result line.
+2026-10-23. M1 accepted live 2026-10-26: review rework, facts board (changed facts reopen tasks that used them), safe resume. Combine/review calls get 15 minutes. Connection failures show their reason (for example a rejected OpenAI key). Unreadable answers get one automatic retry. Plans prefer parallel tasks with fact owners. Gemini turns end at the first result line.
 
 ## Direction
 
@@ -19,7 +19,7 @@ tags: [context]
 
 ## Repository State
 
-All work through the review fixes is pushed to `main` (CI green). M1.3 safe resume is being committed on 2026-10-26. Local checks: 155/155 Node tests, 81.36% line coverage, 35/35 Chromium tests, typecheck.
+All work through the review fixes is pushed to `main` (CI green). M1 follow-ups are being committed on 2026-10-26. Local checks: 158/158 Node tests, 81.45% line coverage, 35/35 Chromium tests, typecheck.
 
 ## Current System
 

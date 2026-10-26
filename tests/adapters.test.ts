@@ -248,3 +248,10 @@ test('a CLI that prints its result but stays open is finished and stopped', asyn
     assert.ok(Date.now() - cliStarted < 5_000);
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
+
+test('combine and review calls get the 15-minute limit; other turns keep 5 minutes', async () => {
+  const { turnTimeoutMs } = await import('../src/server/adapters/common.js');
+  assert.equal(turnTimeoutMs('synthesize'), 15 * 60 * 1000);
+  assert.equal(turnTimeoutMs('review'), 15 * 60 * 1000);
+  for (const purpose of ['plan', 'task', 'reply'] as const) assert.equal(turnTimeoutMs(purpose), 5 * 60 * 1000);
+});

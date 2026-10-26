@@ -8,6 +8,12 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-26 — M1 follow-ups fixed
+
+- A changed fact reopens finished tasks that listed it in `usesFacts`, with an old → new note (criterion 6). Synthesis and review calls get 15 minutes. Answers may publish up to 40 facts. See [[Orchestration Engine]] and the [roadmap](../docs/roadmap.md).
+- Verified: 158/158 Node tests, 81.45% line coverage, 35/35 Chromium tests, typecheck, build, 0 audit findings.
+- Live run `17a22e7c` completed cleanly: 41 facts, Codex and Gemini filled `usesFacts`, synthesis took 4 min 33 s, review passed first time. The one fact change (coffee 17 g, v2) came before any task finished on v1, so correctly no task reopened; the reopen path is covered by tests only.
+
 ## 2026-10-26 — M1 acceptance run
 
 - Live run `10db85ce` (Codex leader, Claude, Gemini) passed all three M1 checks: restart mid-task listed 3 unknown outcomes and resumed only after confirmation; a review remark reached Claude's recipe task, which was revised (syrup fact 36 g → 33 g, v2) before re-synthesis, and the second review passed; all 20 short board facts appear in the final. Criterion 6 stays partial: a changed fact does not reopen dependent tasks. Follow-ups: synthesis timeouts, the 12-facts limit. See the [roadmap](../docs/roadmap.md).

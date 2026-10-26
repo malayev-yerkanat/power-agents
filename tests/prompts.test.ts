@@ -45,5 +45,6 @@ test('prompts explain the shared facts board and show published facts', () => {
   const task = promptFor({ run: withFacts, memberId: 'b', purpose: 'task' });
   assert.match(task, /сначала найди его в run\.facts/);
   assert.match(task, /публикуй в facts, как только они окончательны; менять опубликованный факт может только его владелец/);
+  assert.match(task, /В usesFacts перечисли ключи фактов коллег из run\.facts, на которые опирается твой результат/);
   assert.match(task.split('\nCONTEXT:\n')[1], /"facts":\[\{"key":"Цена","value":"1 200 ₸","ownerId":"a"/);
 });

@@ -1,5 +1,5 @@
 import type { TurnInput, TurnResult } from '../../shared/types.js';
-import { MAX_OUTPUT_BYTES, TURN_TIMEOUT_MS, optionalText, providerRejection, record, requiredText } from './common.js';
+import { MAX_OUTPUT_BYTES, optionalText, providerRejection, record, requiredText, turnTimeoutMs } from './common.js';
 
 async function boundedJson(response: Response): Promise<Record<string, unknown>> {
   if (!response.body) throw new Error('Пустой HTTP-ответ провайдера.');
@@ -41,7 +41,7 @@ export async function runApi(input: TurnInput): Promise<TurnResult> {
   const body = openai
     ? { model, input: input.prompt, tools: [], max_output_tokens: 8192, ...(input.sessionId ? { previous_response_id: input.sessionId } : {}) }
     : { model, max_tokens: 8192, messages: [{ role: 'user', content: input.prompt }] };
-  const signal = AbortSignal.any([input.signal, AbortSignal.timeout(TURN_TIMEOUT_MS)]);
+  const signal = AbortSignal.any([input.signal, AbortSignal.timeout(turnTimeoutMs(input.purpose))]);
   const response = await fetch(openai ? 'https://api.openai.com/v1/responses' : 'https://api.anthropic.com/v1/messages', {
     method: 'POST', signal,
     headers: { 'content-type': 'application/json', ...(openai ? { authorization: `Bearer ${key}` } : { 'x-api-key': key, 'anthropic-version': '2023-06-01' }) },

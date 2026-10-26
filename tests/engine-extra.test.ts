@@ -908,3 +908,34 @@ test('finished and paused calls leave nothing marked as in flight', async () => 
     assert.deepEqual((app.engine.get(run.id) as Run & { inFlight?: unknown[] }).inFlight, []);
   } finally { await app.clean(); }
 });
+
+test('a changed fact reopens finished tasks that used it, with the old and new value', async () => {
+  const promoPrompts: string[] = [];
+  const tasks: TaskSpec[] = [
+    { id: 'price', title: 'Price', description: 'Owns the price', assigneeId: 'a', dependsOn: [] },
+    { id: 'promo', title: 'Promo', description: 'Uses the price', assigneeId: 'b', dependsOn: ['price'] },
+    { id: 'notes', title: 'Notes', description: 'Ignores the price', assigneeId: 'b', dependsOn: ['price'] },
+    { id: 'reprice', title: 'Reprice', description: 'Owner changes the price', assigneeId: 'a', dependsOn: ['promo', 'notes'] },
+  ];
+  const runner: TurnRunner = async value => {
+    const { run, taskId } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run, tasks);
+    if (taskId === 'price') return envelope({ facts: [{ key: 'Цена', value: '1 200 ₸' }], artifact: { title: 'P', body: 'P' } } as never);
+    if (taskId === 'promo') { promoPrompts.push(value.prompt); return envelope({ usesFacts: ['цена'], artifact: { title: 'Promo', body: `Promo v${promoPrompts.length}` } } as never); }
+    if (taskId === 'reprice') return envelope({ facts: [{ key: 'Цена', value: '1 250 ₸' }], artifact: { title: 'R', body: 'R' } } as never);
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => ['completed', 'paused'].includes(app.engine.get(run.id).status), 'finish');
+    const done = app.engine.get(run.id);
+    assert.equal(done.status, 'completed', done.error);
+    assert.equal(promoPrompts.length, 2);
+    assert.match(promoPrompts[1], /Факт «Цена» изменён: «1 200 ₸» → «1 250 ₸»/);
+    assert.equal(done.tasks.find(t => t.id === 'notes')!.turns, 1);
+    assert.deepEqual(done.tasks.find(t => t.id === 'promo')!.usedFacts, { Цена: 2 });
+  } finally { await app.clean(); }
+});

@@ -31,6 +31,7 @@ This catalog is updated by completed knowledge operations.
 
 ## Changes
 
+- 2026-10-26: [[changes/20261026-104724-m1-follow-ups-fixed|M1 follow-ups fixed]]
 - 2026-10-26: [[changes/20261026-094123-m1-acceptance-run|M1 acceptance run]]
 - 2026-10-26: [[changes/20261026-092227-zod-security-update|zod security update]]
 - 2026-10-26: [[changes/20261026-091828-safe-resume-after-restart-m1-3|Safe resume after restart (M1.3)]]

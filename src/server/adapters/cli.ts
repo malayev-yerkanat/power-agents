@@ -1,5 +1,5 @@
 import type { TurnInput, TurnResult, AdapterKind } from '../../shared/types.js';
-import { optionalText, parseJsonObject, record, requiredText } from './common.js';
+import { optionalText, parseJsonObject, record, requiredText, turnTimeoutMs } from './common.js';
 import { ProcessExitError, runProcess, runtimeEnvironment } from './process.js';
 
 /** An error the CLI itself reported, as opposed to output the adapter could not read. */
@@ -76,7 +76,7 @@ export function cliEnvironment(kind: AdapterKind): NodeJS.ProcessEnv {
 export async function runCli(input: TurnInput): Promise<TurnResult> {
   if (!input.connection.executable) throw new Error('CLI не найден. Установите его и выполните вход.');
   const command = buildCliCommand(input);
-  const output = await runProcess(input.connection.executable, command.args, { cwd: input.cwd, signal: input.signal, stdin: command.stdin, env: cliEnvironment(input.connection.kind), ...(input.connection.kind === 'gemini-cli' ? { isComplete: geminiResultLine } : {}) })
+  const output = await runProcess(input.connection.executable, command.args, { cwd: input.cwd, signal: input.signal, stdin: command.stdin, timeoutMs: turnTimeoutMs(input.purpose), env: cliEnvironment(input.connection.kind), ...(input.connection.kind === 'gemini-cli' ? { isComplete: geminiResultLine } : {}) })
     .catch((error: unknown) => { throw error instanceof ProcessExitError ? reportedFailure(input.connection.kind, error.output) ?? error : error; });
   const result = parseCliResult(input.connection.kind, output);
   return { ...result, sessionId: result.sessionId ?? input.sessionId };

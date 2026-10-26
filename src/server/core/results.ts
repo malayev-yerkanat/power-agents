@@ -12,6 +12,24 @@ function mergeFacts(facts: SharedFact[], published: AgentEnvelope['facts'], owne
     return board.map(f => f === existing ? { ...f, value, version: f.version + 1, updatedAt } : f);
   }, facts);
 }
+/** A newer version of a fact reopens finished tasks that relied on an older one, so their results follow the change. */
+function reworkStaleTasks(run: Run, before: SharedFact[], job: Job, createdAt: string): Run {
+  const changed = (run.facts ?? []).flatMap(fact => {
+    const old = findFact(before, fact.key);
+    return old && old.version < fact.version ? [{ fact, old }] : [];
+  });
+  if (!changed.length || run.phase !== 'tasks') return run;
+  const notes: TeamMessage[] = [];
+  const tasks = run.tasks.map(t => {
+    if (t.status !== 'completed' || t.id === job.taskId || t.assigneeId === job.memberId) return t;
+    const stale = changed.filter(({ fact }) => (t.usedFacts?.[fact.key] ?? fact.version) < fact.version);
+    if (!stale.length) return t;
+    notes.push({ id: randomUUID(), fromId: job.memberId, toId: t.assigneeId, taskId: t.id, request: false, status: 'queued', createdAt,
+      body: `${stale.map(({ fact, old }) => `Факт «${fact.key}» изменён: «${old.value}» → «${fact.value}».`).join(' ')} Обнови результат задачи под новое значение.` });
+    return { ...t, status: 'pending' as const };
+  });
+  return { ...run, tasks, messages: [...run.messages, ...notes] };
+}
 export function applyResult(run: Run, job: Job, answer: AgentEnvelope): Run {
   const createdAt = new Date().toISOString();
   const outgoing: TeamMessage[] = answer.messages.map(m => ({ ...m, replyTo: undefined, id: randomUUID(), fromId: job.memberId, taskId: job.taskId, status: 'queued', createdAt }));
@@ -35,7 +53,10 @@ export function applyResult(run: Run, job: Job, answer: AgentEnvelope): Run {
   });
   const artifact: Artifact | undefined = answer.artifact ? { ...answer.artifact, id: randomUUID(), authorId: job.memberId, taskId: job.taskId, createdAt, kind: job.purpose === 'synthesize' ? 'final' : job.purpose === 'review' ? 'review' : 'work' } : undefined;
   const facts = mergeFacts(run.facts ?? [], answer.facts, job.memberId, createdAt);
-  let next: Run = { ...run, messages, tasks, facts, artifacts: artifact ? [...run.artifacts, artifact] : run.artifacts };
+  const used = job.purpose === 'task' && answer.usesFacts
+    ? Object.fromEntries(answer.usesFacts.flatMap(key => { const fact = findFact(facts, key); return fact ? [[fact.key, fact.version]] : []; })) : undefined;
+  const withUse = used ? tasks.map(t => t.id === job.taskId ? { ...t, usedFacts: used } : t) : tasks;
+  let next: Run = reworkStaleTasks({ ...run, messages, tasks: withUse, facts, artifacts: artifact ? [...run.artifacts, artifact] : run.artifacts }, run.facts ?? [], job, createdAt);
   if (job.purpose === 'synthesize') {
     if (!artifact) throw new Error('Руководитель не приложил итоговый материал.');
     next = { ...next, phase: 'review' };

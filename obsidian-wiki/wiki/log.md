@@ -13,6 +13,12 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-26 10:47 UTC - M1 follow-ups fixed
+
+Changed facts reopen tasks that used them, combine and review calls get 15 minutes, and answers may publish up to 40 facts.
+
+Note: [[changes/20261026-104724-m1-follow-ups-fixed|M1 follow-ups fixed]]
+
 ### 2026-10-26 09:41 UTC - M1 acceptance run
 
 A live three-provider run passed review rework, board facts in the final, and safe resume after a mid-run restart; the roadmap marks M1 accepted with three follow-ups.

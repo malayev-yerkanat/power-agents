@@ -1,5 +1,8 @@
+import type { TurnPurpose } from '../../shared/types.js';
 export const MAX_OUTPUT_BYTES = 2 * 1024 * 1024;
 export const TURN_TIMEOUT_MS = 5 * 60 * 1000;
+/** Combining and reviewing read every result, so they get the design's 15-minute ceiling. */
+export const turnTimeoutMs = (purpose: TurnPurpose) => purpose === 'synthesize' || purpose === 'review' ? 15 * 60 * 1000 : TURN_TIMEOUT_MS;
 
 export function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Ожидался JSON-объект в ответе провайдера.');

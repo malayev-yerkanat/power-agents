@@ -26,7 +26,7 @@ The plan prompt prefers parallel tasks and names an owner for each shared fact; 
 
 A `changes_requested` review may list `revisions` (task ID plus remark). Those tasks return to `pending`, their owners get the remark as a note, and the run goes back to the task phase; synthesis repeats only after they finish. Without revisions the leader re-synthesizes as before. A revision for an unknown task is an `AnswerFormatError`.
 
-Runs keep a shared facts board (`Run.facts`, type `SharedFact`). Any answer may publish `facts`; the first publisher owns a key (matched case- and space-insensitively), only the owner can change it, and each change raises its version. A non-owner change is an `AnswerFormatError`, so the agent is asked again. Every turn sees the board in its context.
+Runs keep a shared facts board (`Run.facts`, type `SharedFact`). Any answer may publish `facts`; the first publisher owns a key (matched case- and space-insensitively), only the owner can change it, and each change raises its version. A non-owner change is an `AnswerFormatError`, so the agent is asked again. Every turn sees the board in its context. Task answers may list `usesFacts`; the task stores `usedFacts` (key → version seen). When an owner raises a fact's version during the task phase, completed tasks that used an older version reopen with a note giving the old and new value. Up to 40 facts per answer. Synthesis and review calls get 15 minutes (`turnTimeoutMs`), other turns 5.
 
 A task answer with status `waiting` and no open question is accepted while another task is still unfinished; the task wakes when a note is sent to its owner or another task completes. If nothing is running and no question is queued, stranded waiting tasks fail so «Продолжить» retries them.
 

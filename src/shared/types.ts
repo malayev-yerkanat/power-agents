@@ -18,7 +18,11 @@ export interface Member { id: string; name: string; connectionId: string; model:
 export interface TaskSpec { id: string; title: string; description: string; assigneeId: string; dependsOn: string[] }
 export interface TeamPlan { summary: string; successCriteria: string[]; roles: { memberId: string; role: string }[]; tasks: TaskSpec[] }
 export type TaskStatus = 'pending' | 'running' | 'waiting' | 'completed' | 'failed';
-export interface TeamTask extends TaskSpec { status: TaskStatus; turns: number; output?: string; error?: string }
+export interface TeamTask extends TaskSpec {
+  status: TaskStatus; turns: number; output?: string; error?: string;
+  /** Board facts the latest result relied on, with the version it saw. */
+  usedFacts?: Record<string, number>;
+}
 export interface TeamMessage {
   id: string; fromId: string; toId: string; body: string;
   request: boolean; replyTo?: string; taskId?: string;
@@ -67,4 +71,6 @@ export interface AgentEnvelope {
   revisions?: { taskId: string; remark: string }[];
   /** Shared facts this participant publishes or, as their owner, updates. */
   facts?: { key: string; value: string }[];
+  /** Keys of board facts this task result relies on; a later change to one reopens the task. */
+  usesFacts?: string[];
 }

@@ -21,6 +21,7 @@ Vault initialized. No knowledge operations have completed yet.
 
 ## Recent Changes
 
+- 2026-10-26: M1 follow-ups fixed (wiki/changes/20261026-104724-m1-follow-ups-fixed.md)
 - 2026-10-26: M1 acceptance run (wiki/changes/20261026-094123-m1-acceptance-run.md)
 - 2026-10-26: zod security update (wiki/changes/20261026-092227-zod-security-update.md)
 - 2026-10-26: Safe resume after restart (M1.3) (wiki/changes/20261026-091828-safe-resume-after-restart-m1-3.md)
