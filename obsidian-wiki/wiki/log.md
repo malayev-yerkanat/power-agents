@@ -13,6 +13,12 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-26 11:07 UTC - M2 steps 1-3: write mode, task files, git module
+
+CLI task turns can write files in their own task folder, finished tasks list and offer their files, and a git workspace module for code runs was added (not yet wired).
+
+Note: [[changes/20261026-110756-m2-steps-1-3-write-mode-task-files-git-module|M2 steps 1-3: write mode, task files, git module]]
+
 ### 2026-10-26 10:47 UTC - M1 follow-ups fixed
 
 Changed facts reopen tasks that used them, combine and review calls get 15 minutes, and answers may publish up to 40 facts.
