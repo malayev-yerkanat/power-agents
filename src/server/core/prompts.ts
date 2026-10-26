@@ -1,5 +1,5 @@
 import type { Artifact, Run, TeamTask, TurnPurpose } from '../../shared/types.ts';
-export interface Context { run: Run; memberId: string; purpose: TurnPurpose; taskId?: string; requestId?: string; folders?: { own?: string; read?: string[]; repo?: boolean } }
+export interface Context { run: Run; memberId: string; purpose: TurnPurpose; taskId?: string; requestId?: string; folders?: { own?: string; read?: string[]; repo?: boolean }; team?: string[] }
 const latest = (artifacts: Artifact[], keep: (artifact: Artifact) => boolean) => artifacts.filter(keep).at(-1);
 /** Each turn sees only the work it needs, once: resending every document outgrows the limit on long runs. */
 function sharedRun({ run: { sessions: _sessions, inFlight: _inFlight, interrupted: _interrupted, ...run }, memberId, purpose, taskId }: Context): Omit<Run, 'sessions' | 'inFlight' | 'interrupted'> {
@@ -12,6 +12,10 @@ function sharedRun({ run: { sessions: _sessions, inFlight: _inFlight, interrupte
   return { ...run, artifacts: [...work, ...documents],
     tasks: run.tasks.map(({ output, ...task }) => visible(task) && output !== undefined && !work.some(a => a.taskId === task.id && a.body === output) ? { ...task, output } : task),
     messages: run.messages.filter(m => m.fromId === 'user' || m.fromId === memberId || m.toId === memberId) };
+}
+function teamNote(team: Context['team']): string {
+  if (!team?.length) return '';
+  return `Тебе доступны командные инструменты MCP-сервера team: ${team.join(', ')}. Используй их во время хода: спроси или сообщи коллеге (send_message), прочитай входящие (read_inbox), опубликуй окончательный факт (publish_fact), посмотри доску (team_status), сообщи о блокировке (report_blocked)${team.includes('add_task') ? '; как руководитель ты можешь добавить задачу (add_task) или передать ещё не начатую задачу (assign_task)' : ''}. Инструменты действуют от твоего имени; отправителя указать нельзя. Итог хода всё равно верни одним JSON-объектом.\n`;
 }
 function folderNote(folders: Context['folders']): string {
   if (folders?.repo) {
@@ -37,6 +41,7 @@ export function promptFor(context: Context): string {
     'synthesize: подготовь единый полный итог в artifact, учитывая все результаты, замечания пользователя и последнюю проверку.\n' +
     'review: независимо проверь последний final artifact по цели и successCriteria. Верни verdict pass или changes_requested, аргументы в artifact. При changes_requested перечисли в revisions задачи, которые должны доработать их владельцы, с конкретным замечанием к каждой; если исправить нужно только сборку итога, оставь revisions пустым. Не утверждай, что проводил проверки, которых не было.\n' +
     'resolve: в рабочей копии результата идёт слияние ветки задачи run.repo.conflict.taskId; конфликтуют файлы run.repo.conflict.files. Разреши конфликты: убери маркеры <<<<<<< ======= >>>>>>> и сохрани по смыслу изменения обеих сторон. Не запускай git. Верни status done и опиши решение в summary.\n' +
+    teamNote(context.team) +
     folderNote(context.folders) +
     'Поля artifact, verdict, revisions, facts и usesFacts необязательны для обычных ходов. messages всегда массив.\nCONTEXT:\n' + serialized;
 }

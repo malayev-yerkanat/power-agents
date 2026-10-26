@@ -4,7 +4,7 @@ export interface Job { memberId: string; purpose: TurnPurpose; taskId?: string; 
 /** Facts are matched by key regardless of case and surrounding spaces. */
 export const findFact = (facts: SharedFact[] | undefined, key: string) => facts?.find(f => f.key.trim().toLowerCase() === key.trim().toLowerCase());
 /** The first publisher owns a fact; only the owner's later values replace it, raising its version. */
-function mergeFacts(facts: SharedFact[], published: AgentEnvelope['facts'], ownerId: string, updatedAt: string): SharedFact[] {
+export function mergeFacts(facts: SharedFact[], published: AgentEnvelope['facts'], ownerId: string, updatedAt: string): SharedFact[] {
   return (published ?? []).reduce((board, { key, value }) => {
     const existing = findFact(board, key);
     if (!existing) return [...board, { key: key.trim(), value, ownerId, version: 1, updatedAt }];
@@ -13,7 +13,7 @@ function mergeFacts(facts: SharedFact[], published: AgentEnvelope['facts'], owne
   }, facts);
 }
 /** A newer version of a fact reopens finished tasks that relied on an older one, so their results follow the change. */
-function reworkStaleTasks(run: Run, before: SharedFact[], job: Job, createdAt: string): Run {
+export function reworkStaleTasks(run: Run, before: SharedFact[], job: Job, createdAt: string): Run {
   const changed = (run.facts ?? []).flatMap(fact => {
     const old = findFact(before, fact.key);
     return old && old.version < fact.version ? [{ fact, old }] : [];

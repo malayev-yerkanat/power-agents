@@ -76,6 +76,8 @@ export interface TurnInput {
   writable?: boolean;
   /** Extra folders the turn may read, such as dependency results. */
   readDirs?: string[];
+  /** Team tools for this turn: the MCP endpoint and a token valid only while the turn runs. */
+  team?: { url: string; token: string };
   onProgress: (text: string) => void;
 }
 export interface TurnResult { text: string; sessionId?: string }

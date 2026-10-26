@@ -8,6 +8,12 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-26 — M3 steps 0–2: team tools over MCP
+
+- Spike: Claude takes a per-run HTTP MCP server via `--mcp-config` (token from `${POWER_AGENTS_TOKEN}`, not in process arguments); Codex via `-c mcp_servers.team.*` with `bearer_token_env_var` and `default_tools_approval_mode="approve"`; agy loads `.agents/mcp_config.json` but only allows tool calls through its global settings, so Gemini stays without team tools.
+- `src/server/core/team.ts` holds the tool rules (status, inbox, send, facts, blocked report; leader add/assign task) with strict schemas; `src/server/mcp.ts` serves them at `POST /mcp` with one token per turn, refusing browser origins and foreign hosts. Every call is a `team_tool` event with the token's member as actor.
+- Verified: 185/185 Node tests (team.ts 100% lines), 83.01% line coverage, 35/35 Chromium tests, typecheck, build, 0 audit findings.
+
 ## 2026-10-26 — M2 acceptance
 
 - Files run `ec0727e0`: all three providers saved their named file; the final lists them. Code run `5cc8a064` on a Node demo repo: two task branches merged into the result branch, `npm test` passed via the platform check, the user's branch and working tree unchanged, worktrees removed. Roadmap criterion 11 done. Live conflict resolution not yet observed.

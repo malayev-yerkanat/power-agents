@@ -13,6 +13,12 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-26 14:50 UTC - M3 steps 0-2: team tools over MCP
+
+A local MCP endpoint gives agents team tools with one token per turn, so identity comes from the platform; the spike showed Claude and Codex can use it per run and Gemini cannot without global settings.
+
+Note: [[changes/20261026-145008-m3-steps-0-2-team-tools-over-mcp|M3 steps 0-2: team tools over MCP]]
+
 ### 2026-10-26 13:47 UTC - M2 acceptance
 
 Live files and code runs passed: all three agents saved files, two task branches merged, the platform's npm test check passed, and the user's branch stayed unchanged. Criterion 11 is done.

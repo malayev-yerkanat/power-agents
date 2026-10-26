@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Connection, InFlightCall, Run, TeamTask, TurnPurpose, TurnRunner } from '../shared/types.ts';
@@ -11,6 +11,7 @@ import { AnswerFormatError, InputError, validateInput, parseEnvelope, parsePlan 
 import { promptFor } from './core/prompts.ts';
 import { applyResult, findFact, type Job } from './core/results.ts';
 import { listFiles, taskFolder } from './files.ts';
+import { runTeamTool, teamToolNames, TeamToolError, type TeamGrant, type TeamToolName } from './core/team.ts';
 const finished = (run: Run, callId: string): Run => ({ ...run, inFlight: run.inFlight?.filter(c => c.id !== callId) });
 const callNames: Record<TurnPurpose, string> = { plan: 'план', task: 'задача', reply: 'ответ коллеге', synthesize: 'сборка итога', review: 'проверка', resolve: 'разрешение конфликта' };
 function callLabel(run: Run, call: InFlightCall): string {
@@ -36,13 +37,21 @@ function read(job: Job, text: string, snapshot: Run, memberId: string) {
   }
   return { plan: undefined, answer };
 }
-interface Options { store: Store; connections: Connection[]; workspaceRoot: string; runner?: TurnRunner; demoRunner?: TurnRunner }
+interface TurnSetup {
+  member: Run['members'][number]; connection: { kind: string }; runner: TurnRunner;
+  folders: { own?: string; read?: string[]; repo?: boolean }; sessionKey: string; token?: string;
+}
+interface Options { store: Store; connections: Connection[]; workspaceRoot: string; runner?: TurnRunner; demoRunner?: TurnRunner; teamUrl?: string }
+/** Adapters that connect a per-run MCP server without touching the user's CLI settings (agy cannot, see the M3 spike). */
+const TEAM_TOOL_KINDS = new Set(['claude-cli', 'codex-cli', 'demo']);
 export class Engine {
   private readonly options: Options;
   private readonly active = new Map<string, { runId: string; memberId: string; controller: AbortController }>();
   private scheduled = false;
   /** Runs with a git operation or check in progress; their dispatch waits. */
   private readonly gitBusy = new Set<string>();
+  /** Turn tokens for team tools; kept in memory only, so a restart revokes them all. */
+  private readonly teamTokens = new Map<string, TeamGrant>();
   private stopped = false;
   constructor(options: Options) {
     this.options = options;
@@ -114,6 +123,17 @@ export class Engine {
     if (replan) this.ensureFree(id);
     const next = this.change(id, r => ({ ...r, ...(replan ? { status: 'planning' as const, phase: 'plan' as const, plan: undefined } : {}), messages: [...r.messages, { id: randomUUID(), fromId: 'user', toId: r.leaderId, body: body.trim(), request: false, status: 'queued', createdAt: new Date().toISOString() }] }), 'user_message', replan ? 'Замечания переданы руководителю. План пересматривается.' : 'Сообщение будет учтено в следующих ходах.');
     this.schedule(); return next;
+  }
+  grant(token: string): TeamGrant | undefined { return this.teamTokens.get(token); }
+  tools(grant: TeamGrant): TeamToolName[] { return teamToolNames(this.get(grant.runId), grant); }
+  /** Runs a team tool as the token's member; the rules live in `runTeamTool`, the log entry names the actor. */
+  call(token: string, name: TeamToolName, args: unknown): unknown {
+    const grant = this.teamTokens.get(token);
+    if (!grant) throw new TeamToolError('Доступ недействителен: ход завершён.');
+    let result: unknown;
+    this.change(grant.runId, run => { const out = runTeamTool(run, grant, name, args); result = out.result; return out.run; }, 'team_tool', `Инструмент ${name}`, grant.memberId);
+    this.schedule();
+    return result;
   }
   shutdown(): void { this.stopped = true; for (const a of this.active.values()) a.controller.abort(); }
   private ensureFree(id: string): void {
@@ -206,6 +226,14 @@ export class Engine {
     // CLIs keep conversations per working folder, so a task folder has its own conversation.
     const sessionKey = folders.own && connection.kind.endsWith('-cli') ? `${member.id}#${job.taskId ?? 'result'}` : member.id;
     const input = { runId: snapshot.id, member, connection, purpose: job.purpose, prompt: promptFor({ run: snapshot, ...job, folders }), cwd: folders.own ?? runDir, writable: !!folders.own, readDirs: folders.read, sessionId: Object.hasOwn(snapshot.sessions, sessionKey) ? snapshot.sessions[sessionKey] : undefined, signal: controller.signal, onProgress: () => {} };
+    const token = this.options.teamUrl && TEAM_TOOL_KINDS.has(connection.kind) ? randomBytes(32).toString('hex') : undefined;
+    if (token) this.teamTokens.set(token, { runId: snapshot.id, memberId: member.id, purpose: job.purpose, taskId: job.taskId, callId });
+    try { await this.executeTurn(snapshot, job, controller, callId, { member, connection, runner, folders, sessionKey, token }, input); }
+    finally { if (token) this.teamTokens.delete(token); }
+  }
+  private async executeTurn(snapshot: Run, job: Job, controller: AbortController, callId: string, turn: TurnSetup, baseInput: Parameters<TurnRunner>[0]): Promise<void> {
+    const { member, connection, runner, folders, sessionKey, token } = turn;
+    const input = token ? { ...baseInput, team: { url: this.options.teamUrl!, token }, prompt: promptFor({ run: snapshot, ...job, folders, team: teamToolNames(snapshot, { runId: snapshot.id, memberId: member.id, purpose: job.purpose, taskId: job.taskId, callId: '' }) }) } : baseInput;
     const stale = () => controller.signal.aborted || this.stopped || !['planning', 'running'].includes(this.get(snapshot.id).status);
     let result = await runner(input).catch(async (error: unknown) => {
       if (!(error instanceof DeniedActionError) || !folders.own || stale()) throw error;

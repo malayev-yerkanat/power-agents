@@ -6,6 +6,7 @@ import { Store } from './store.ts';
 import { Engine } from './engine.ts';
 import { discoverConnections } from './adapters/index.ts';
 import { createApiHandler } from './http.ts';
+import { createMcpHandler } from './mcp.ts';
 import { TelegramService, isTelegramToken } from './telegram.ts';
 
 const root = process.cwd();
@@ -15,12 +16,13 @@ const dataRoot = resolve(root, '.power-agents');
 const store = new Store(join(dataRoot, 'state.sqlite'));
 const connections = await discoverConnections();
 const workspaceRoot = join(dataRoot, 'workspaces');
-const engine = new Engine({ store, connections, workspaceRoot });
+const engine = new Engine({ store, connections, workspaceRoot, teamUrl: `http://127.0.0.1:${port}/mcp` });
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
 const telegramError = telegramToken && !isTelegramToken(telegramToken)
   ? 'TELEGRAM_BOT_TOKEN has an invalid BotFather token format.' : undefined;
 const telegram = telegramToken && !telegramError ? new TelegramService(store, telegramToken) : undefined;
 const api = createApiHandler({ store, engine, connections, workspaceRoot, telegram, telegramError });
+const mcp = createMcpHandler({ grant: token => engine.grant(token), tools: grant => engine.tools(grant), call: (token, name, args) => engine.call(token, name, args) });
 const production = process.env.NODE_ENV === 'production';
 const server = createServer();
 const vite = production ? undefined : await createViteServer({
@@ -29,6 +31,7 @@ const vite = production ? undefined : await createViteServer({
 const mime: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.png': 'image/png', '.ttf': 'font/ttf', '.woff2': 'font/woff2' };
 server.on('request', (req, res) => {
   void (async () => {
+    if (await mcp(req, res)) return;
     if (await api(req, res)) return;
     if (vite) { vite.middlewares(req, res); return; }
     const dist = join(root, 'dist');
