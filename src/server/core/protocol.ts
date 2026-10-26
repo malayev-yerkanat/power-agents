@@ -15,6 +15,7 @@ const text = (max: number) => z.string().trim().min(1).max(max);
 export const createSchema = z.object({
   goal: text(12000).min(10), mode: z.enum(['live', 'demo']), leaderId: id,
   members: z.array(z.object({ id, name: text(80), connectionId: id, model: z.string().max(120), role: z.string().max(500) })).min(2).max(5),
+  repoPath: text(1000).optional(), checkCommand: text(1000).optional(),
 });
 export function validateInput(value: unknown): CreateRunInput {
   const input = createSchema.parse(value);

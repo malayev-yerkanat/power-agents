@@ -967,6 +967,7 @@ test('task turns write files in their own folder; later turns can read them and 
     assert.match(draft.cwd, /tasks[/\\]draft$/);
     assert.deepEqual(edit.readDirs, [draft.cwd]);
     assert.match(edit.prompt, /Твоя рабочая папка/);
+    assert.match(edit.prompt, /обязательно сохрани их на диск в этой папке своими инструментами записи: текст в ответе файлом не считается/);
     assert.ok(!combine.writable && !review.writable);
     assert.deepEqual(combine.readDirs, [draft.cwd, edit.cwd]);
     const work = app.engine.get(run.id).artifacts.find(a => a.kind === 'work' && a.taskId === 'draft')!;

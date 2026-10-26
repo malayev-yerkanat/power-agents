@@ -315,3 +315,24 @@ test('task files download only when listed and inside the task folder', async ()
     assert.equal((await fetch(url(`docs/${encodeURIComponent('меню.md')}`))).status, 401);
   } finally { await app.close(); rmSync(root, { recursive: true, force: true }); }
 });
+
+test('a code run must point at a git repository', async () => {
+  const app = await setup();
+  try {
+    const members = [
+      { id: 'leader', name: 'Leader', connectionId: 'demo', model: '', role: 'Lead' },
+      { id: 'reviewer', name: 'Reviewer', connectionId: 'demo', model: '', role: 'Review' },
+    ];
+    const body = (repoPath: string) => JSON.stringify({ goal: 'Change the project code', mode: 'demo', leaderId: 'leader', members, repoPath, checkCommand: 'npm test' });
+    const notRepo = mkdtempSync(join(tmpdir(), 'power-not-repo-'));
+    for (const path of ['relative/path', notRepo]) {
+      const response = await fetch(`${app.base}/api/runs`, { method: 'POST', headers: app.headers, body: body(path) });
+      assert.equal(response.status, 400, path);
+    }
+    rmSync(notRepo, { recursive: true, force: true });
+    const response = await fetch(`${app.base}/api/runs`, { method: 'POST', headers: app.headers, body: body(process.cwd()) });
+    assert.equal(response.status, 201);
+    const [, input] = app.calls.at(-1) as [string, CreateRunInput];
+    assert.equal(input.checkCommand, 'npm test');
+  } finally { await app.close(); }
+});

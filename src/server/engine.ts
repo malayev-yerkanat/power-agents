@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Connection, InFlightCall, Run, TeamTask, TurnPurpose, TurnRunner } from '../shared/types.ts';
+import { abortMerge, commitTask, conflictsResolved, createResultWorktree, createTaskWorktree, diffStat, finishMerge, mergeTask, removeWorktrees, runCheck } from './workspace.ts';
 import { Store } from './store.ts';
 import { runTurn } from './adapters/index.ts';
 import { redactError } from './adapters/common.ts';
@@ -11,7 +12,7 @@ import { promptFor } from './core/prompts.ts';
 import { applyResult, findFact, type Job } from './core/results.ts';
 import { listFiles, taskFolder } from './files.ts';
 const finished = (run: Run, callId: string): Run => ({ ...run, inFlight: run.inFlight?.filter(c => c.id !== callId) });
-const callNames: Record<TurnPurpose, string> = { plan: 'план', task: 'задача', reply: 'ответ коллеге', synthesize: 'сборка итога', review: 'проверка' };
+const callNames: Record<TurnPurpose, string> = { plan: 'план', task: 'задача', reply: 'ответ коллеге', synthesize: 'сборка итога', review: 'проверка', resolve: 'разрешение конфликта' };
 function callLabel(run: Run, call: InFlightCall): string {
   const task = run.tasks.find(t => t.id === call.taskId);
   return `${run.members.find(m => m.id === call.memberId)?.name ?? call.memberId} — ${callNames[call.purpose]}${task && call.purpose === 'task' ? ` «${task.title}»` : ''}`;
@@ -25,7 +26,7 @@ function read(job: Job, text: string, snapshot: Run, memberId: string) {
   const parsed = parseEnvelope(text, ids, memberId);
   // A reply keeps its answer even if it also asks something; the extra questions travel as notes.
   const answer = job.purpose === 'reply' ? { ...parsed, messages: parsed.messages.map(m => ({ ...m, request: false })) } : parsed;
-  if (['review', 'synthesize'].includes(job.purpose) && answer.messages.length) throw new AnswerFormatError('На этапе итога и проверки верните результат без новых запросов.');
+  if (['review', 'synthesize', 'resolve'].includes(job.purpose) && answer.messages.length) throw new AnswerFormatError('На этапе итога и проверки верните результат без новых запросов.');
   if (answer.revisions?.some(r => !snapshot.tasks.some(t => t.id === r.taskId))) throw new AnswerFormatError('Замечания проверки ссылаются на неизвестную задачу. Используй id задач из плана.');
   for (const fact of answer.facts ?? []) {
     const owned = findFact(snapshot.facts, fact.key);
@@ -40,6 +41,8 @@ export class Engine {
   private readonly options: Options;
   private readonly active = new Map<string, { runId: string; memberId: string; controller: AbortController }>();
   private scheduled = false;
+  /** Runs with a git operation or check in progress; their dispatch waits. */
+  private readonly gitBusy = new Set<string>();
   private stopped = false;
   constructor(options: Options) {
     this.options = options;
@@ -59,8 +62,10 @@ export class Engine {
   private change(id: string, update: (run: Run) => Run, type: string, message: string, actorId?: string): Run {
     return this.options.store.updateRun(id, update, { type, message, actorId });
   }
-  create(value: unknown): Run {
+  /** A code run needs `repo`, which the HTTP layer resolves from `repoPath` before calling. */
+  create(value: unknown, repo?: { root: string; baseCommit: string }): Run {
     const input = validateInput(value);
+    if (input.repoPath && !repo) throw new InputError('Репозиторий не проверен.');
     if (this.options.store.hasActiveRun()) throw new InputError('Сначала приостановите текущую команду.');
     if (input.mode === 'live') for (const member of input.members) {
       const connection = this.options.connections.find(c => c.id === member.connectionId);
@@ -68,7 +73,8 @@ export class Engine {
       if (connection.kind.endsWith('-api') && !member.model.trim()) throw new InputError('Для API укажите модель.');
     }
     const now = new Date().toISOString();
-    const run: Run = { ...input, id: randomUUID(), title: input.goal.slice(0, 90), status: 'planning', tasks: [], messages: [], artifacts: [], sessions: {}, turnCount: 0, reviewRound: 0, phase: 'plan', createdAt: now, updatedAt: now, version: 1 };
+    const run: Run = { ...input, id: randomUUID(), title: input.goal.slice(0, 90), status: 'planning', tasks: [], messages: [], artifacts: [], sessions: {}, turnCount: 0, reviewRound: 0, phase: 'plan', createdAt: now, updatedAt: now, version: 1,
+      ...(repo ? { repo: { root: repo.root, baseCommit: repo.baseCommit, checkCommand: input.checkCommand, merges: 0 } } : {}) };
     mkdirSync(join(this.options.workspaceRoot, run.id), { recursive: true });
     this.options.store.createRun(run, { type: 'created', message: input.mode === 'demo' ? 'Создана демонстрационная команда.' : 'Команда создана. Руководитель готовит план.' });
     this.schedule();
@@ -96,7 +102,9 @@ export class Engine {
     }
     if (action !== 'pause' && action !== 'cancel') throw new InputError('Неизвестное действие.');
     const next = this.change(id, r => ({ ...r, status: action === 'cancel' ? 'cancelled' : 'paused', inFlight: [] }), action, action === 'cancel' ? 'Работа отменена.' : 'Запрошена остановка текущих вызовов.');
-    this.abort(id); return next;
+    this.abort(id);
+    if (action === 'cancel') this.cleanupRepo(next);
+    return next;
   }
   message(id: string, body: string): Run {
     const run = this.get(id);
@@ -133,6 +141,12 @@ export class Engine {
     const busy = (memberId: string) => [...this.active.values()].some(a => a.runId === run.id && a.memberId === memberId);
     if (run.phase === 'plan') { if (!busy(run.leaderId)) this.launch(run, { memberId: run.leaderId, purpose: 'plan' }); return; }
     if (run.phase === 'tasks') {
+      if (run.repo) {
+        if (this.gitBusy.has(run.id)) return;
+        if (!run.repo.resultBranch) { this.gitOp(run.id, () => this.prepareRepo(run.id)); return; }
+        if (run.repo.conflict) { if (!busy(run.leaderId)) this.launch(run, { memberId: run.leaderId, purpose: 'resolve' }); return; }
+        if (run.tasks.some(t => t.status === 'completed' && t.mergedTurn !== t.turns)) { this.gitOp(run.id, () => this.mergeFinished(run.id)); return; }
+      }
       // An owner still waiting on its own answers would reply with guesses, so its replies wait too.
       const awaitingInputs = (memberId: string) => this.get(run.id).messages.some(m => m.request && m.fromId === memberId && m.status !== 'answered');
       for (const request of run.messages.filter(m => m.request && m.status === 'queued')) {
@@ -140,7 +154,8 @@ export class Engine {
       }
       for (const task of this.get(run.id).tasks) {
         if (task.status !== 'pending' || busy(task.assigneeId) || this.active.size >= 3) continue;
-        if (!task.dependsOn.every(dep => run.tasks.find(t => t.id === dep)?.status === 'completed')) continue;
+        const ready = (dep: string) => { const t = run.tasks.find(x => x.id === dep); return t?.status === 'completed' && (!run.repo || t.mergedTurn === t.turns); };
+        if (!task.dependsOn.every(ready)) continue;
         if (task.turns >= 20) throw new Error('Задача превысила лимит 20 ходов. Уточните цель.');
         this.launch(this.get(run.id), { memberId: task.assigneeId, purpose: 'task', taskId: task.id });
       }
@@ -156,6 +171,7 @@ export class Engine {
       const held = !latest.tasks.some(t => t.status === 'failed') && latest.messages.find(m => m.request && m.status === 'queued');
       if (held) { this.launch(latest, { memberId: held.toId, purpose: 'reply', requestId: held.id }); return; }
       if (latest.tasks.every(t => t.status === 'completed') && !latest.messages.some(m => m.request && m.status !== 'answered')) {
+        if (latest.repo?.checkCommand && latest.repo.check?.merges !== latest.repo.merges) { this.gitOp(run.id, () => this.checkRepo(run.id)); return; }
         const next = this.change(run.id, r => ({ ...r, phase: 'synthesize' }), 'synthesis', 'Руководитель собирает итог команды.');
         this.launch(next, { memberId: next.leaderId, purpose: 'synthesize' });
       } else {
@@ -185,9 +201,10 @@ export class Engine {
     const connection = this.options.connections.find(c => c.id === member.connectionId) ?? { id: 'demo', name: 'Демо', kind: 'demo' as const, available: true, detail: '' };
     const runner = snapshot.mode === 'demo' ? this.options.demoRunner ?? demoRunner : this.options.runner ?? runTurn;
     const runDir = join(this.options.workspaceRoot, snapshot.id);
+    if (snapshot.repo && job.purpose === 'task' && job.taskId) await createTaskWorktree(snapshot.repo.root, runDir, snapshot.id, job.taskId);
     const folders = this.folders(snapshot, job, runDir, connection.kind === 'demo' || connection.kind.endsWith('-cli'));
     // CLIs keep conversations per working folder, so a task folder has its own conversation.
-    const sessionKey = folders.own && connection.kind.endsWith('-cli') ? `${member.id}#${job.taskId}` : member.id;
+    const sessionKey = folders.own && connection.kind.endsWith('-cli') ? `${member.id}#${job.taskId ?? 'result'}` : member.id;
     const input = { runId: snapshot.id, member, connection, purpose: job.purpose, prompt: promptFor({ run: snapshot, ...job, folders }), cwd: folders.own ?? runDir, writable: !!folders.own, readDirs: folders.read, sessionId: Object.hasOwn(snapshot.sessions, sessionKey) ? snapshot.sessions[sessionKey] : undefined, signal: controller.signal, onProgress: () => {} };
     const stale = () => controller.signal.aborted || this.stopped || !['planning', 'running'].includes(this.get(snapshot.id).status);
     let result = await runner(input);
@@ -213,23 +230,86 @@ export class Engine {
     this.change(snapshot.id, current => {
       const applied = plan ? { ...current, plan, status: 'awaiting_approval' as const } : applyResult(current, job, answer!);
       const added = applied.artifacts.length > current.artifacts.length ? applied.artifacts.at(-1) : undefined;
-      const listing = folders.own && added?.taskId === job.taskId ? listFiles(folders.own) : undefined;
+      const listing = folders.own && !snapshot.repo && added?.taskId === job.taskId ? listFiles(folders.own) : undefined;
       const next = finished(listing && (listing.files.length || listing.omitted)
         ? { ...applied, artifacts: [...applied.artifacts.slice(0, -1), { ...added!, files: listing.files, ...(listing.omitted ? { omittedFiles: listing.omitted } : {}) }] } : applied, callId);
       return { ...next, sessions: result.sessionId ? { ...next.sessions, [sessionKey]: result.sessionId } : next.sessions };
     }, 'turn_completed', plan ? 'План готов к согласованию.' : answer!.summary.slice(0, 600), member.id);
+    if (job.purpose === 'resolve') await this.finishResolve(snapshot.id);
+    const after = this.get(snapshot.id);
+    if (after.status === 'completed') this.cleanupRepo(after);
+  }
+  private gitOp(id: string, op: () => Promise<void>): void {
+    this.gitBusy.add(id);
+    void op().catch(error => { if (!this.stopped) this.fail(id, error); }).finally(() => { this.gitBusy.delete(id); this.schedule(); });
+  }
+  private resultDir(run: Run): string { return join(this.options.workspaceRoot, run.id, 'result'); }
+  private async prepareRepo(id: string): Promise<void> {
+    const run = this.get(id);
+    const dir = this.resultDir(run);
+    const branch = existsSync(dir) ? `power-agents/${id.slice(0, 8)}/result` : (await createResultWorktree(run.repo!.root, join(this.options.workspaceRoot, id), id, run.repo!.baseCommit)).branch;
+    this.change(id, r => ({ ...r, repo: { ...r.repo!, resultBranch: branch } }), 'repo_ready', `Создана ветка результата ${branch}. Исходная ветка не меняется.`);
+  }
+  /** Commits and merges finished tasks one at a time, in plan order; a conflict stops the queue for the leader. */
+  private async mergeFinished(id: string): Promise<void> {
+    for (const task of this.get(id).tasks.filter(t => t.status === 'completed' && t.mergedTurn !== t.turns)) {
+      const run = this.get(id);
+      const { dir, branch } = await createTaskWorktree(run.repo!.root, join(this.options.workspaceRoot, id), id, task.id);
+      await commitTask(dir, run.members.find(m => m.id === task.assigneeId)?.name ?? task.assigneeId);
+      const merged = await mergeTask(this.resultDir(run), branch);
+      if (!merged.ok) {
+        this.change(id, r => ({ ...r, repo: { ...r.repo!, conflict: { taskId: task.id, files: merged.conflicts } } }), 'merge_conflict', `Конфликт слияния «${task.title}»: ${merged.conflicts.join(', ')}. Руководитель разрешит его.`);
+        return;
+      }
+      await this.recordMerge(id, task.id, task.turns, `Изменения «${task.title}» слиты в ветку результата.`);
+    }
+  }
+  private async recordMerge(id: string, taskId: string, turns: number, message: string): Promise<void> {
+    const run = this.get(id);
+    const stat = await diffStat(this.resultDir(run), run.repo!.baseCommit);
+    this.change(id, r => ({ ...r, repo: { ...r.repo!, conflict: undefined, merges: r.repo!.merges + 1, diffStat: stat },
+      tasks: r.tasks.map(t => t.id === taskId ? { ...t, mergedTurn: turns } : t) }), 'merged', message);
+  }
+  private async finishResolve(id: string): Promise<void> {
+    const run = this.get(id);
+    const conflict = run.repo?.conflict;
+    if (!conflict) return;
+    const dir = this.resultDir(run);
+    if (await conflictsResolved(dir)) {
+      await finishMerge(dir);
+      await this.recordMerge(id, conflict.taskId, run.tasks.find(t => t.id === conflict.taskId)!.turns, 'Руководитель разрешил конфликт слияния.');
+      return;
+    }
+    await abortMerge(dir);
+    const message = `Конфликт слияния не разрешён: ${conflict.files.join(', ')}. Слияние отменено; уточните задачу и продолжите.`;
+    this.change(id, r => ({ ...r, status: 'paused', error: message, repo: { ...r.repo!, conflict: undefined } }), 'error', message);
+  }
+  private async checkRepo(id: string): Promise<void> {
+    const run = this.get(id);
+    const command = run.repo!.checkCommand!;
+    const result = await runCheck(this.resultDir(run), command);
+    const title = result.passed ? 'Проверка пройдена' : 'Проверка не пройдена';
+    this.change(id, r => ({ ...r, repo: { ...r.repo!, check: { passed: result.passed, exitCode: result.exitCode, merges: run.repo!.merges } },
+      artifacts: [...r.artifacts, { id: randomUUID(), kind: 'check', title, authorId: 'platform', createdAt: new Date().toISOString(),
+        body: `Команда: \`${command}\`\nКод выхода: ${result.exitCode ?? 'остановлена'}\n\n\`\`\`\n${result.output.replace(/```/g, "'''")}\n\`\`\`` }] }), 'check', `${title}: ${command}`.slice(0, 600));
+  }
+  private cleanupRepo(run: Run): void {
+    if (run.repo) void removeWorktrees(run.repo.root, join(this.options.workspaceRoot, run.id)).catch(() => {});
   }
   /** A task writes only in its own folder; dependents, replies, the combine step and the review read the folders they need. */
-  private folders(run: Run, job: Job, runDir: string, canWrite: boolean): { own?: string; read?: string[] } {
+  private folders(run: Run, job: Job, runDir: string, canWrite: boolean): { own?: string; read?: string[]; repo?: boolean } {
     const existing = (ids: string[]) => { const dirs = ids.map(id => taskFolder(runDir, id)).filter(dir => existsSync(dir)); return dirs.length ? dirs : undefined; };
+    const repo = run.repo ? { repo: true } : {};
+    if (job.purpose === 'resolve') return { own: canWrite ? join(runDir, 'result') : undefined, ...repo };
     if (job.purpose === 'task' && job.taskId) {
       const task = run.tasks.find(t => t.id === job.taskId)!;
       const own = canWrite ? taskFolder(runDir, job.taskId) : undefined;
-      if (own) mkdirSync(own, { recursive: true });
-      return { own, read: existing(task.dependsOn) };
+      if (own && !run.repo) mkdirSync(own, { recursive: true });
+      // In a code run a task's worktree already holds its merged dependencies.
+      return { own, read: run.repo ? undefined : existing(task.dependsOn), ...repo };
     }
-    if (job.purpose === 'reply') return { read: existing(run.tasks.filter(t => t.assigneeId === job.memberId).map(t => t.id)) };
-    if (job.purpose === 'synthesize' || job.purpose === 'review') return { read: existing(run.tasks.map(t => t.id)) };
+    if (job.purpose === 'reply') return { read: existing(run.tasks.filter(t => t.assigneeId === job.memberId).map(t => t.id)), ...repo };
+    if (job.purpose === 'synthesize' || job.purpose === 'review') return { read: run.repo ? [join(runDir, 'result')] : existing(run.tasks.map(t => t.id)), ...repo };
     return {};
   }
   /** Task and reply failures stay with their task so other participants keep working. */

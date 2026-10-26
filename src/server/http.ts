@@ -9,9 +9,10 @@ import { createSchema } from './core/protocol.ts';
 import { createModelCatalogLoader } from './adapters/models.ts';
 import type { TelegramService } from './telegram.ts';
 import { resolveFile, taskFolder } from './files.ts';
+import { repoInfo } from './workspace.ts';
 
 interface EngineApi {
-  create(input: CreateRunInput): Run | Promise<Run>;
+  create(input: CreateRunInput, repo?: { root: string; baseCommit: string }): Run | Promise<Run>;
   approve(id: string, version: number): Run | Promise<Run>;
   control(id: string, action: 'pause' | 'resume' | 'cancel', confirmRepeat?: boolean): Run | Promise<Run>;
   message(id: string, body: string): Run | Promise<Run>;
@@ -145,7 +146,11 @@ function download(res: ServerResponse, store: Store, runId: string, artifactId: 
 }
 
 async function mutate(path: string[], body: unknown, { engine }: Options): Promise<Run> {
-  if (path.length === 2) return engine.create(createSchema.parse(body));
+  if (path.length === 2) {
+    const input = createSchema.parse(body);
+    const repo = input.repoPath ? await repoInfo(input.repoPath).catch((error: Error) => { throw new HttpError(400, error.message); }) : undefined;
+    return engine.create(input, repo);
+  }
   const id = path[2];
   if (path.length === 4 && path[3] === 'approve') return engine.approve(id, approveSchema.parse(body).version);
   if (path.length === 4 && path[3] === 'control') { const { action, confirmRepeat } = controlSchema.parse(body); return engine.control(id, action, confirmRepeat); }

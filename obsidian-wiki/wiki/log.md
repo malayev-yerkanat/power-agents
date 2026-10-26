@@ -13,6 +13,12 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-26 11:16 UTC - M2 step 4: code runs in git worktrees
+
+Code runs now use per-task git worktrees merged into a result branch, with leader conflict resolution, the user's check command, and cleanup; the task prompt now requires saving named files to disk.
+
+Note: [[changes/20261026-111627-m2-step-4-code-runs-in-git-worktrees|M2 step 4: code runs in git worktrees]]
+
 ### 2026-10-26 11:07 UTC - M2 steps 1-3: write mode, task files, git module
 
 CLI task turns can write files in their own task folder, finished tasks list and offer their files, and a git workspace module for code runs was added (not yet wired).

@@ -8,6 +8,12 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-26 — M2 step 4: code runs in git worktrees
+
+- A run created with `repoPath` (checked by the HTTP layer with `repoInfo`) stores `Run.repo`. The engine creates the result worktree, gives each task a worktree branched from the result tip, commits and merges finished tasks one at a time (`mergedTurn`), starts dependents only after their dependencies merge, lets the leader resolve conflicts in a `resolve` turn (otherwise aborts and pauses), runs `checkCommand` before synthesis as a `check` artifact, and removes worktrees on completion or cancel. The user's branch is never touched.
+- Live files run `431d3181` completed, but only Claude saved its file: Codex and Gemini read "give the full text in the artifact" as permission to answer in text. The task prompt now says files named by the task must be saved to disk.
+- Verified: 175/175 Node tests, 82.60% line coverage, 35/35 Chromium tests, typecheck, build, 0 audit findings.
+
 ## 2026-10-26 — M2 steps 1–3: write mode, task files, git module
 
 - Task turns of CLI participants may now edit files, only in `tasks/<taskId>/` inside the run folder: Codex `workspace-write` with temp folders excluded (a spike showed `/tmp` was otherwise writable), Claude `acceptEdits` with file tools only, Gemini `accept-edits` in its sandbox. Other turns read; dependents, replies, synthesis and review get the folders they need. Finished tasks list their files (200 files, 1 MiB each, 10 MiB per task) and the UI offers downloads limited to listed files inside the folder.

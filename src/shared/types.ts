@@ -22,6 +22,8 @@ export interface TeamTask extends TaskSpec {
   status: TaskStatus; turns: number; output?: string; error?: string;
   /** Board facts the latest result relied on, with the version it saw. */
   usedFacts?: Record<string, number>;
+  /** In code runs, the turn count at which this task's branch was last merged into the result branch. */
+  mergedTurn?: number;
 }
 export interface TeamMessage {
   id: string; fromId: string; toId: string; body: string;
@@ -33,18 +35,26 @@ export interface SharedFact { key: string; value: string; ownerId: string; versi
 /** A file a task wrote in its folder, relative to that folder. */
 export interface ArtifactFile { path: string; bytes: number }
 export interface Artifact {
-  id: string; title: string; body: string; authorId: string; taskId?: string; kind: 'work' | 'final' | 'review'; createdAt: string;
+  id: string; title: string; body: string; authorId: string; taskId?: string; kind: 'work' | 'final' | 'review' | 'check'; createdAt: string;
   files?: ArtifactFile[]; omittedFiles?: number;
 }
 export type RunStatus = 'planning' | 'awaiting_approval' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
 /** A provider call the platform started and has not yet seen finish. */
 export interface InFlightCall { id: string; memberId: string; purpose: TurnPurpose; taskId?: string; requestId?: string; startedAt: string }
+/** A code run's git state: the user's branch is never touched; work lands on the result branch. */
+export interface RepoState {
+  root: string; baseCommit: string; checkCommand?: string; resultBranch?: string;
+  merges: number; diffStat?: string;
+  conflict?: { taskId: string; files: string[] };
+  check?: { passed: boolean; exitCode: number | null; merges: number };
+}
 export interface Run {
   id: string; title: string; goal: string; status: RunStatus; members: Member[]; leaderId: string;
   plan?: TeamPlan; tasks: TeamTask[]; messages: TeamMessage[]; artifacts: Artifact[];
   sessions: Record<string, string>; turnCount: number; reviewRound: number;
   phase: 'plan' | 'tasks' | 'synthesize' | 'review' | 'done';
   facts?: SharedFact[];
+  repo?: RepoState;
   inFlight?: InFlightCall[];
   /** Calls a server restart cut off: their outcome is unknown, so they repeat only after the user confirms. */
   interrupted?: InFlightCall[];
@@ -57,8 +67,8 @@ export interface RunSummaryPage { runs: RunSummary[]; nextCursor?: string; total
 export interface EventHistoryPage { events: RunEvent[]; before?: number }
 export interface RunDetail { run: Run; events: RunEvent[]; eventsBefore?: number }
 export interface Bootstrap extends RunSummaryPage { connections: Connection[]; csrfToken: string; maxConcurrent: number; eventCursor: number }
-export interface CreateRunInput { goal: string; members: Member[]; leaderId: string; mode: 'live' | 'demo' }
-export type TurnPurpose = 'plan' | 'task' | 'reply' | 'synthesize' | 'review';
+export interface CreateRunInput { goal: string; members: Member[]; leaderId: string; mode: 'live' | 'demo'; repoPath?: string; checkCommand?: string }
+export type TurnPurpose = 'plan' | 'task' | 'reply' | 'synthesize' | 'review' | 'resolve';
 export interface TurnInput {
   runId: string; member: Member; connection: Connection; purpose: TurnPurpose;
   prompt: string; cwd: string; sessionId?: string; signal: AbortSignal;
