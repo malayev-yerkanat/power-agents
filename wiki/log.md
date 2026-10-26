@@ -8,6 +8,11 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-26 — M3 acceptance
+
+- Live run `99c6c723`: Claude (20) and Codex (19) used team tools mid-turn, each call a `team_tool` event by the calling member; probes with no token, a forged token, a browser Origin and a foreign Host were refused during and after the run. Roadmap criterion 12 done; Gemini stays without team tools.
+- Two earlier runs showed Codex had the tools but answered at once because the prompt opened with "answer only with JSON"; prompts for tool users now open with "call team_status and read_inbox first".
+
 ## 2026-10-26 — M3 step 3–4: CLI wiring and docs
 
 - Claude gets the team server through `--mcp-config` (token via `${POWER_AGENTS_TOKEN}`) with the team tools allowed; Codex through `-c mcp_servers.team.*`. The token is never in process arguments. Connections carry `teamTools`; the composer marks Gemini "без командных инструментов", and the leader's plan prompt lists who has tools. The capability is set per adapter type rather than probed at each start, to avoid spending provider quota.

@@ -90,6 +90,7 @@ test('agents use team tools as themselves; impersonation, stale tokens and brows
     const done = engine.get(run.id);
     assert.equal(done.status, 'completed', done.error);
     assert.match(String(seen.leaderPrompt), /командные инструменты MCP-сервера team/);
+    assert.match(String(seen.leaderPrompt), /^Ты участник команды Power Agents\. Сначала, до ответа, вызови инструменты team_status и read_inbox MCP-сервера team/);
     assert.ok((seen.leaderTools as string[]).includes('add_task'));
     assert.ok(!(seen.builderTools as string[]).includes('add_task'), 'only the leader is offered leader tools');
     assert.equal((seen.forged as { isError?: boolean }).isError, true, 'a smuggled sender is rejected');

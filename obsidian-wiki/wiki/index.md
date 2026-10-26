@@ -31,6 +31,7 @@ This catalog is updated by completed knowledge operations.
 
 ## Changes
 
+- 2026-10-26: [[changes/20261026-153027-m3-acceptance|M3 acceptance]]
 - 2026-10-26: [[changes/20261026-145356-m3-steps-3-4-cli-wiring-and-docs|M3 steps 3-4: CLI wiring and docs]]
 - 2026-10-26: [[changes/20261026-145008-m3-steps-0-2-team-tools-over-mcp|M3 steps 0-2: team tools over MCP]]
 - 2026-10-26: [[changes/20261026-134733-m2-acceptance|M2 acceptance]]

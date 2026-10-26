@@ -11,7 +11,7 @@ tags: [context]
 
 ## Last Updated
 
-2026-10-23. M1 accepted live 2026-10-26: review rework, facts board (changed facts reopen tasks that used them), safe resume. Combine/review calls get 15 minutes. M2 accepted live 2026-10-26 (task files, git worktree code runs). M3 in code: MCP team tools with per-turn tokens (Claude, Codex); live acceptance pending. Connection failures show their reason; unreadable answers get one retry.
+2026-10-23. M1 accepted live 2026-10-26: review rework, facts board (changed facts reopen tasks that used them), safe resume. Combine/review calls get 15 minutes. M2 accepted live 2026-10-26 (task files, git worktree code runs). M3 accepted live 2026-10-26: MCP team tools with per-turn tokens (Claude, Codex). Connection failures show their reason; unreadable answers get one retry.
 
 ## Direction
 

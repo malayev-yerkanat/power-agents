@@ -1,6 +1,6 @@
 # Power Agents roadmap
 
-Updated: 2026-10-26 (M1 and M2 accepted).
+Updated: 2026-10-26 (M1, M2 and M3 accepted).
 
 ## North star
 
@@ -31,7 +31,7 @@ remains the source of intent; this roadmap orders the remaining work.
 | 9 | Pause stops new turns; stop is shown only after confirmation | Done |
 | 10 | Errors show a clear reason and next step | Done; 2026-10-23 |
 | 11 | Document tasks without Git; code tasks in separate worktrees | Done; live acceptance 2026-10-26 |
-| 12 | Identity is checked by the platform; keys never leak | Partial: keys stay server-side; no tool-level identity |
+| 12 | Identity is checked by the platform; keys never leak | Done; live acceptance 2026-10-26 (Gemini without team tools) |
 
 ## Milestones
 
@@ -86,7 +86,14 @@ with identity checked by the platform rather than by message text.
 
 Done when a live run uses the tools and an impersonation attempt is rejected.
 
-Progress (2026-10-26): team tools, per-turn tokens, the `/mcp` endpoint, Claude and Codex wiring and the leader tools are done in code; Gemini works without team tools (agy allows MCP tool calls only through its global settings). Live acceptance is pending.
+**Accepted on 2026-10-26** (run `99c6c723`). Claude and Codex used the team tools mid-turn
+(39 calls: status, inbox, messages, facts), each logged with the calling member. Probes during
+and after the run were refused: no token and a forged token (401), a browser `Origin` and a
+foreign `Host` (403). Gemini works without team tools: agy allows MCP tool calls only through
+its global settings, which the platform does not change.
+
+Found on the way: Codex had the tools but answered at once while the prompt opened with
+"answer only with JSON"; tool users' prompts now open with the tool step.
 
 ## Backlog
 

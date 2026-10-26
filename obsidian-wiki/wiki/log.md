@@ -13,6 +13,12 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-26 15:30 UTC - M3 acceptance
+
+A live run showed Claude and Codex using team tools under platform-checked identity while forged and browser requests were refused; criterion 12 is done, with Gemini running without team tools.
+
+Note: [[changes/20261026-153027-m3-acceptance|M3 acceptance]]
+
 ### 2026-10-26 14:53 UTC - M3 steps 3-4: CLI wiring and docs
 
 Claude and Codex now connect the team tools per turn with the token only in the environment; Gemini is marked as having no team tools, and the leader learns who has them.
