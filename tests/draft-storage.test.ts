@@ -6,11 +6,12 @@ import {
   readDraft,
   steeringDraftSchema,
   writeDraft,
+  type ComposerDraft,
 } from '../src/client/draftStorage';
 
-const draft = {
+const draft: ComposerDraft = {
   goal: '',
-  mode: 'demo' as const,
+  mode: 'demo',
   leaderId: 'a',
   members: [
     { id: 'a', name: '', connectionId: 'missing-provider', model: '', role: '' },
@@ -61,7 +62,7 @@ test('denied storage never crashes or claims to save', () => {
 test('invalid values are rejected before any storage write', () => {
   const writes: string[] = [];
   const store = { setItem: (_key: string, value: string) => { writes.push(value); } };
-  const invalidDraft = { ...draft, credential: 'secret' };
+  const invalidDraft = { ...draft, credential: 'secret' } as ComposerDraft;
   assert.ok(writeDraft(store, 'draft', invalidDraft, composerDraftSchema));
   assert.equal(writes.length, 0);
 });

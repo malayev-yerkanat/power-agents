@@ -15,6 +15,8 @@ export const composerDraftSchema = z.object({
   mode: z.enum(['live', 'demo']),
   members: z.array(memberDraftSchema).min(2).max(5),
   leaderId: z.string().max(80),
+  repoPath: z.string().max(1000).optional(),
+  checkCommand: z.string().max(1000).optional(),
 }).strict().refine(
   (value) => new Set(value.members.map((item) => item.id)).size === value.members.length
     && value.members.some((item) => item.id === value.leaderId),

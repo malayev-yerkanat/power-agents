@@ -13,6 +13,12 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-26 11:23 UTC - M2 step 5: code-run UI, docs, denied writes
+
+The run form takes an optional git project and check command, the run page shows the result branch and check, and a Gemini write outside its folder is reported and retried once.
+
+Note: [[changes/20261026-112326-m2-step-5-code-run-ui-docs-denied-writes|M2 step 5: code-run UI, docs, denied writes]]
+
 ### 2026-10-26 11:16 UTC - M2 step 4: code runs in git worktrees
 
 Code runs now use per-task git worktrees merged into a result branch, with leader conflict resolution, the user's check command, and cleanup; the task prompt now requires saving named files to disk.

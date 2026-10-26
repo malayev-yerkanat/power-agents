@@ -4,6 +4,9 @@ export type ComposerIssue = { fieldId: string; message: string };
 
 export function validateComposer(input: CreateRunInput, connections: Connection[]): ComposerIssue[] {
   const issues: ComposerIssue[] = [];
+  if (input.repoPath && !input.repoPath.startsWith('/')) {
+    issues.push({ fieldId: 'repoPath', message: 'Укажите полный путь к папке проекта, начиная с /.' });
+  }
   if (input.goal.trim().length < 10) {
     issues.push({ fieldId: 'goal', message: 'Опишите цель подробнее: минимум 10 символов.' });
   }

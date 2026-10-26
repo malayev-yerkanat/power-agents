@@ -25,7 +25,8 @@ export function Composer({ connections, onCreate, openSettings, loadModels }: Pr
     return { goal: '', mode: 'live', members, leaderId: members[0]?.id || '' };
   };
   const draft = useBrowserDraft('power-agents:composer:v1', composerDraftSchema, createDefaultDraft);
-  const { goal, mode, members, leaderId } = draft.value;
+  const { goal, mode, members, leaderId, repoPath = '', checkCommand = '' } = draft.value;
+  const setRepo = (fields: { repoPath?: string; checkCommand?: string }) => draft.update(value => ({ ...value, ...fields }));
   const setGoal = (goal: string) => draft.update(value => ({ ...value, goal }));
   const setMode = (mode: 'live' | 'demo') => draft.update(value => ({ ...value, mode }));
   const setLeaderId = (leaderId: string) => draft.update(value => ({ ...value, leaderId }));
@@ -72,7 +73,7 @@ export function Composer({ connections, onCreate, openSettings, loadModels }: Pr
   const updateMember = (id: string, patch: Partial<Member>) => setMembers(current => current.map(member => member.id === id ? { ...member, ...patch } : member));
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setError('');
-    const nextIssues = validateComposer({ goal, mode, members, leaderId }, connections);
+    const nextIssues = validateComposer({ goal, mode, members, leaderId, repoPath: repoPath.trim() || undefined }, connections);
     setIssues(nextIssues);
     if (nextIssues.length) {
       const field = document.getElementById(nextIssues[0].fieldId);
@@ -86,7 +87,7 @@ export function Composer({ connections, onCreate, openSettings, loadModels }: Pr
       return;
     }
     setBusy(true);
-    try { await onCreate({ goal: goal.trim(), members: members.map(member => ({ ...member, name: member.name.trim(), role: member.role.trim(), model: member.model.trim() })), leaderId, mode }); draft.reset(createDefaultDraft()); }
+    try { await onCreate({ goal: goal.trim(), members: members.map(member => ({ ...member, name: member.name.trim(), role: member.role.trim(), model: member.model.trim() })), leaderId, mode, ...(repoPath.trim() ? { repoPath: repoPath.trim(), ...(checkCommand.trim() ? { checkCommand: checkCommand.trim() } : {}) } : {}) }); draft.reset(createDefaultDraft()); }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Не удалось создать задачу.'); }
     finally { setBusy(false); }
   }
@@ -108,6 +109,15 @@ export function Composer({ connections, onCreate, openSettings, loadModels }: Pr
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3"><span id="goal-help" className="text-xs text-muted">Чем точнее цель, тем полезнее результат.</span><span className="font-mono text-[11px] text-muted">{goal.length.toLocaleString('ru')} / 12 000</span></div>
         </section>
         <div className="example-row"><Lightbulb size={15} /><span>Попробуйте:</span>{examples.map(example => <button type="button" key={example.label} onClick={() => { clearIssues('goal'); setGoal(example.goal); }}>{example.label}<ArrowUpRight size={11} /></button>)}</div>
+        <details className="repo-card" open={!!repoPath}>
+          <summary>Изменить код в git-проекте <span className="text-muted">(необязательно)</span></summary>
+          <label htmlFor="repoPath" className="section-label">Папка проекта</label>
+          <input id="repoPath" value={repoPath} onChange={e => { clearIssues('repoPath'); setRepo({ repoPath: e.target.value }); }} maxLength={1000} placeholder="/Users/you/projects/app" aria-invalid={!!issueFor('repoPath')} aria-describedby="repo-help" />
+          {fieldError('repoPath')}
+          <label htmlFor="checkCommand" className="section-label">Команда проверки</label>
+          <input id="checkCommand" value={checkCommand} onChange={e => setRepo({ checkCommand: e.target.value })} maxLength={1000} placeholder="npm test" disabled={!repoPath.trim()} aria-describedby="repo-help" />
+          <p id="repo-help" className="text-xs text-muted">Каждая задача работает в отдельной копии на своей ветке; итог собирается в ветке power-agents/…/result. Ваша ветка и незакоммиченные изменения не затрагиваются и в работу не попадают. Команду проверки платформа запускает после слияния.</p>
+        </details>
         <section className="team-section" aria-labelledby="team-heading">
           <div className="section-heading"><div><span className="section-index">02 / Команда</span><div className="flex items-center gap-2"><h2 id="team-heading">Кто возьмётся за задачу</h2><span className="count-badge">{members.length}</span></div><p>Выберите агентов и лидера. Роли можно уточнить в плане.</p></div><button className="text-button" type="button" onClick={openSettings}><SlidersHorizontal size={16} />Подключения</button></div>
           <p className="team-summary">{members.map(member =>

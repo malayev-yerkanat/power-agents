@@ -67,6 +67,8 @@ worktrees and produce one merged result branch without touching the user's branc
 
 Done when a live run delivers a small code change on a result branch whose tests pass.
 
+Progress (2026-10-26): write mode, task files, git worktrees, merge, leader conflict resolution, check command and UI are done in code (steps 1–5). Live acceptance is pending.
+
 ### M3 — Team tools (criteria 2 and 12 in depth)
 
 A local MCP server gives CLI agents team tools (message, publish, request review)

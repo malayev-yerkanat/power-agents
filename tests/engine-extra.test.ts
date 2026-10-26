@@ -1003,3 +1003,28 @@ test('a CLI conversation is resumed only from the folder it started in', async (
     assert.equal(engine.get(run.id).sessions[`${leader}#draft`], `task-${leader}`);
   } finally { engine.shutdown(); await yieldLoop(); store.close(); rmSync(workspaceRoot, { recursive: true, force: true }); }
 });
+
+test('a write outside the task folder is retried once with a hint about the folder', async () => {
+  const { WriteDeniedError } = await import('../src/server/adapters/common.ts');
+  const prompts: string[] = [];
+  const tasks: TaskSpec[] = [{ id: 'promo', title: 'Promo', description: 'Write promo.md', assigneeId: 'a', dependsOn: [] }];
+  const runner: TurnRunner = async value => {
+    const { run, taskId } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run, tasks);
+    if (taskId === 'promo') {
+      prompts.push(value.prompt);
+      if (prompts.length === 1) throw new WriteDeniedError('write_file /elsewhere/promo.md');
+    }
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => ['completed', 'paused'].includes(app.engine.get(run.id).status), 'finish');
+    assert.equal(app.engine.get(run.id).status, 'completed', app.engine.get(run.id).error);
+    assert.equal(prompts.length, 2);
+    assert.match(prompts[1], /вне рабочей папки запрещена \(write_file \/elsewhere\/promo\.md\)\. Сохраняй файлы только в .*tasks[/\\]promo/);
+  } finally { await app.clean(); }
+});

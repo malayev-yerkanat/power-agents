@@ -8,6 +8,12 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-26 — M2 step 5: code-run UI, docs, denied writes
+
+- The composer has an optional "Изменить код в git-проекте" section (repo path, check command); the run page shows the result branch, conflicts, the check result and the diff stat. Docs: new "Файлы и код" section in the prototype guide.
+- Live files run `aaf204a5` paused because Gemini tried to write outside its folder and returned an empty answer. The Gemini parser now raises `WriteDeniedError` with the denied path, and the engine retries such a turn once with the folder named.
+- Verified: 177/177 Node tests, 82.45% line coverage, 35/35 Chromium tests, typecheck, build, 0 audit findings.
+
 ## 2026-10-26 — M2 step 4: code runs in git worktrees
 
 - A run created with `repoPath` (checked by the HTTP layer with `repoInfo`) stores `Run.repo`. The engine creates the result worktree, gives each task a worktree branched from the result tip, commits and merges finished tasks one at a time (`mergedTurn`), starts dependents only after their dependencies merge, lets the leader resolve conflicts in a `resolve` turn (otherwise aborts and pauses), runs `checkCommand` before synthesis as a `check` artifact, and removes worktrees on completion or cancel. The user's branch is never touched.

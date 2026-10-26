@@ -29,6 +29,12 @@ time, .count-badge, .section-index, .run-facts, .run-progress { font-variant-num
 .squad-preview figcaption span:last-child { font-variant-numeric: tabular-nums; }
 .section-index { display: block; font: 11px/1.5 ui-monospace, monospace; color: var(--color-muted); white-space: nowrap; }
 .goal-card { position: relative; padding: 26px 28px 20px; border: 1px solid var(--control-border); border-top: 3px solid var(--color-accent); background: #fffef9; }
+.repo-card { margin-top: 12px; padding: 14px 18px; border: 1px solid var(--control-border); background: #fffef9; }
+.repo-card summary { cursor: pointer; font-weight: 600; }
+.repo-card label { display: block; margin-top: 12px; }
+.repo-card input { display: block; width: 100%; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--control-border); font-family: var(--font-mono, monospace); font-size: 13px; }
+.repo-card input:disabled { opacity: .55; }
+.repo-card p { margin-top: 10px; }
 .goal-card .section-label { font-size: 12px; line-height: 1.8; }
 .goal-card textarea { width: 100%; min-height: 148px; padding: 22px 0 14px; color: #203e70; font-size: 15px; line-height: 1.8; outline: none; }
 .goal-card:focus-within { border-color: var(--color-accent); box-shadow: 3px 3px 0 #dce6f7; }
@@ -232,3 +238,7 @@ button:active:focus-visible { transform: none; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
   button:active:not(:disabled) { transform: none; }
 }
+
+.repo-panel { margin: 12px 0; padding: 14px 18px; border: 1px solid var(--control-border); background: #fffef9; }
+.repo-panel p { margin-top: 6px; overflow-wrap: anywhere; }
+.repo-diffstat { margin-top: 8px; padding: 8px 10px; overflow-x: auto; font-size: 12px; background: rgba(0,0,0,.04); }

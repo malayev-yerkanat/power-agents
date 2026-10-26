@@ -1,5 +1,5 @@
 import type { TurnInput, TurnResult, AdapterKind } from '../../shared/types.js';
-import { optionalText, parseJsonObject, record, requiredText, turnTimeoutMs } from './common.js';
+import { WriteDeniedError, optionalText, parseJsonObject, record, requiredText, turnTimeoutMs } from './common.js';
 import { ProcessExitError, runProcess, runtimeEnvironment } from './process.js';
 
 /** An error the CLI itself reported, as opposed to output the adapter could not read. */
@@ -56,6 +56,14 @@ export function parseCliResult(kind: AdapterKind, output: string): TurnResult {
     }
     const result = results.length === 1 ? record(results[0].result) : record(parseJsonObject(output));
     if (result.status !== 'SUCCESS') throw new CliReportedError(optionalText(result.error) ?? 'Ошибка Gemini CLI. Проверьте вход в agy.');
+    const field = (value: unknown, key: string): unknown => value && typeof value === 'object' ? (value as Record<string, unknown>)[key] : undefined;
+    const denied = Array.isArray(result.denied_actions) ? result.denied_actions.map(a => optionalText(field(a, 'action'))).filter(Boolean) : [];
+    if (!optionalText(result.response) && denied.length) {
+      // A denied tool leaves an empty answer; the failed step names the path it tried.
+      const paths = events.map(e => field(e.step_update, 'tool_info')).filter(info => denied.includes(optionalText(field(info, 'name'))))
+        .map(info => optionalText(field(field(info, 'parameters'), 'Path'))).filter(Boolean);
+      throw new WriteDeniedError([...new Set([...denied, ...paths])].join(' '));
+    }
     return { text: requiredText(result.response), sessionId: optionalText(result.conversation_id) };
   }
   throw new Error('Неизвестный CLI-провайдер.');
