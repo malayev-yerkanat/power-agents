@@ -11,7 +11,7 @@ tags: [context]
 
 ## Last Updated
 
-2026-10-23. M1 in code: review remarks reopen owners' tasks; a shared facts board; tasks may wait for working colleagues; restart-interrupted calls repeat only after confirmation. Connection failures show their reason (for example a rejected OpenAI key). Unreadable answers get one automatic retry. Plans prefer parallel tasks with fact owners. Gemini turns end at the first result line.
+2026-10-23. M1 accepted live 2026-10-26: review remarks reopen owners' tasks, a shared facts board, safe resume after restart. Connection failures show their reason (for example a rejected OpenAI key). Unreadable answers get one automatic retry. Plans prefer parallel tasks with fact owners. Gemini turns end at the first result line.
 
 ## Direction
 

@@ -13,6 +13,12 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-26 09:41 UTC - M1 acceptance run
+
+A live three-provider run passed review rework, board facts in the final, and safe resume after a mid-run restart; the roadmap marks M1 accepted with three follow-ups.
+
+Note: [[changes/20261026-094123-m1-acceptance-run|M1 acceptance run]]
+
 ### 2026-10-26 09:22 UTC - zod security update
 
 Raised zod to 4.6.7 to fix advisory GHSA-mrhx-c7xc-m3w5, which failed CI's npm audit.

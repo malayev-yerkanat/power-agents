@@ -8,6 +8,10 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-26 — M1 acceptance run
+
+- Live run `10db85ce` (Codex leader, Claude, Gemini) passed all three M1 checks: restart mid-task listed 3 unknown outcomes and resumed only after confirmation; a review remark reached Claude's recipe task, which was revised (syrup fact 36 g → 33 g, v2) before re-synthesis, and the second review passed; all 20 short board facts appear in the final. Criterion 6 stays partial: a changed fact does not reopen dependent tasks. Follow-ups: synthesis timeouts, the 12-facts limit. See the [roadmap](../docs/roadmap.md).
+
 ## 2026-10-26 — zod security update
 
 - CI's `npm audit` failed on advisory GHSA-mrhx-c7xc-m3w5 (zod below 4.6.6 can exhaust memory on oversized constrained collections). Raised zod to ^4.6.7. Verified: 0 audit findings, 155/155 Node tests, 35/35 Chromium tests, typecheck, build.
