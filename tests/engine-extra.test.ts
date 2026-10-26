@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -938,4 +938,67 @@ test('a changed fact reopens finished tasks that used it, with the old and new v
     assert.equal(done.tasks.find(t => t.id === 'notes')!.turns, 1);
     assert.deepEqual(done.tasks.find(t => t.id === 'promo')!.usedFacts, { Цена: 2 });
   } finally { await app.clean(); }
+});
+
+test('task turns write files in their own folder; later turns can read them and see the manifest', async () => {
+  const seen: Partial<Record<string, TurnInput>> = {};
+  const tasks: TaskSpec[] = [
+    { id: 'draft', title: 'Draft', description: 'Write a file', assigneeId: 'a', dependsOn: [] },
+    { id: 'edit', title: 'Edit', description: 'Read the draft', assigneeId: 'b', dependsOn: ['draft'] },
+  ];
+  const runner: TurnRunner = async value => {
+    const { run, taskId } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run, tasks);
+    seen[taskId ?? value.purpose] = value;
+    if (taskId === 'draft') {
+      mkdirSync(join(value.cwd, 'docs'), { recursive: true });
+      writeFileSync(join(value.cwd, 'docs', 'menu.md'), '# Menu');
+    }
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => app.engine.get(run.id).status === 'completed', 'completion');
+    const draft = seen.draft!, edit = seen.edit!, combine = seen.synthesize!, review = seen.review!;
+    assert.equal(draft.writable, true);
+    assert.match(draft.cwd, /tasks[/\\]draft$/);
+    assert.deepEqual(edit.readDirs, [draft.cwd]);
+    assert.match(edit.prompt, /Твоя рабочая папка/);
+    assert.ok(!combine.writable && !review.writable);
+    assert.deepEqual(combine.readDirs, [draft.cwd, edit.cwd]);
+    const work = app.engine.get(run.id).artifacts.find(a => a.kind === 'work' && a.taskId === 'draft')!;
+    assert.deepEqual(work.files, [{ path: 'docs/menu.md', bytes: 6 }]);
+    assert.match(combine.prompt, /docs\/menu\.md/);
+  } finally { await app.clean(); }
+});
+
+test('a CLI conversation is resumed only from the folder it started in', async () => {
+  const calls: TurnInput[] = [];
+  const tasks: TaskSpec[] = [{ id: 'draft', title: 'Draft', description: 'Write', assigneeId: 'a', dependsOn: [] }];
+  const runner: TurnRunner = async value => {
+    calls.push(value);
+    const { run } = contextOf(value);
+    const result = value.purpose === 'plan' ? await plan(run, tasks) : await successfulRunner(value);
+    return { ...result, sessionId: `${value.purpose}-${value.member.id}` };
+  };
+  const workspaceRoot = mkdtempSync(join(tmpdir(), 'power-engine-cli-'));
+  const store = new Store(':memory:');
+  const cli = (id: string, kind: 'claude-cli' | 'codex-cli') => ({ id, name: id, kind, available: true, executable: '/bin/true', detail: '' });
+  const engine = new Engine({ store, connections: [cli('c1', 'claude-cli'), cli('c2', 'codex-cli')], workspaceRoot, runner });
+  try {
+    const run = engine.create({ ...input, mode: 'live', members: input.members.map((m, i) => ({ ...m, connectionId: i === 0 ? 'c1' : 'c2' })) });
+    await until(() => engine.get(run.id).status === 'awaiting_approval');
+    engine.approve(run.id, engine.get(run.id).version);
+    await until(() => engine.get(run.id).status === 'completed', 'completion');
+    const leader = engine.get(run.id).leaderId;
+    const task = calls.find(c => c.purpose === 'task')!;
+    const combine = calls.find(c => c.purpose === 'synthesize')!;
+    assert.equal(task.member.id, leader);
+    assert.equal(task.sessionId, undefined, 'the task folder starts its own conversation');
+    assert.equal(combine.sessionId, `plan-${leader}`, 'the run-folder conversation continues');
+    assert.equal(engine.get(run.id).sessions[`${leader}#draft`], `task-${leader}`);
+  } finally { engine.shutdown(); await yieldLoop(); store.close(); rmSync(workspaceRoot, { recursive: true, force: true }); }
 });

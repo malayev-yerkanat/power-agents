@@ -1,4 +1,6 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { z } from 'zod';
 import type { Connection, CreateRunInput, ModelCatalog, Run, RunEvent } from '../shared/types.ts';
@@ -6,6 +8,7 @@ import type { Store } from './store.ts';
 import { createSchema } from './core/protocol.ts';
 import { createModelCatalogLoader } from './adapters/models.ts';
 import type { TelegramService } from './telegram.ts';
+import { resolveFile, taskFolder } from './files.ts';
 
 interface EngineApi {
   create(input: CreateRunInput): Run | Promise<Run>;
@@ -13,7 +16,7 @@ interface EngineApi {
   control(id: string, action: 'pause' | 'resume' | 'cancel', confirmRepeat?: boolean): Run | Promise<Run>;
   message(id: string, body: string): Run | Promise<Run>;
 }
-interface Options { store: Store; engine: EngineApi; connections: Connection[]; models?: (connection: Connection) => Promise<ModelCatalog>; telegram?: TelegramService; telegramError?: string }
+interface Options { store: Store; engine: EngineApi; connections: Connection[]; workspaceRoot?: string; models?: (connection: Connection) => Promise<ModelCatalog>; telegram?: TelegramService; telegramError?: string }
 class HttpError extends Error {
   statusCode: number;
   constructor(statusCode: number, message: string) { super(message); this.statusCode = statusCode; }
@@ -117,6 +120,18 @@ function eventStream(req: IncomingMessage, res: ServerResponse, store: Store, ru
   res.once('close', cleanup); res.once('error', cleanup);
 }
 
+/** Serves a file only if the task's latest result lists it and it still lies inside that task's folder. */
+function downloadFile(res: ServerResponse, { store, workspaceRoot }: Options, runId: string, taskId: string, path: string): void {
+  const listed = store.getRun(runId)?.artifacts.filter(a => a.kind === 'work' && a.taskId === taskId).at(-1)?.files?.some(f => f.path === path);
+  const full = listed && workspaceRoot ? resolveFile(taskFolder(join(workspaceRoot, runId), taskId), path) : undefined;
+  if (!full) throw new HttpError(404, 'File not found');
+  const name = basename(path);
+  res.writeHead(200, {
+    'Content-Type': 'application/octet-stream', 'X-Content-Type-Options': 'nosniff',
+    'Content-Disposition': `attachment; filename="${name.replace(/[^a-zA-Z0-9._-]/g, '_')}"; filename*=UTF-8''${encodeURIComponent(name)}`,
+  });
+  res.end(readFileSync(full));
+}
 function download(res: ServerResponse, store: Store, runId: string, artifactId: string): void {
   const artifact = store.getRun(runId)?.artifacts.find(value => value.id === artifactId);
   if (!artifact) throw new HttpError(404, 'Artifact not found');
@@ -209,6 +224,8 @@ export function createApiHandler(options: Options): (req: IncomingMessage, res: 
           eventStream(req, res, options.store, path[2]);
         } else if (path[1] === 'runs' && path.length === 5 && path[3] === 'artifacts') {
           download(res, options.store, path[2], path[4]);
+        } else if (path[1] === 'runs' && path.length >= 6 && path[3] === 'files') {
+          downloadFile(res, options, path[2], path[4], path.slice(5).join('/'));
         } else throw new HttpError(404, 'API endpoint not found');
       } else if (req.method === 'POST') {
         const token = req.headers['x-csrf-token'];

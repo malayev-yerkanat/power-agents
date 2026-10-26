@@ -8,6 +8,13 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-26 — M2 steps 1–3: write mode, task files, git module
+
+- Task turns of CLI participants may now edit files, only in `tasks/<taskId>/` inside the run folder: Codex `workspace-write` with temp folders excluded (a spike showed `/tmp` was otherwise writable), Claude `acceptEdits` with file tools only, Gemini `accept-edits` in its sandbox. Other turns read; dependents, replies, synthesis and review get the folders they need. Finished tasks list their files (200 files, 1 MiB each, 10 MiB per task) and the UI offers downloads limited to listed files inside the folder.
+- CLI conversations are kept per folder (`<member>#<taskId>` for task folders), after a live run showed Claude cannot resume a conversation from another folder.
+- `src/server/workspace.ts` (git worktrees, commit, merge, conflicts, check command, cleanup) was built in a side session and merged; it is not wired into the engine yet.
+- Verified: 171/171 Node tests, 82.20% line coverage, 35/35 Chromium tests, typecheck, 0 audit findings.
+
 ## 2026-10-26 — M1 follow-ups fixed
 
 - A changed fact reopens finished tasks that listed it in `usesFacts`, with an old → new note (criterion 6). Synthesis and review calls get 15 minutes. Answers may publish up to 40 facts. See [[Orchestration Engine]] and the [roadmap](../docs/roadmap.md).

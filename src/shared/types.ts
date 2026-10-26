@@ -30,7 +30,12 @@ export interface TeamMessage {
 }
 /** A value one participant owns (a price, a gram weight, a promo term) that everyone else reads instead of asking. */
 export interface SharedFact { key: string; value: string; ownerId: string; version: number; updatedAt: string }
-export interface Artifact { id: string; title: string; body: string; authorId: string; taskId?: string; kind: 'work' | 'final' | 'review'; createdAt: string }
+/** A file a task wrote in its folder, relative to that folder. */
+export interface ArtifactFile { path: string; bytes: number }
+export interface Artifact {
+  id: string; title: string; body: string; authorId: string; taskId?: string; kind: 'work' | 'final' | 'review'; createdAt: string;
+  files?: ArtifactFile[]; omittedFiles?: number;
+}
 export type RunStatus = 'planning' | 'awaiting_approval' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
 /** A provider call the platform started and has not yet seen finish. */
 export interface InFlightCall { id: string; memberId: string; purpose: TurnPurpose; taskId?: string; requestId?: string; startedAt: string }
@@ -57,6 +62,10 @@ export type TurnPurpose = 'plan' | 'task' | 'reply' | 'synthesize' | 'review';
 export interface TurnInput {
   runId: string; member: Member; connection: Connection; purpose: TurnPurpose;
   prompt: string; cwd: string; sessionId?: string; signal: AbortSignal;
+  /** Task turns may edit files inside `cwd` only; every other turn reads. */
+  writable?: boolean;
+  /** Extra folders the turn may read, such as dependency results. */
+  readDirs?: string[];
   onProgress: (text: string) => void;
 }
 export interface TurnResult { text: string; sessionId?: string }

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Connection, InFlightCall, Run, TeamTask, TurnPurpose, TurnRunner } from '../shared/types.ts';
 import { Store } from './store.ts';
@@ -9,6 +9,7 @@ import { demoRunner } from './core/demo.ts';
 import { AnswerFormatError, InputError, validateInput, parseEnvelope, parsePlan } from './core/protocol.ts';
 import { promptFor } from './core/prompts.ts';
 import { applyResult, findFact, type Job } from './core/results.ts';
+import { listFiles, taskFolder } from './files.ts';
 const finished = (run: Run, callId: string): Run => ({ ...run, inFlight: run.inFlight?.filter(c => c.id !== callId) });
 const callNames: Record<TurnPurpose, string> = { plan: 'план', task: 'задача', reply: 'ответ коллеге', synthesize: 'сборка итога', review: 'проверка' };
 function callLabel(run: Run, call: InFlightCall): string {
@@ -183,14 +184,18 @@ export class Engine {
     const member = snapshot.members.find(m => m.id === job.memberId)!;
     const connection = this.options.connections.find(c => c.id === member.connectionId) ?? { id: 'demo', name: 'Демо', kind: 'demo' as const, available: true, detail: '' };
     const runner = snapshot.mode === 'demo' ? this.options.demoRunner ?? demoRunner : this.options.runner ?? runTurn;
-    const input = { runId: snapshot.id, member, connection, purpose: job.purpose, prompt: promptFor({ run: snapshot, ...job }), cwd: join(this.options.workspaceRoot, snapshot.id), sessionId: Object.hasOwn(snapshot.sessions, member.id) ? snapshot.sessions[member.id] : undefined, signal: controller.signal, onProgress: () => {} };
+    const runDir = join(this.options.workspaceRoot, snapshot.id);
+    const folders = this.folders(snapshot, job, runDir, connection.kind === 'demo' || connection.kind.endsWith('-cli'));
+    // CLIs keep conversations per working folder, so a task folder has its own conversation.
+    const sessionKey = folders.own && connection.kind.endsWith('-cli') ? `${member.id}#${job.taskId}` : member.id;
+    const input = { runId: snapshot.id, member, connection, purpose: job.purpose, prompt: promptFor({ run: snapshot, ...job, folders }), cwd: folders.own ?? runDir, writable: !!folders.own, readDirs: folders.read, sessionId: Object.hasOwn(snapshot.sessions, sessionKey) ? snapshot.sessions[sessionKey] : undefined, signal: controller.signal, onProgress: () => {} };
     const stale = () => controller.signal.aborted || this.stopped || !['planning', 'running'].includes(this.get(snapshot.id).status);
     let result = await runner(input);
     if (stale()) return;
     const current = this.get(snapshot.id);
     const userNotes = (run: Run) => run.messages.filter(m => m.fromId === 'user').length;
     if (['plan', 'synthesize', 'review'].includes(job.purpose) && userNotes(current) !== userNotes(snapshot)) {
-      this.change(snapshot.id, run => ({ ...finished(run, callId), phase: job.purpose === 'plan' ? 'plan' : 'synthesize', sessions: result.sessionId ? { ...run.sessions, [member.id]: result.sessionId } : run.sessions }), 'superseded', 'Получены новые уточнения. Этап будет выполнен заново с актуальным контекстом.');
+      this.change(snapshot.id, run => ({ ...finished(run, callId), phase: job.purpose === 'plan' ? 'plan' : 'synthesize', sessions: result.sessionId ? { ...run.sessions, [sessionKey]: result.sessionId } : run.sessions }), 'superseded', 'Получены новые уточнения. Этап будет выполнен заново с актуальным контекстом.');
       return;
     }
     let reading: ReturnType<typeof read>;
@@ -199,16 +204,33 @@ export class Engine {
       if (!(error instanceof AnswerFormatError)) throw error;
       // One retry in the same session, with the reason, fixes most malformed answers without pausing the team.
       const firstSession = result.sessionId;
-      this.change(snapshot.id, r => ({ ...r, turnCount: r.turnCount + 1, sessions: firstSession ? { ...r.sessions, [member.id]: firstSession } : r.sessions }), 'format_retry', `Ответ не принят, запрошен повтор: ${error.message}`.slice(0, 600), member.id);
+      this.change(snapshot.id, r => ({ ...r, turnCount: r.turnCount + 1, sessions: firstSession ? { ...r.sessions, [sessionKey]: firstSession } : r.sessions }), 'format_retry', `Ответ не принят, запрошен повтор: ${error.message}`.slice(0, 600), member.id);
       result = await runner({ ...input, sessionId: firstSession ?? input.sessionId, prompt: input.prompt.replace('\nCONTEXT:\n', `\nТвой предыдущий ответ не принят: ${error.message} Верни заново полный ответ одним JSON-объектом строго по схеме, без текста до или после него.\nCONTEXT:\n`) });
       if (stale()) return;
       reading = read(job, result.text, snapshot, member.id);
     }
     const { plan, answer } = reading;
     this.change(snapshot.id, current => {
-      const next = finished(plan ? { ...current, plan, status: 'awaiting_approval' as const } : applyResult(current, job, answer!), callId);
-      return { ...next, sessions: result.sessionId ? { ...next.sessions, [member.id]: result.sessionId } : next.sessions };
+      const applied = plan ? { ...current, plan, status: 'awaiting_approval' as const } : applyResult(current, job, answer!);
+      const added = applied.artifacts.length > current.artifacts.length ? applied.artifacts.at(-1) : undefined;
+      const listing = folders.own && added?.taskId === job.taskId ? listFiles(folders.own) : undefined;
+      const next = finished(listing && (listing.files.length || listing.omitted)
+        ? { ...applied, artifacts: [...applied.artifacts.slice(0, -1), { ...added!, files: listing.files, ...(listing.omitted ? { omittedFiles: listing.omitted } : {}) }] } : applied, callId);
+      return { ...next, sessions: result.sessionId ? { ...next.sessions, [sessionKey]: result.sessionId } : next.sessions };
     }, 'turn_completed', plan ? 'План готов к согласованию.' : answer!.summary.slice(0, 600), member.id);
+  }
+  /** A task writes only in its own folder; dependents, replies, the combine step and the review read the folders they need. */
+  private folders(run: Run, job: Job, runDir: string, canWrite: boolean): { own?: string; read?: string[] } {
+    const existing = (ids: string[]) => { const dirs = ids.map(id => taskFolder(runDir, id)).filter(dir => existsSync(dir)); return dirs.length ? dirs : undefined; };
+    if (job.purpose === 'task' && job.taskId) {
+      const task = run.tasks.find(t => t.id === job.taskId)!;
+      const own = canWrite ? taskFolder(runDir, job.taskId) : undefined;
+      if (own) mkdirSync(own, { recursive: true });
+      return { own, read: existing(task.dependsOn) };
+    }
+    if (job.purpose === 'reply') return { read: existing(run.tasks.filter(t => t.assigneeId === job.memberId).map(t => t.id)) };
+    if (job.purpose === 'synthesize' || job.purpose === 'review') return { read: existing(run.tasks.map(t => t.id)) };
+    return {};
   }
   /** Task and reply failures stay with their task so other participants keep working. */
   private failTurn(id: string, job: Job, error: unknown, callId: string): void {

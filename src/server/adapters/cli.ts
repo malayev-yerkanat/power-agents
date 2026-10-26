@@ -8,16 +8,22 @@ class CliReportedError extends Error {}
 export function buildCliCommand(input: TurnInput): { args: string[]; stdin?: string } {
   const model = input.member.model.trim();
   const modelArgs = model ? ['--model', model] : [];
+  const addDirs = (input.readDirs ?? []).flatMap(dir => ['--add-dir', dir]);
   if (input.connection.kind === 'codex-cli') {
-    const args = ['exec', '--json', '--ignore-user-config', '-s', 'read-only', '-C', input.cwd, ...modelArgs];
+    // workspace-write would also allow the system temp folders; writes must stay in the task folder.
+    const sandbox = input.writable
+      ? ['-s', 'workspace-write', '-c', 'sandbox_workspace_write.exclude_tmpdir_env_var=true', '-c', 'sandbox_workspace_write.exclude_slash_tmp=true']
+      : ['-s', 'read-only'];
+    const args = ['exec', '--json', '--ignore-user-config', '--skip-git-repo-check', ...sandbox, '-C', input.cwd, ...modelArgs];
     return { args: [...args, ...(input.sessionId ? ['resume', input.sessionId] : []), '-'], stdin: input.prompt };
   }
   if (input.connection.kind === 'claude-cli') {
-    return { args: ['-p', '--permission-mode', 'plan', '--output-format', 'json', '--tools', '', '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}', '--disable-slash-commands', '--settings', '{"disableAllHooks":true}', ...modelArgs, ...(input.sessionId ? ['--resume', input.sessionId] : [])], stdin: input.prompt };
+    const tools = input.writable ? 'Read,Edit,Write,Glob,Grep' : input.readDirs ? 'Read,Glob,Grep' : '';
+    return { args: ['-p', '--permission-mode', input.writable ? 'acceptEdits' : 'plan', '--output-format', 'json', '--tools', tools, ...addDirs, '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}', '--disable-slash-commands', '--settings', '{"disableAllHooks":true}', ...modelArgs, ...(input.sessionId ? ['--resume', input.sessionId] : [])], stdin: input.prompt };
   }
   if (input.connection.kind === 'gemini-cli') {
     return {
-      args: ['--mode', 'plan', '--sandbox', '--disable-slash-commands', '--input-format', 'stream-json', '--output-format', 'stream-json', '--print-timeout', '300s', ...modelArgs, ...(input.sessionId ? ['--conversation', input.sessionId] : [])],
+      args: ['--mode', input.writable ? 'accept-edits' : 'plan', '--sandbox', ...addDirs, '--disable-slash-commands', '--input-format', 'stream-json', '--output-format', 'stream-json', '--print-timeout', '300s', ...modelArgs, ...(input.sessionId ? ['--conversation', input.sessionId] : [])],
       stdin: `${JSON.stringify({ event: 'user', message: { content: input.prompt } })}\n`,
     };
   }

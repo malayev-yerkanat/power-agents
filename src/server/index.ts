@@ -14,12 +14,13 @@ if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('POR
 const dataRoot = resolve(root, '.power-agents');
 const store = new Store(join(dataRoot, 'state.sqlite'));
 const connections = await discoverConnections();
-const engine = new Engine({ store, connections, workspaceRoot: join(dataRoot, 'workspaces') });
+const workspaceRoot = join(dataRoot, 'workspaces');
+const engine = new Engine({ store, connections, workspaceRoot });
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
 const telegramError = telegramToken && !isTelegramToken(telegramToken)
   ? 'TELEGRAM_BOT_TOKEN has an invalid BotFather token format.' : undefined;
 const telegram = telegramToken && !telegramError ? new TelegramService(store, telegramToken) : undefined;
-const api = createApiHandler({ store, engine, connections, telegram, telegramError });
+const api = createApiHandler({ store, engine, connections, workspaceRoot, telegram, telegramError });
 const production = process.env.NODE_ENV === 'production';
 const server = createServer();
 const vite = production ? undefined : await createViteServer({

@@ -6,7 +6,7 @@ import type { AddressInfo } from 'node:net';
 import { createApiHandler } from '../src/server/http.ts';
 import { Store } from '../src/server/store.ts';
 import { Engine } from '../src/server/engine.ts';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Connection, CreateRunInput, ModelCatalog, Run } from '../src/shared/types.ts';
@@ -21,7 +21,7 @@ function fixture(): Run {
   };
 }
 
-async function setup(connections: Connection[] = [], models?: (connection: Connection) => Promise<ModelCatalog>) {
+async function setup(connections: Connection[] = [], models?: (connection: Connection) => Promise<ModelCatalog>, workspaceRoot?: string) {
   const store = new Store(':memory:');
   const calls: unknown[][] = [];
   const engine = {
@@ -31,7 +31,7 @@ async function setup(connections: Connection[] = [], models?: (connection: Conne
     message(id: string, body: string) { calls.push(['message', id, body]); return fixture(); },
   };
   store.createRun(fixture(), { type: 'created', message: 'Created' });
-  const handler = createApiHandler({ store, engine, connections, models });
+  const handler = createApiHandler({ store, engine, connections, models, workspaceRoot });
   const server = createServer((req, res) => {
     void handler(req, res).then(handled => { if (!handled) { res.writeHead(404); res.end(); } });
   });
@@ -291,4 +291,27 @@ test('run creation rejects duplicate member IDs and an outside leader through th
     await new Promise<void>(resolve => server.close(() => resolve()));
     store.close(); rmSync(workspace, { recursive: true, force: true });
   }
+});
+
+test('task files download only when listed and inside the task folder', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'power-http-files-'));
+  const app = await setup([], undefined, root);
+  try {
+    const runId = fixture().id;
+    const dir = join(root, runId, 'tasks', 't1');
+    mkdirSync(join(dir, 'docs'), { recursive: true });
+    writeFileSync(join(dir, 'docs', 'меню.md'), '# Menu');
+    writeFileSync(join(dir, 'secret.txt'), 'no');
+    app.store.updateRun(runId, r => ({ ...r, artifacts: [...r.artifacts, { id: 'w1', title: 'W', body: 'b', authorId: 'leader', taskId: 't1', kind: 'work',
+      createdAt: '2026-10-07T00:00:00.000Z', files: [{ path: 'docs/меню.md', bytes: 6 }] }] }), { type: 'seed', message: 'files' });
+    const url = (path: string) => `${app.base}/api/runs/${runId}/files/t1/${path}`;
+    const ok = await fetch(url(`docs/${encodeURIComponent('меню.md')}`), { headers: app.headers });
+    assert.equal(ok.status, 200);
+    assert.equal(await ok.text(), '# Menu');
+    assert.match(ok.headers.get('content-disposition')!, /attachment/);
+    assert.equal(ok.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal((await fetch(url('secret.txt'), { headers: app.headers })).status, 404);
+    assert.equal((await fetch(url('..%2F..%2Fsecret.txt'), { headers: app.headers })).status, 404);
+    assert.equal((await fetch(url(`docs/${encodeURIComponent('меню.md')}`))).status, 401);
+  } finally { await app.close(); rmSync(root, { recursive: true, force: true }); }
 });

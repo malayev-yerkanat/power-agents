@@ -1,5 +1,5 @@
 import type { Artifact, Run, TeamTask, TurnPurpose } from '../../shared/types.ts';
-export interface Context { run: Run; memberId: string; purpose: TurnPurpose; taskId?: string; requestId?: string }
+export interface Context { run: Run; memberId: string; purpose: TurnPurpose; taskId?: string; requestId?: string; folders?: { own?: string; read?: string[] } }
 const latest = (artifacts: Artifact[], keep: (artifact: Artifact) => boolean) => artifacts.filter(keep).at(-1);
 /** Each turn sees only the work it needs, once: resending every document outgrows the limit on long runs. */
 function sharedRun({ run: { sessions: _sessions, inFlight: _inFlight, interrupted: _interrupted, ...run }, memberId, purpose, taskId }: Context): Omit<Run, 'sessions' | 'inFlight' | 'interrupted'> {
@@ -12,6 +12,11 @@ function sharedRun({ run: { sessions: _sessions, inFlight: _inFlight, interrupte
   return { ...run, artifacts: [...work, ...documents],
     tasks: run.tasks.map(({ output, ...task }) => visible(task) && output !== undefined && !work.some(a => a.taskId === task.id && a.body === output) ? { ...task, output } : task),
     messages: run.messages.filter(m => m.fromId === 'user' || m.fromId === memberId || m.toId === memberId) };
+}
+function folderNote(folders: Context['folders']): string {
+  const own = folders?.own ? `Твоя рабочая папка — ${folders.own}: создавай и изменяй в ней файлы результата, если они нужны по задаче, и ничего не записывай вне её. В artifact всё равно дай полный текст результата и перечисли созданные файлы.\n` : '';
+  const read = folders?.read ? `Файлы задач доступны для чтения: ${folders.read.join(', ')}. Список файлов каждой задачи — в artifacts[].files; при сборке итога перечисли файлы команды.\n` : '';
+  return own + read;
 }
 export function promptFor(context: Context): string {
   const serialized = JSON.stringify({ ...context, run: sharedRun(context) });
@@ -26,5 +31,6 @@ export function promptFor(context: Context): string {
     'reply: ответь на requestId через summary; платформа доставит ответ отправителю. Не задавай встречных вопросов в этом ходе. Если вопрос о факте, которым владеешь ты, назови точное значение, опубликуй его в facts и придерживайся его в своей задаче. Если значение ещё зависит от данных коллег, которых у тебя нет, прямо назови его предварительным.\n' +
     'synthesize: подготовь единый полный итог в artifact, учитывая все результаты, замечания пользователя и последнюю проверку.\n' +
     'review: независимо проверь последний final artifact по цели и successCriteria. Верни verdict pass или changes_requested, аргументы в artifact. При changes_requested перечисли в revisions задачи, которые должны доработать их владельцы, с конкретным замечанием к каждой; если исправить нужно только сборку итога, оставь revisions пустым. Не утверждай, что проводил проверки, которых не было.\n' +
+    folderNote(context.folders) +
     'Поля artifact, verdict, revisions, facts и usesFacts необязательны для обычных ходов. messages всегда массив.\nCONTEXT:\n' + serialized;
 }

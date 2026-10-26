@@ -255,3 +255,25 @@ test('combine and review calls get the 15-minute limit; other turns keep 5 minut
   assert.equal(turnTimeoutMs('review'), 15 * 60 * 1000);
   for (const purpose of ['plan', 'task', 'reply'] as const) assert.equal(turnTimeoutMs(purpose), 5 * 60 * 1000);
 });
+
+test('writable turns edit only inside their folder; readable folders are added; no bypass flags', () => {
+  const writable = { ...input('claude-cli'), cwd: '/work/run/tasks/t1', writable: true, readDirs: ['/work/run/tasks/t0'] } as TurnInput;
+  const claude = buildCliCommand(writable).args;
+  assert.equal(claude[claude.indexOf('--permission-mode') + 1], 'acceptEdits');
+  assert.equal(claude[claude.indexOf('--tools') + 1], 'Read,Edit,Write,Glob,Grep');
+  assert.equal(claude[claude.indexOf('--add-dir') + 1], '/work/run/tasks/t0');
+  const codex = buildCliCommand({ ...writable, connection: input('codex-cli').connection }).args;
+  assert.equal(codex[codex.indexOf('-s') + 1], 'workspace-write');
+  assert.ok(codex.includes('sandbox_workspace_write.exclude_tmpdir_env_var=true'));
+  assert.ok(codex.includes('sandbox_workspace_write.exclude_slash_tmp=true'));
+  assert.ok(codex.includes('--skip-git-repo-check'));
+  assert.equal(codex[codex.indexOf('-C') + 1], '/work/run/tasks/t1');
+  const gemini = buildCliCommand({ ...writable, connection: input('gemini-cli').connection }).args;
+  assert.equal(gemini[gemini.indexOf('--mode') + 1], 'accept-edits');
+  assert.ok(gemini.includes('--sandbox'));
+  assert.equal(gemini[gemini.indexOf('--add-dir') + 1], '/work/run/tasks/t0');
+  for (const args of [claude, codex, gemini]) assert.ok(!args.some(a => /dangerously|bypass|yolo|danger-full-access/i.test(a)), args.join(' '));
+  const reader = buildCliCommand({ ...input('claude-cli'), readDirs: ['/work/run/result'] } as TurnInput).args;
+  assert.equal(reader[reader.indexOf('--permission-mode') + 1], 'plan');
+  assert.equal(reader[reader.indexOf('--tools') + 1], 'Read,Glob,Grep');
+});

@@ -3,6 +3,8 @@ import type { Artifact } from '../shared/types';
 import { MarkdownDocument } from './MarkdownDocument';
 import { timeLabel } from './ui';
 
+const fileSize = (bytes: number) => bytes < 1024 ? `${bytes} Б` : bytes < 1024 * 1024 ? `${Math.round(bytes / 1024)} КБ` : `${(bytes / 1024 / 1024).toFixed(1)} МБ`;
+
 type Props = { artifact: Artifact; runId: string; label: string; author: string; expanded: boolean };
 
 export function ArtifactView({ artifact, runId, label, author, expanded }: Props) {
@@ -27,6 +29,9 @@ export function ArtifactView({ artifact, runId, label, author, expanded }: Props
       </div>
     </div>
     <p className="artifact-action-notice" role="status">{notice}</p>
+    {!!artifact.files?.length && artifact.taskId && <div className="artifact-files"><div className="eyebrow">Файлы задачи</div><ul>
+      {artifact.files.map(file => <li key={file.path}><a href={`/api/runs/${encodeURIComponent(runId)}/files/${encodeURIComponent(artifact.taskId!)}/${file.path.split('/').map(encodeURIComponent).join('/')}`} download>{file.path}</a> <span className="artifact-meta">{fileSize(file.bytes)}</span></li>)}
+    </ul>{!!artifact.omittedFiles && <p className="artifact-meta">Не показано файлов: {artifact.omittedFiles} (лимиты: 200 файлов, 1 МБ на файл, 10 МБ на задачу).</p>}</div>}
     {expanded ? document : <details className="artifact-disclosure"><summary>Документ: {artifact.title}</summary>{document}</details>}
   </article>;
 }
