@@ -5,7 +5,12 @@ import { ProcessExitError, runProcess, runtimeEnvironment } from './process.js';
 /** An error the CLI itself reported, as opposed to output the adapter could not read. */
 class CliReportedError extends Error {}
 
-export function buildCliCommand(input: TurnInput): { args: string[]; stdin?: string } {
+/** Team tool names as Claude exposes them for the per-run `team` server. */
+const CLAUDE_TEAM_TOOLS = ['team_status', 'read_inbox', 'send_message', 'publish_fact', 'report_blocked', 'add_task', 'assign_task'].map(name => `mcp__team__${name}`).join(',');
+
+export function buildCliCommand(input: TurnInput): { args: string[]; stdin?: string; env?: Record<string, string> } {
+  // The turn token travels only in the environment; Claude expands it inside its config, Codex reads it by name.
+  const env = input.team ? { POWER_AGENTS_TOKEN: input.team.token } : undefined;
   const model = input.member.model.trim();
   const modelArgs = model ? ['--model', model] : [];
   const addDirs = (input.readDirs ?? []).flatMap(dir => ['--add-dir', dir]);
@@ -15,11 +20,12 @@ export function buildCliCommand(input: TurnInput): { args: string[]; stdin?: str
       ? ['-s', 'workspace-write', '-c', 'sandbox_workspace_write.exclude_tmpdir_env_var=true', '-c', 'sandbox_workspace_write.exclude_slash_tmp=true']
       : ['-s', 'read-only'];
     const args = ['exec', '--json', '--ignore-user-config', '--skip-git-repo-check', ...sandbox, '-C', input.cwd, ...modelArgs];
-    return { args: [...args, ...(input.sessionId ? ['resume', input.sessionId] : []), '-'], stdin: input.prompt };
+    const team = input.team ? ['-c', `mcp_servers.team.url="${input.team.url}"`, '-c', 'mcp_servers.team.bearer_token_env_var="POWER_AGENTS_TOKEN"', '-c', 'mcp_servers.team.default_tools_approval_mode="approve"'] : [];
+    return { args: [...args, ...team, ...(input.sessionId ? ['resume', input.sessionId] : []), '-'], stdin: input.prompt, env };
   }
   if (input.connection.kind === 'claude-cli') {
     const tools = input.writable ? 'Read,Edit,Write,Glob,Grep' : input.readDirs ? 'Read,Glob,Grep' : '';
-    return { args: ['-p', '--permission-mode', input.writable ? 'acceptEdits' : 'plan', '--output-format', 'json', '--tools', tools, ...addDirs, '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}', '--disable-slash-commands', '--settings', '{"disableAllHooks":true}', ...modelArgs, ...(input.sessionId ? ['--resume', input.sessionId] : [])], stdin: input.prompt };
+    return { args: ['-p', '--permission-mode', input.writable ? 'acceptEdits' : 'plan', '--output-format', 'json', '--tools', tools, ...addDirs, '--strict-mcp-config', '--mcp-config', JSON.stringify({ mcpServers: input.team ? { team: { type: 'http', url: input.team.url, headers: { Authorization: 'Bearer ${POWER_AGENTS_TOKEN}' } } } : {} }), ...(input.team ? ['--allowedTools', CLAUDE_TEAM_TOOLS] : []), '--disable-slash-commands', '--settings', '{"disableAllHooks":true}', ...modelArgs, ...(input.sessionId ? ['--resume', input.sessionId] : [])], stdin: input.prompt, env };
   }
   if (input.connection.kind === 'gemini-cli') {
     return {
@@ -90,7 +96,7 @@ export function cliEnvironment(kind: AdapterKind): NodeJS.ProcessEnv {
 export async function runCli(input: TurnInput): Promise<TurnResult> {
   if (!input.connection.executable) throw new Error('CLI не найден. Установите его и выполните вход.');
   const command = buildCliCommand(input);
-  const output = await runProcess(input.connection.executable, command.args, { cwd: input.cwd, signal: input.signal, stdin: command.stdin, timeoutMs: turnTimeoutMs(input.purpose), env: cliEnvironment(input.connection.kind), ...(input.connection.kind === 'gemini-cli' ? { isComplete: geminiResultLine } : {}) })
+  const output = await runProcess(input.connection.executable, command.args, { cwd: input.cwd, signal: input.signal, stdin: command.stdin, timeoutMs: turnTimeoutMs(input.purpose), env: { ...cliEnvironment(input.connection.kind), ...command.env }, ...(input.connection.kind === 'gemini-cli' ? { isComplete: geminiResultLine } : {}) })
     .catch((error: unknown) => { throw error instanceof ProcessExitError ? reportedFailure(input.connection.kind, error.output) ?? error : error; });
   const result = parseCliResult(input.connection.kind, output);
   return { ...result, sessionId: result.sessionId ?? input.sessionId };

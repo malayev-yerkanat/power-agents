@@ -8,6 +8,11 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-26 — M3 step 3–4: CLI wiring and docs
+
+- Claude gets the team server through `--mcp-config` (token via `${POWER_AGENTS_TOKEN}`) with the team tools allowed; Codex through `-c mcp_servers.team.*`. The token is never in process arguments. Connections carry `teamTools`; the composer marks Gemini "без командных инструментов", and the leader's plan prompt lists who has tools. The capability is set per adapter type rather than probed at each start, to avoid spending provider quota.
+- Verified: 187/187 Node tests, typecheck.
+
 ## 2026-10-26 — M3 steps 0–2: team tools over MCP
 
 - Spike: Claude takes a per-run HTTP MCP server via `--mcp-config` (token from `${POWER_AGENTS_TOKEN}`, not in process arguments); Codex via `-c mcp_servers.team.*` with `bearer_token_env_var` and `default_tools_approval_mode="approve"`; agy loads `.agents/mcp_config.json` but only allows tool calls through its global settings, so Gemini stays without team tools.

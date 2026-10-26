@@ -124,6 +124,9 @@ export class Engine {
     const next = this.change(id, r => ({ ...r, ...(replan ? { status: 'planning' as const, phase: 'plan' as const, plan: undefined } : {}), messages: [...r.messages, { id: randomUUID(), fromId: 'user', toId: r.leaderId, body: body.trim(), request: false, status: 'queued', createdAt: new Date().toISOString() }] }), 'user_message', replan ? 'Замечания переданы руководителю. План пересматривается.' : 'Сообщение будет учтено в следующих ходах.');
     this.schedule(); return next;
   }
+  private toolMembers(run: Run): string[] {
+    return run.members.filter(m => TEAM_TOOL_KINDS.has(this.options.connections.find(c => c.id === m.connectionId)?.kind ?? 'demo')).map(m => m.id);
+  }
   grant(token: string): TeamGrant | undefined { return this.teamTokens.get(token); }
   tools(grant: TeamGrant): TeamToolName[] { return teamToolNames(this.get(grant.runId), grant); }
   /** Runs a team tool as the token's member; the rules live in `runTeamTool`, the log entry names the actor. */
@@ -225,7 +228,7 @@ export class Engine {
     const folders = this.folders(snapshot, job, runDir, connection.kind === 'demo' || connection.kind.endsWith('-cli'));
     // CLIs keep conversations per working folder, so a task folder has its own conversation.
     const sessionKey = folders.own && connection.kind.endsWith('-cli') ? `${member.id}#${job.taskId ?? 'result'}` : member.id;
-    const input = { runId: snapshot.id, member, connection, purpose: job.purpose, prompt: promptFor({ run: snapshot, ...job, folders }), cwd: folders.own ?? runDir, writable: !!folders.own, readDirs: folders.read, sessionId: Object.hasOwn(snapshot.sessions, sessionKey) ? snapshot.sessions[sessionKey] : undefined, signal: controller.signal, onProgress: () => {} };
+    const input = { runId: snapshot.id, member, connection, purpose: job.purpose, prompt: promptFor({ run: snapshot, ...job, folders, ...(job.purpose === 'plan' && this.options.teamUrl ? { toolMembers: this.toolMembers(snapshot) } : {}) }), cwd: folders.own ?? runDir, writable: !!folders.own, readDirs: folders.read, sessionId: Object.hasOwn(snapshot.sessions, sessionKey) ? snapshot.sessions[sessionKey] : undefined, signal: controller.signal, onProgress: () => {} };
     const token = this.options.teamUrl && TEAM_TOOL_KINDS.has(connection.kind) ? randomBytes(32).toString('hex') : undefined;
     if (token) this.teamTokens.set(token, { runId: snapshot.id, memberId: member.id, purpose: job.purpose, taskId: job.taskId, callId });
     try { await this.executeTurn(snapshot, job, controller, callId, { member, connection, runner, folders, sessionKey, token }, input); }

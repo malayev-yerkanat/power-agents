@@ -21,6 +21,7 @@ Vault initialized. No knowledge operations have completed yet.
 
 ## Recent Changes
 
+- 2026-10-26: M3 steps 3-4: CLI wiring and docs (wiki/changes/20261026-145356-m3-steps-3-4-cli-wiring-and-docs.md)
 - 2026-10-26: M3 steps 0-2: team tools over MCP (wiki/changes/20261026-145008-m3-steps-0-2-team-tools-over-mcp.md)
 - 2026-10-26: M2 acceptance (wiki/changes/20261026-134733-m2-acceptance.md)
 - 2026-10-26: Gemini terminal commands (wiki/changes/20261026-112944-gemini-terminal-commands.md)

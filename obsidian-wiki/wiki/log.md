@@ -13,6 +13,12 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-26 14:53 UTC - M3 steps 3-4: CLI wiring and docs
+
+Claude and Codex now connect the team tools per turn with the token only in the environment; Gemini is marked as having no team tools, and the leader learns who has them.
+
+Note: [[changes/20261026-145356-m3-steps-3-4-cli-wiring-and-docs|M3 steps 3-4: CLI wiring and docs]]
+
 ### 2026-10-26 14:50 UTC - M3 steps 0-2: team tools over MCP
 
 A local MCP endpoint gives agents team tools with one token per turn, so identity comes from the platform; the spike showed Claude and Codex can use it per run and Gemini cannot without global settings.

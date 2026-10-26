@@ -25,7 +25,7 @@ export async function discoverConnections(): Promise<Connection[]> {
   ];
   const cli = await Promise.all(specs.map(async spec => {
     const executable = await findExecutable(spec.binary, spec.paths);
-    return { id: spec.id, name: spec.name, kind: spec.kind, available: Boolean(executable), executable,
+    return { id: spec.id, name: spec.name, kind: spec.kind, available: Boolean(executable), executable, teamTools: spec.kind !== 'gemini-cli',
       detail: executable ? 'CLI найден. Вход в аккаунт не проверен; используется авторизация официального CLI.' : `CLI не найден. Установите ${spec.binary} и выполните вход.` };
   }));
   const api: Connection[] = [

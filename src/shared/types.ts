@@ -6,6 +6,8 @@ export interface Connection {
   available: boolean;
   detail: string;
   executable?: string;
+  /** Whether this adapter connects the per-run team MCP server (Claude and Codex; agy only through global settings). */
+  teamTools?: boolean;
 }
 export interface ModelOption { id: string; name: string }
 export interface ModelCatalog {

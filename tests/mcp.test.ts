@@ -112,3 +112,11 @@ test('agents use team tools as themselves; impersonation, stale tokens and brows
     server.closeAllConnections(); server.close(); store.close(); rmSync(workspaceRoot, { recursive: true, force: true });
   }
 });
+
+test('the leader learns who has team tools; connections say so too', async () => {
+  const { promptFor } = await import('../src/server/core/prompts.ts');
+  const now = '2026-10-26T00:00:00.000Z';
+  const run = { id: 'r', title: 'R', goal: 'Goal text here', status: 'planning', phase: 'plan', mode: 'live', leaderId: 'a', members: input.members, tasks: [], messages: [], artifacts: [], sessions: {}, turnCount: 0, reviewRound: 0, createdAt: now, updatedAt: now, version: 1 } as Run;
+  assert.match(promptFor({ run, memberId: 'a', purpose: 'plan', toolMembers: ['a'] }), /Командные инструменты .* есть у: a; остальные общаются только через итоговый JSON-ответ/);
+  assert.doesNotMatch(promptFor({ run, memberId: 'a', purpose: 'plan' }), /Командные инструменты/);
+});

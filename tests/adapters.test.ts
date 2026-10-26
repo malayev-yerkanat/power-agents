@@ -288,3 +288,20 @@ test('a Gemini write outside its folder is reported with the denied path', async
   const command = JSON.stringify({ event: 'result', result: { conversation_id: 'c1', status: 'SUCCESS', response: '', denied_actions: [{ action: 'command' }] } });
   assert.throws(() => parseCliResult('gemini-cli', command), /^Error: CLI запретил действие: command$|CLI запретил действие: command/);
 });
+
+test('team tools are wired per run, with the token only in the environment', () => {
+  const team = { url: 'http://127.0.0.1:4317/mcp', token: 'secret-turn-token' };
+  const claude = buildCliCommand({ ...input('claude-cli'), team } as TurnInput);
+  const config = JSON.parse(claude.args[claude.args.indexOf('--mcp-config') + 1]);
+  assert.deepEqual(config, { mcpServers: { team: { type: 'http', url: team.url, headers: { Authorization: 'Bearer ${POWER_AGENTS_TOKEN}' } } } });
+  assert.ok(claude.args.includes('--strict-mcp-config'));
+  assert.match(claude.args[claude.args.indexOf('--allowedTools') + 1], /^mcp__team__team_status,.*mcp__team__assign_task$/);
+  assert.equal(claude.env?.POWER_AGENTS_TOKEN, team.token);
+  const codex = buildCliCommand({ ...input('codex-cli'), team } as TurnInput);
+  for (const setting of [`mcp_servers.team.url="${team.url}"`, 'mcp_servers.team.bearer_token_env_var="POWER_AGENTS_TOKEN"', 'mcp_servers.team.default_tools_approval_mode="approve"']) assert.ok(codex.args.includes(setting), setting);
+  assert.equal(codex.env?.POWER_AGENTS_TOKEN, team.token);
+  for (const command of [claude, codex]) assert.ok(!command.args.some(a => a.includes(team.token)), 'the token never appears in process arguments');
+  const plain = buildCliCommand(input('claude-cli'));
+  assert.deepEqual(JSON.parse(plain.args[plain.args.indexOf('--mcp-config') + 1]), { mcpServers: {} });
+  assert.equal(plain.env, undefined);
+});

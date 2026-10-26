@@ -34,4 +34,6 @@ Each launched call is recorded in `Run.inFlight` and removed by the change that 
 
 File and code output (M2): CLI task turns write only in `tasks/<taskId>` (see `files.ts`); finished tasks list their files. Code runs (`Run.repo`, set from `repoPath`) use `workspace.ts`: a result worktree, one worktree per task, commit and merge after each task (`mergedTurn`), a leader `resolve` turn on conflicts, the user's `checkCommand` before synthesis, and cleanup at the end. A Gemini write outside its folder raises `WriteDeniedError` and the turn is retried once with the folder named.
 
+Team tools (M3): `core/team.ts` holds the rules, `mcp.ts` serves `POST /mcp`. The engine mints a random token per tool-capable turn (`TEAM_TOOL_KINDS`: Claude, Codex, demo), passes it as `TurnInput.team`, revokes it when the turn ends, and logs each call as `team_tool` with the token's member. A grant is valid only while its call is in `inFlight` and the run is running.
+
 The engine limits runs to 100 turns and tasks to 20 turns. See [engine](../../src/server/engine.ts), [protocol](../../src/server/core/protocol.ts), and [[Data Flow]].

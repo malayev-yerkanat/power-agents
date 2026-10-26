@@ -86,6 +86,8 @@ with identity checked by the platform rather than by message text.
 
 Done when a live run uses the tools and an impersonation attempt is rejected.
 
+Progress (2026-10-26): team tools, per-turn tokens, the `/mcp` endpoint, Claude and Codex wiring and the leader tools are done in code; Gemini works without team tools (agy allows MCP tool calls only through its global settings). Live acceptance is pending.
+
 ## Backlog
 
 - Saved team presets.
