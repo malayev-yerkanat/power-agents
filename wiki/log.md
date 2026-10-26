@@ -8,6 +8,12 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-26 — M1.3 safe resume after restart
+
+- The engine records every running call. After a restart, cut-off calls are listed as "outcome unknown", their tasks fail, and resume needs `confirmRepeat` (the Continue button asks). See [[Orchestration Engine]] and the [roadmap](../docs/roadmap.md).
+- Verified: 155/155 Node tests, 81.36% line coverage, 35/35 Chromium tests, typecheck. One unreproduced flaky failure in a single coverage run; 24 reruns passed.
+- Live: a three-provider run restarted mid-task listed all 3 calls as outcome unknown, refused an unconfirmed resume (HTTP 400), and after confirmation all tasks completed; the run was then cancelled to save quota.
+
 ## 2026-10-26 — M1.2 live check and waiting on colleagues
 
 - The 2026-10-23 live run used the facts board: all three agents published 22 owner-tagged facts. It paused because Gemini answered "waiting" after Codex said prices were not final; the engine treated that as an error. Now a task may wait without a question while colleagues are working, and wakes on a note or a finished task; stranded waits still fail. See [[Orchestration Engine]].

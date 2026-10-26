@@ -28,12 +28,17 @@ export interface TeamMessage {
 export interface SharedFact { key: string; value: string; ownerId: string; version: number; updatedAt: string }
 export interface Artifact { id: string; title: string; body: string; authorId: string; taskId?: string; kind: 'work' | 'final' | 'review'; createdAt: string }
 export type RunStatus = 'planning' | 'awaiting_approval' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
+/** A provider call the platform started and has not yet seen finish. */
+export interface InFlightCall { id: string; memberId: string; purpose: TurnPurpose; taskId?: string; requestId?: string; startedAt: string }
 export interface Run {
   id: string; title: string; goal: string; status: RunStatus; members: Member[]; leaderId: string;
   plan?: TeamPlan; tasks: TeamTask[]; messages: TeamMessage[]; artifacts: Artifact[];
   sessions: Record<string, string>; turnCount: number; reviewRound: number;
   phase: 'plan' | 'tasks' | 'synthesize' | 'review' | 'done';
   facts?: SharedFact[];
+  inFlight?: InFlightCall[];
+  /** Calls a server restart cut off: their outcome is unknown, so they repeat only after the user confirms. */
+  interrupted?: InFlightCall[];
   error?: string; createdAt: string; updatedAt: string; version: number;
   mode: 'live' | 'demo'; approvedAt?: string;
 }

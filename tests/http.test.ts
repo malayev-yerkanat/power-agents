@@ -27,7 +27,7 @@ async function setup(connections: Connection[] = [], models?: (connection: Conne
   const engine = {
     create(input: CreateRunInput) { calls.push(['create', input]); return fixture(); },
     approve(id: string, version: number) { calls.push(['approve', id, version]); return fixture(); },
-    control(id: string, action: 'pause' | 'resume' | 'cancel') { calls.push(['control', id, action]); return fixture(); },
+    control(id: string, action: 'pause' | 'resume' | 'cancel', confirmRepeat?: boolean) { calls.push(['control', id, action, ...(confirmRepeat ? [confirmRepeat] : [])]); return fixture(); },
     message(id: string, body: string) { calls.push(['message', id, body]); return fixture(); },
   };
   store.createRun(fixture(), { type: 'created', message: 'Created' });
@@ -207,14 +207,15 @@ test('routes validated mutations and streams Markdown artifact downloads', async
     };
     for (const [path, body] of [
       ['/api/runs', input], ['/api/runs/run-1/approve', { version: 1 }],
-      ['/api/runs/run-1/control', { action: 'pause' }], ['/api/runs/run-1/messages', { body: 'Please revise' }],
+      ['/api/runs/run-1/control', { action: 'pause' }], ['/api/runs/run-1/control', { action: 'resume', confirmRepeat: true }],
+      ['/api/runs/run-1/messages', { body: 'Please revise' }],
     ] as const) {
       const response = await fetch(`${app.base}${path}`, { method: 'POST', headers: app.headers, body: JSON.stringify(body) });
       assert.ok(response.ok);
       assert.deepEqual(await response.json(), { run: fixture() });
     }
     assert.deepEqual(app.calls, [
-      ['create', input], ['approve', 'run-1', 1], ['control', 'run-1', 'pause'], ['message', 'run-1', 'Please revise'],
+      ['create', input], ['approve', 'run-1', 1], ['control', 'run-1', 'pause'], ['control', 'run-1', 'resume', true], ['message', 'run-1', 'Please revise'],
     ]);
     const artifact = await fetch(`${app.base}/api/runs/run-1/artifacts/art-1`, { headers: app.headers });
     assert.match(artifact.headers.get('content-type')!, /text\/markdown/);

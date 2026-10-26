@@ -30,4 +30,6 @@ Runs keep a shared facts board (`Run.facts`, type `SharedFact`). Any answer may 
 
 A task answer with status `waiting` and no open question is accepted while another task is still unfinished; the task wakes when a note is sent to its owner or another task completes. If nothing is running and no question is queued, stranded waiting tasks fail so «Продолжить» retries them.
 
+Each launched call is recorded in `Run.inFlight` and removed by the change that finishes it (result, superseded stage, task failure); pause, cancel and run-level failure clear the list. On startup any remaining calls move to `Run.interrupted`: their tasks fail with "исход неизвестен", the pause message names each call, and `control(id, "resume")` refuses until called with `confirmRepeat` (the Continue button asks first). Agents never see these fields.
+
 The engine limits runs to 100 turns and tasks to 20 turns. See [engine](../../src/server/engine.ts), [protocol](../../src/server/core/protocol.ts), and [[Data Flow]].

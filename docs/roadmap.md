@@ -27,7 +27,7 @@ remains the source of intent; this roadmap orders the remaining work.
 | 5 | Messages to a busy participant are queued; delivery states are visible | Done |
 | 6 | A changed shared decision triggers rework of affected tasks | Missing: no shared decisions store |
 | 7 | Redelivery creates no duplicate task, message or parallel turn | Mostly done |
-| 8 | Restart keeps state; an unknown outcome is shown, not repeated | Partial: resuming may repeat an unfinished call |
+| 8 | Restart keeps state; an unknown outcome is shown, not repeated | Done in code (M1.3, 2026-10-26): interrupted calls are listed and repeat only after confirmation |
 | 9 | Pause stops new turns; stop is shown only after confirmation | Done |
 | 10 | Errors show a clear reason and next step | Done; 2026-10-23 |
 | 11 | Document tasks without Git; code tasks in separate worktrees | Half: documents only |
@@ -41,7 +41,7 @@ remains the source of intent; this roadmap orders the remaining work.
    who revise their work before the leader re-synthesizes.
 2. Done in code on 2026-10-23: a shared facts board: owners publish values (prices, names, terms); other
    participants read them from context instead of asking repeatedly.
-3. Resume after a restart never silently repeats a call whose result may already exist.
+3. Done in code on 2026-10-26: resume after a restart never silently repeats a call whose result may already exist.
 
 Done when a live three-provider run shows a review remark reaching a task owner,
 a revised task result cited in the final document, facts read from the board, and

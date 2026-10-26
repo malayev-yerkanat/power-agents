@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Connection, Run, TeamTask, TurnRunner } from '../shared/types.ts';
+import type { Connection, InFlightCall, Run, TeamTask, TurnPurpose, TurnRunner } from '../shared/types.ts';
 import { Store } from './store.ts';
 import { runTurn } from './adapters/index.ts';
 import { redactError } from './adapters/common.ts';
@@ -9,6 +9,12 @@ import { demoRunner } from './core/demo.ts';
 import { AnswerFormatError, InputError, validateInput, parseEnvelope, parsePlan } from './core/protocol.ts';
 import { promptFor } from './core/prompts.ts';
 import { applyResult, findFact, type Job } from './core/results.ts';
+const finished = (run: Run, callId: string): Run => ({ ...run, inFlight: run.inFlight?.filter(c => c.id !== callId) });
+const callNames: Record<TurnPurpose, string> = { plan: 'план', task: 'задача', reply: 'ответ коллеге', synthesize: 'сборка итога', review: 'проверка' };
+function callLabel(run: Run, call: InFlightCall): string {
+  const task = run.tasks.find(t => t.id === call.taskId);
+  return `${run.members.find(m => m.id === call.memberId)?.name ?? call.memberId} — ${callNames[call.purpose]}${task && call.purpose === 'task' ? ` «${task.title}»` : ''}`;
+}
 /** A task returning to work waits if its own question is still open. */
 const retry = (run: Run, task: TeamTask): TeamTask => ({ ...task, status: run.messages.some(m => m.request && m.fromId === task.assigneeId && m.taskId === task.id && m.status !== 'answered') ? 'waiting' : 'pending', error: undefined });
 /** Reads an agent's answer for its turn; every rejection is an AnswerFormatError so the turn can be retried. */
@@ -37,7 +43,15 @@ export class Engine {
   constructor(options: Options) {
     this.options = options;
     for (const run of options.store.listActiveRuns()) {
-      if (run.status === 'planning' || run.status === 'running') this.change(run.id, r => ({ ...r, status: 'paused', error: 'Сервер перезапущен. Последний вызов мог завершиться у провайдера. Продолжение повторит незавершённую работу.', tasks: r.tasks.map(t => t.status === 'running' ? retry(r, t) : t), messages: r.messages.map(m => m.request && m.status === 'delivered' ? { ...m, status: 'queued' } : m) }), 'recovered', 'Работа приостановлена после перезапуска.');
+      if (run.status !== 'planning' && run.status !== 'running') continue;
+      const interrupted = run.inFlight ?? [];
+      const error = interrupted.length
+        ? `Сервер перезапущен во время вызовов. Исход неизвестен: ${interrupted.map(c => callLabel(run, c)).join('; ')}. «Продолжить» повторит их только после подтверждения.`
+        : 'Сервер перезапущен. Последний вызов мог завершиться у провайдера. Продолжение повторит незавершённую работу.';
+      this.change(run.id, r => ({ ...r, status: 'paused', error, inFlight: [], ...(interrupted.length ? { interrupted } : {}),
+        tasks: r.tasks.map(t => interrupted.some(c => c.taskId === t.id && c.purpose === 'task')
+          ? { ...t, status: 'failed', error: 'Сервер перезапущен во время вызова: исход неизвестен.' } : t.status === 'running' ? retry(r, t) : t),
+        messages: r.messages.map(m => m.request && m.status === 'delivered' ? { ...m, status: 'queued' } : m) }), 'recovered', 'Работа приостановлена после перезапуска.');
     }
   }
   get(id: string): Run { const run = this.options.store.getRun(id); if (!run) throw new InputError('Команда не найдена.'); return run; }
@@ -67,7 +81,7 @@ export class Engine {
     const next = this.change(id, r => ({ ...r, status: 'running', phase: 'tasks', approvedAt: new Date().toISOString(), members: r.members.map(m => ({ ...m, role: r.plan!.roles.find(role => role.memberId === m.id)!.role })), tasks: r.plan!.tasks.map(t => ({ ...t, status: 'pending', turns: 0 })) }), 'approved', 'План и состав команды согласованы.');
     this.schedule(); return next;
   }
-  control(id: string, action: 'pause' | 'resume' | 'cancel'): Run {
+  control(id: string, action: 'pause' | 'resume' | 'cancel', confirmRepeat = false): Run {
     const run = this.get(id);
     if (['completed', 'cancelled'].includes(run.status)) throw new InputError('Эта работа уже завершена.');
     if (action === 'resume') {
@@ -75,11 +89,12 @@ export class Engine {
       if ([...this.active.values()].some(a => a.runId === id)) throw new InputError('Ожидается остановка предыдущих вызовов. Повторите продолжение через несколько секунд.');
       this.ensureFree(id);
       if (run.turnCount >= 100) throw new InputError('Достигнут лимит 100 ходов. Создайте новую задачу с более узкой целью.');
-      const next = this.change(id, r => ({ ...r, status: r.phase === 'plan' ? 'planning' : 'running', error: undefined, tasks: r.tasks.map(t => ['failed', 'running'].includes(t.status) ? retry(r, t) : t), messages: r.messages.map(m => m.request && m.status === 'delivered' ? { ...m, status: 'queued' } : m) }), 'resumed', 'Работа продолжена.');
+      if (run.interrupted?.length && !confirmRepeat) throw new InputError(`Подтвердите повтор вызовов с неизвестным исходом: ${run.interrupted.map(c => callLabel(run, c)).join('; ')}.`);
+      const next = this.change(id, r => ({ ...r, status: r.phase === 'plan' ? 'planning' : 'running', error: undefined, interrupted: undefined, tasks: r.tasks.map(t => ['failed', 'running'].includes(t.status) ? retry(r, t) : t), messages: r.messages.map(m => m.request && m.status === 'delivered' ? { ...m, status: 'queued' } : m) }), 'resumed', 'Работа продолжена.');
       this.schedule(); return next;
     }
     if (action !== 'pause' && action !== 'cancel') throw new InputError('Неизвестное действие.');
-    const next = this.change(id, r => ({ ...r, status: action === 'cancel' ? 'cancelled' : 'paused' }), action, action === 'cancel' ? 'Работа отменена.' : 'Запрошена остановка текущих вызовов.');
+    const next = this.change(id, r => ({ ...r, status: action === 'cancel' ? 'cancelled' : 'paused', inFlight: [] }), action, action === 'cancel' ? 'Работа отменена.' : 'Запрошена остановка текущих вызовов.');
     this.abort(id); return next;
   }
   message(id: string, body: string): Run {
@@ -158,12 +173,13 @@ export class Engine {
     const key = `${run.id}:${job.memberId}`;
     const controller = new AbortController();
     this.active.set(key, { runId: run.id, memberId: job.memberId, controller });
-    const snapshot = this.change(run.id, r => ({ ...r, turnCount: r.turnCount + 1, tasks: r.tasks.map(t => t.id === job.taskId ? { ...t, status: 'running', turns: t.turns + 1 } : t), messages: r.messages.map(m => m.id === job.requestId || (!m.request && m.toId === job.memberId && m.status === 'queued') ? { ...m, status: 'delivered' } : m) }), 'turn_started', `Начат ход: ${job.purpose}.`, job.memberId);
-    void this.execute(snapshot, job, controller).catch(error => {
-      if (!controller.signal.aborted && !this.stopped) this.failTurn(run.id, job, error);
+    const call: InFlightCall = { id: randomUUID(), memberId: job.memberId, purpose: job.purpose, taskId: job.taskId, requestId: job.requestId, startedAt: new Date().toISOString() };
+    const snapshot = this.change(run.id, r => ({ ...r, inFlight: [...(r.inFlight ?? []), call], turnCount: r.turnCount + 1, tasks: r.tasks.map(t => t.id === job.taskId ? { ...t, status: 'running', turns: t.turns + 1 } : t), messages: r.messages.map(m => m.id === job.requestId || (!m.request && m.toId === job.memberId && m.status === 'queued') ? { ...m, status: 'delivered' } : m) }), 'turn_started', `Начат ход: ${job.purpose}.`, job.memberId);
+    void this.execute(snapshot, job, controller, call.id).catch(error => {
+      if (!controller.signal.aborted && !this.stopped) this.failTurn(run.id, job, error, call.id);
     }).finally(() => { this.active.delete(key); this.schedule(); });
   }
-  private async execute(snapshot: Run, job: Job, controller: AbortController): Promise<void> {
+  private async execute(snapshot: Run, job: Job, controller: AbortController, callId: string): Promise<void> {
     const member = snapshot.members.find(m => m.id === job.memberId)!;
     const connection = this.options.connections.find(c => c.id === member.connectionId) ?? { id: 'demo', name: 'Демо', kind: 'demo' as const, available: true, detail: '' };
     const runner = snapshot.mode === 'demo' ? this.options.demoRunner ?? demoRunner : this.options.runner ?? runTurn;
@@ -174,7 +190,7 @@ export class Engine {
     const current = this.get(snapshot.id);
     const userNotes = (run: Run) => run.messages.filter(m => m.fromId === 'user').length;
     if (['plan', 'synthesize', 'review'].includes(job.purpose) && userNotes(current) !== userNotes(snapshot)) {
-      this.change(snapshot.id, run => ({ ...run, phase: job.purpose === 'plan' ? 'plan' : 'synthesize', sessions: result.sessionId ? { ...run.sessions, [member.id]: result.sessionId } : run.sessions }), 'superseded', 'Получены новые уточнения. Этап будет выполнен заново с актуальным контекстом.');
+      this.change(snapshot.id, run => ({ ...finished(run, callId), phase: job.purpose === 'plan' ? 'plan' : 'synthesize', sessions: result.sessionId ? { ...run.sessions, [member.id]: result.sessionId } : run.sessions }), 'superseded', 'Получены новые уточнения. Этап будет выполнен заново с актуальным контекстом.');
       return;
     }
     let reading: ReturnType<typeof read>;
@@ -190,17 +206,17 @@ export class Engine {
     }
     const { plan, answer } = reading;
     this.change(snapshot.id, current => {
-      const next = plan ? { ...current, plan, status: 'awaiting_approval' as const } : applyResult(current, job, answer!);
+      const next = finished(plan ? { ...current, plan, status: 'awaiting_approval' as const } : applyResult(current, job, answer!), callId);
       return { ...next, sessions: result.sessionId ? { ...next.sessions, [member.id]: result.sessionId } : next.sessions };
     }, 'turn_completed', plan ? 'План готов к согласованию.' : answer!.summary.slice(0, 600), member.id);
   }
   /** Task and reply failures stay with their task so other participants keep working. */
-  private failTurn(id: string, job: Job, error: unknown): void {
+  private failTurn(id: string, job: Job, error: unknown, callId: string): void {
     const run = this.get(id);
     const taskId = job.purpose === 'task' ? job.taskId : job.purpose === 'reply' ? run.messages.find(m => m.id === job.requestId)?.taskId : undefined;
     if (!taskId || run.status !== 'running') { this.fail(id, error, job.memberId); return; }
     const message = this.named(run, job.memberId, error);
-    this.change(id, r => ({ ...r, tasks: r.tasks.map(t => t.id === taskId ? { ...t, status: 'failed', error: message } : t) }), 'error', message, job.memberId);
+    this.change(id, r => ({ ...finished(r, callId), tasks: r.tasks.map(t => t.id === taskId ? { ...t, status: 'failed', error: message } : t) }), 'error', message, job.memberId);
   }
   private named(run: Run, memberId: string | undefined, error: unknown): string {
     const name = memberId && run.members.find(m => m.id === memberId)?.name;
@@ -208,7 +224,7 @@ export class Engine {
   }
   private fail(id: string, error: unknown, memberId?: string): void {
     const message = this.named(this.get(id), memberId, error);
-    this.change(id, r => ({ ...r, status: 'paused', error: message, tasks: r.tasks.map(t => t.status === 'running' ? { ...t, status: 'failed', error: 'Вызов прерван; потребуется повтор.' } : t) }), 'error', message, memberId);
+    this.change(id, r => ({ ...r, status: 'paused', error: message, inFlight: [], tasks: r.tasks.map(t => t.status === 'running' ? { ...t, status: 'failed', error: 'Вызов прерван; потребуется повтор.' } : t) }), 'error', message, memberId);
     this.abort(id);
   }
 }

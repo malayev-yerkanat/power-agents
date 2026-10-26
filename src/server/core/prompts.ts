@@ -2,7 +2,7 @@ import type { Artifact, Run, TeamTask, TurnPurpose } from '../../shared/types.ts
 export interface Context { run: Run; memberId: string; purpose: TurnPurpose; taskId?: string; requestId?: string }
 const latest = (artifacts: Artifact[], keep: (artifact: Artifact) => boolean) => artifacts.filter(keep).at(-1);
 /** Each turn sees only the work it needs, once: resending every document outgrows the limit on long runs. */
-function sharedRun({ run: { sessions: _sessions, ...run }, memberId, purpose, taskId }: Context): Omit<Run, 'sessions'> {
+function sharedRun({ run: { sessions: _sessions, inFlight: _inFlight, interrupted: _interrupted, ...run }, memberId, purpose, taskId }: Context): Omit<Run, 'sessions' | 'inFlight' | 'interrupted'> {
   const current = run.tasks.find(t => t.id === taskId);
   const visible = (task: TeamTask) => purpose === 'synthesize' || task.id === current?.id || !!current?.dependsOn.includes(task.id)
     || (purpose === 'reply' && task.assigneeId === memberId);

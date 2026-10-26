@@ -10,7 +10,7 @@ import type { TelegramService } from './telegram.ts';
 interface EngineApi {
   create(input: CreateRunInput): Run | Promise<Run>;
   approve(id: string, version: number): Run | Promise<Run>;
-  control(id: string, action: 'pause' | 'resume' | 'cancel'): Run | Promise<Run>;
+  control(id: string, action: 'pause' | 'resume' | 'cancel', confirmRepeat?: boolean): Run | Promise<Run>;
   message(id: string, body: string): Run | Promise<Run>;
 }
 interface Options { store: Store; engine: EngineApi; connections: Connection[]; models?: (connection: Connection) => Promise<ModelCatalog>; telegram?: TelegramService; telegramError?: string }
@@ -20,7 +20,7 @@ class HttpError extends Error {
 }
 
 const approveSchema = z.object({ version: z.number().int().nonnegative().safe() }).strict();
-const controlSchema = z.object({ action: z.enum(['pause', 'resume', 'cancel']) }).strict();
+const controlSchema = z.object({ action: z.enum(['pause', 'resume', 'cancel']), confirmRepeat: z.boolean().optional() }).strict();
 const messageSchema = z.object({ body: z.string().trim().min(1).max(12_000) }).strict();
 const telegramPreferencesSchema = z.object({ approval: z.boolean().optional(), completed: z.boolean().optional() }).strict()
   .refine(value => value.approval !== undefined || value.completed !== undefined, 'Select at least one notification preference');
@@ -133,7 +133,7 @@ async function mutate(path: string[], body: unknown, { engine }: Options): Promi
   if (path.length === 2) return engine.create(createSchema.parse(body));
   const id = path[2];
   if (path.length === 4 && path[3] === 'approve') return engine.approve(id, approveSchema.parse(body).version);
-  if (path.length === 4 && path[3] === 'control') return engine.control(id, controlSchema.parse(body).action);
+  if (path.length === 4 && path[3] === 'control') { const { action, confirmRepeat } = controlSchema.parse(body); return engine.control(id, action, confirmRepeat); }
   if (path.length === 4 && path[3] === 'messages') return engine.message(id, messageSchema.parse(body).body);
   throw new HttpError(404, 'API endpoint not found');
 }

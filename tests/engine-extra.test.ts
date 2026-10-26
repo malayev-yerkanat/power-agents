@@ -860,3 +860,51 @@ test('a task may wait for a colleague who is still working, and their note wakes
     assert.match(promoPrompt, /Final price: 1 200 ₸/);
   } finally { await app.clean(); }
 });
+
+test('restart lists calls with an unknown outcome and repeats them only after confirmation', async () => {
+  const calls: TurnInput[] = [];
+  const runner: TurnRunner = async value => { calls.push(value); return successfulRunner(value); };
+  const seed = seedRun({
+    tasks: defaultTasks.map((task, index) => ({ ...task, status: index === 0 ? 'running' : 'completed', turns: 1 })),
+    inFlight: [{ id: 'call-1', memberId: defaultTasks[0].assigneeId, purpose: 'task', taskId: defaultTasks[0].id, startedAt: '2026-10-07T00:00:00.000Z' }],
+  } as Partial<Run>);
+  const app = setup(runner, seed);
+  try {
+    const recovered = app.engine.get(seed.id) as Run & { interrupted?: unknown[]; inFlight?: unknown[] };
+    assert.equal(recovered.status, 'paused');
+    assert.equal(recovered.interrupted?.length, 1);
+    assert.deepEqual(recovered.inFlight, []);
+    assert.equal(recovered.tasks[0].status, 'failed');
+    assert.match(recovered.tasks[0].error!, /исход неизвестен/);
+    assert.match(recovered.error!, /Исход неизвестен.*Agent a — задача «/);
+    assert.throws(() => app.engine.control(seed.id, 'resume'), /Подтвердите повтор/);
+    assert.equal(calls.length, 0);
+    const resumed = app.engine.control(seed.id, 'resume', true) as Run & { interrupted?: unknown[] };
+    assert.equal(resumed.interrupted, undefined);
+    await until(() => app.engine.get(seed.id).status === 'completed', 'completion after confirmed repeat');
+    assert.equal(calls.filter(call => call.purpose === 'task').length, 1);
+  } finally { await app.clean(); }
+});
+
+test('finished and paused calls leave nothing marked as in flight', async () => {
+  let release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  let hold = true;
+  const runner: TurnRunner = async value => {
+    if (value.purpose === 'task' && hold) { await new Promise<void>((resolve, reject) => { value.signal?.addEventListener('abort', () => reject(new Error('aborted'))); void gate.then(resolve); }); }
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => ((app.engine.get(run.id) as Run & { inFlight?: unknown[] }).inFlight?.length ?? 0) > 0, 'a call in flight');
+    app.engine.control(run.id, 'pause');
+    assert.deepEqual((app.engine.get(run.id) as Run & { inFlight?: unknown[] }).inFlight, []);
+    hold = false; release();
+    await until(() => { try { app.engine.control(run.id, 'resume'); return true; } catch { return false; } }, 'resume after the abort settles');
+    await until(() => app.engine.get(run.id).status === 'completed', 'completion');
+    assert.deepEqual((app.engine.get(run.id) as Run & { inFlight?: unknown[] }).inFlight, []);
+  } finally { await app.clean(); }
+});
