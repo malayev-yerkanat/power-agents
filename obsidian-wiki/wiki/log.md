@@ -13,6 +13,12 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-26 13:47 UTC - M2 acceptance
+
+Live files and code runs passed: all three agents saved files, two task branches merged, the platform's npm test check passed, and the user's branch stayed unchanged. Criterion 11 is done.
+
+Note: [[changes/20261026-134733-m2-acceptance|M2 acceptance]]
+
 ### 2026-10-26 11:29 UTC - Gemini terminal commands
 
 Writable turns are told to use file tools instead of terminal commands, and any action a CLI denies is retried once with that hint and reported by name.

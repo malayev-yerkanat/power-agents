@@ -1,6 +1,6 @@
 # Power Agents roadmap
 
-Updated: 2026-10-26 (M1 accepted).
+Updated: 2026-10-26 (M1 and M2 accepted).
 
 ## North star
 
@@ -30,7 +30,7 @@ remains the source of intent; this roadmap orders the remaining work.
 | 8 | Restart keeps state; an unknown outcome is shown, not repeated | Done; live acceptance 2026-10-26 |
 | 9 | Pause stops new turns; stop is shown only after confirmation | Done |
 | 10 | Errors show a clear reason and next step | Done; 2026-10-23 |
-| 11 | Document tasks without Git; code tasks in separate worktrees | Half: documents only |
+| 11 | Document tasks without Git; code tasks in separate worktrees | Done; live acceptance 2026-10-26 |
 | 12 | Identity is checked by the platform; keys never leak | Partial: keys stay server-side; no tool-level identity |
 
 ## Milestones
@@ -67,7 +67,17 @@ worktrees and produce one merged result branch without touching the user's branc
 
 Done when a live run delivers a small code change on a result branch whose tests pass.
 
-Progress (2026-10-26): write mode, task files, git worktrees, merge, leader conflict resolution, check command and UI are done in code (steps 1–5). Live acceptance is pending.
+**Accepted on 2026-10-26.** Files run `ec0727e0`: Claude, Codex and Gemini each saved their
+Markdown file in their task folder (`recipe.md`, `pricing.md`, `promo.md`) and the final lists
+all three. Code run `5cc8a064` on a small Node demo repo with a failing test: Claude
+implemented `menuPrice` in `src/price.js`, Gemini documented it in `README.md`; both task
+branches merged into `power-agents/5cc8a064/result`, the platform's `npm test` check passed
+(2/2), the user's `main`, HEAD and working tree were unchanged, and the worktrees were removed.
+
+Found on the way and fixed: CLI conversations are kept per folder; the task prompt requires
+saving named files; writes outside the folder and terminal commands that a CLI denies are
+retried once with a hint. Leader conflict resolution is covered by tests; no live run has
+produced a conflict yet.
 
 ### M3 — Team tools (criteria 2 and 12 in depth)
 

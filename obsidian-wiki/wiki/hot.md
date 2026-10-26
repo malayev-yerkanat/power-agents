@@ -21,6 +21,7 @@ Vault initialized. No knowledge operations have completed yet.
 
 ## Recent Changes
 
+- 2026-10-26: M2 acceptance (wiki/changes/20261026-134733-m2-acceptance.md)
 - 2026-10-26: Gemini terminal commands (wiki/changes/20261026-112944-gemini-terminal-commands.md)
 - 2026-10-26: M2 step 5: code-run UI, docs, denied writes (wiki/changes/20261026-112326-m2-step-5-code-run-ui-docs-denied-writes.md)
 - 2026-10-26: M2 step 4: code runs in git worktrees (wiki/changes/20261026-111627-m2-step-4-code-runs-in-git-worktrees.md)

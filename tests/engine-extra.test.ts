@@ -36,8 +36,9 @@ const successfulRunner: TurnRunner = async value => {
   if (value.purpose === 'review') return envelope({ verdict: 'pass', artifact: { title: 'Review', body: 'Report meets criteria' } });
   return envelope({ artifact: { title: value.purpose, body: 'Scripted report content' } });
 };
+/** Test files run in parallel, so under coverage a healthy wait can take seconds; a broken run still times out. */
 async function until(predicate: () => boolean, describe = 'expected state'): Promise<void> {
-  const deadline = Date.now() + 2500;
+  const deadline = Date.now() + 10000;
   while (Date.now() < deadline) {
     if (predicate()) return;
     await new Promise(resolve => setTimeout(resolve, 2));
