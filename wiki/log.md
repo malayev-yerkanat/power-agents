@@ -8,6 +8,11 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-26 — M2 acceptance
+
+- Files run `ec0727e0`: all three providers saved their named file; the final lists them. Code run `5cc8a064` on a Node demo repo: two task branches merged into the result branch, `npm test` passed via the platform check, the user's branch and working tree unchanged, worktrees removed. Roadmap criterion 11 done. Live conflict resolution not yet observed.
+- The engine-extra test wait limit rose from 2.5 s to 10 s: an intermittent failure (about 1 in 10 coverage runs, never reproduced in 15 runs) is most likely a slow wait under parallel test load.
+
 ## 2026-10-26 — Gemini terminal commands
 
 - Live acceptance runs `90eb09d1` (files) and `44eb9911` (code) paused because Gemini tried a terminal command, which its headless mode denies, leaving an empty answer. In the code run Claude's change still merged and `npm test` passed on the result branch, with the user's branch untouched. Writable turns are now told not to use terminal commands, any denied action (`DeniedActionError`) gets one retry with that hint, and the error names the action. agy offers no per-run allow rule short of `--dangerously-skip-permissions`, which stays off.
