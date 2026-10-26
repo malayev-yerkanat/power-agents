@@ -8,7 +8,7 @@ import { redactError } from './adapters/common.ts';
 import { demoRunner } from './core/demo.ts';
 import { AnswerFormatError, InputError, validateInput, parseEnvelope, parsePlan } from './core/protocol.ts';
 import { promptFor } from './core/prompts.ts';
-import { applyResult, type Job } from './core/results.ts';
+import { applyResult, findFact, type Job } from './core/results.ts';
 /** A task returning to work waits if its own question is still open. */
 const retry = (run: Run, task: TeamTask): TeamTask => ({ ...task, status: run.messages.some(m => m.request && m.fromId === task.assigneeId && m.taskId === task.id && m.status !== 'answered') ? 'waiting' : 'pending', error: undefined });
 /** Reads an agent's answer for its turn; every rejection is an AnswerFormatError so the turn can be retried. */
@@ -20,6 +20,12 @@ function read(job: Job, text: string, snapshot: Run, memberId: string) {
   const answer = job.purpose === 'reply' ? { ...parsed, messages: parsed.messages.map(m => ({ ...m, request: false })) } : parsed;
   if (['review', 'synthesize'].includes(job.purpose) && answer.messages.length) throw new AnswerFormatError('На этапе итога и проверки верните результат без новых запросов.');
   if (answer.revisions?.some(r => !snapshot.tasks.some(t => t.id === r.taskId))) throw new AnswerFormatError('Замечания проверки ссылаются на неизвестную задачу. Используй id задач из плана.');
+  for (const fact of answer.facts ?? []) {
+    const owned = findFact(snapshot.facts, fact.key);
+    if (owned && owned.ownerId !== memberId) {
+      throw new AnswerFormatError(`Факт «${fact.key.trim()}» принадлежит ${snapshot.members.find(m => m.id === owned.ownerId)?.name ?? owned.ownerId}; не меняй его, а спроси владельца.`);
+    }
+  }
   return { plan: undefined, answer };
 }
 interface Options { store: Store; connections: Connection[]; workspaceRoot: string; runner?: TurnRunner; demoRunner?: TurnRunner }
@@ -123,7 +129,13 @@ export class Engine {
         this.launch(this.get(run.id), { memberId: task.assigneeId, purpose: 'task', taskId: task.id });
       }
       if ([...this.active.values()].some(a => a.runId === run.id)) return;
-      const latest = this.get(run.id);
+      let latest = this.get(run.id);
+      // A task waiting for colleagues who have all stopped would wait forever, so it fails and «Продолжить» retries it.
+      const stranded = latest.tasks.filter(t => t.status === 'waiting' && !latest.messages.some(m => m.request && m.fromId === t.assigneeId && m.taskId === t.id && m.status !== 'answered'));
+      if (stranded.length && !latest.messages.some(m => m.request && m.status === 'queued')) {
+        latest = this.change(run.id, r => ({ ...r, tasks: r.tasks.map(t => stranded.some(s => s.id === t.id)
+          ? { ...t, status: 'failed' as const, error: 'Агент ждёт ответа, но не задал вопрос, а коллеги уже закончили. Уточните задачу и продолжите.' } : t) }), 'error', 'Задача ждала коллег, которые уже закончили.');
+      }
       // Owners asking each other would wait forever; with nothing else running or failed, the oldest held question goes through.
       const held = !latest.tasks.some(t => t.status === 'failed') && latest.messages.find(m => m.request && m.status === 'queued');
       if (held) { this.launch(latest, { memberId: held.toId, purpose: 'reply', requestId: held.id }); return; }

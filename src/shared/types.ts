@@ -24,6 +24,8 @@ export interface TeamMessage {
   request: boolean; replyTo?: string; taskId?: string;
   status: 'queued' | 'delivered' | 'answered'; createdAt: string;
 }
+/** A value one participant owns (a price, a gram weight, a promo term) that everyone else reads instead of asking. */
+export interface SharedFact { key: string; value: string; ownerId: string; version: number; updatedAt: string }
 export interface Artifact { id: string; title: string; body: string; authorId: string; taskId?: string; kind: 'work' | 'final' | 'review'; createdAt: string }
 export type RunStatus = 'planning' | 'awaiting_approval' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
 export interface Run {
@@ -31,6 +33,7 @@ export interface Run {
   plan?: TeamPlan; tasks: TeamTask[]; messages: TeamMessage[]; artifacts: Artifact[];
   sessions: Record<string, string>; turnCount: number; reviewRound: number;
   phase: 'plan' | 'tasks' | 'synthesize' | 'review' | 'done';
+  facts?: SharedFact[];
   error?: string; createdAt: string; updatedAt: string; version: number;
   mode: 'live' | 'demo'; approvedAt?: string;
 }
@@ -57,4 +60,6 @@ export interface AgentEnvelope {
   verdict?: 'pass' | 'changes_requested';
   /** Review only: the tasks whose owners must revise, with a concrete remark each. */
   revisions?: { taskId: string; remark: string }[];
+  /** Shared facts this participant publishes or, as their owner, updates. */
+  facts?: { key: string; value: string }[];
 }

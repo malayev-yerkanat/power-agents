@@ -770,3 +770,93 @@ test('review remarks for an unknown task are rejected and retried', async () => 
     assert.equal(reviews, 2);
   } finally { await app.clean(); }
 });
+
+test('owners publish shared facts that every later turn can read', async () => {
+  const contexts: Record<string, Run> = {};
+  const tasks: TaskSpec[] = [
+    { id: 'price', title: 'Price', description: 'Owns the price', assigneeId: 'a', dependsOn: [] },
+    { id: 'promo', title: 'Promo', description: 'Uses the price', assigneeId: 'b', dependsOn: ['price'] },
+  ];
+  const runner: TurnRunner = async value => {
+    const { run, taskId } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run, tasks);
+    if (taskId) contexts[taskId] = run;
+    if (taskId === 'price') return envelope({ artifact: { title: 'Price', body: 'Price table' }, facts: [{ key: 'Цена', value: '1 200 ₸' }] } as never);
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => app.engine.get(run.id).status === 'completed', 'completion');
+    const fact = { key: 'Цена', value: '1 200 ₸', ownerId: 'a', version: 1 };
+    assert.deepEqual(contexts.promo.facts?.map(({ updatedAt: _, ...f }) => f), [fact]);
+    assert.deepEqual(app.engine.get(run.id).facts?.map(({ updatedAt: _, ...f }) => f), [fact]);
+  } finally { await app.clean(); }
+});
+
+test('only a fact owner can change it; the owner update raises the version', async () => {
+  let promoCalls = 0;
+  const tasks: TaskSpec[] = [
+    { id: 'price', title: 'Price', description: 'Owns the price', assigneeId: 'a', dependsOn: [] },
+    { id: 'promo', title: 'Promo', description: 'Uses the price', assigneeId: 'b', dependsOn: ['price'] },
+    { id: 'reprice', title: 'Reprice', description: 'Owner updates', assigneeId: 'a', dependsOn: ['promo'] },
+  ];
+  const prompts: string[] = [];
+  const runner: TurnRunner = async value => {
+    const { run, taskId } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run, tasks);
+    if (taskId === 'price') return envelope({ facts: [{ key: 'Цена', value: '1 200 ₸' }], artifact: { title: 'P', body: 'P' } } as never);
+    if (taskId === 'promo') {
+      prompts.push(value.prompt);
+      return ++promoCalls === 1 ? envelope({ facts: [{ key: ' цена ', value: '999 ₸' }] } as never) : envelope({ artifact: { title: 'Promo', body: 'Promo' } });
+    }
+    if (taskId === 'reprice') return envelope({ facts: [{ key: 'Цена', value: '1 250 ₸' }], artifact: { title: 'R', body: 'R' } } as never);
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => app.engine.get(run.id).status === 'completed', 'completion');
+    assert.equal(promoCalls, 2);
+    assert.match(prompts[1], /Факт «цена» принадлежит Agent a/);
+    const facts = app.engine.get(run.id).facts!;
+    assert.equal(facts.length, 1);
+    assert.deepEqual([facts[0].value, facts[0].ownerId, facts[0].version], ['1 250 ₸', 'a', 2]);
+  } finally { await app.clean(); }
+});
+
+test('a task may wait for a colleague who is still working, and their note wakes it', async () => {
+  let promoCalls = 0;
+  const tasks: TaskSpec[] = [
+    { id: 'price', title: 'Price', description: 'Owns the price', assigneeId: 'a', dependsOn: [] },
+    { id: 'promo', title: 'Promo', description: 'Needs the price', assigneeId: 'b', dependsOn: [] },
+  ];
+  let promoPrompt = '';
+  const runner: TurnRunner = async value => {
+    const { run, taskId } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run, tasks);
+    if (taskId === 'promo') {
+      promoPrompt = value.prompt;
+      return ++promoCalls === 1 ? envelope({ status: 'waiting', messages: [] }) : envelope({ artifact: { title: 'Promo', body: 'Promo at 1 200 ₸' } });
+    }
+    if (taskId === 'price') {
+      await until(() => promoCalls === 1, 'promo waits first');
+      return envelope({ messages: [{ toId: 'b', body: 'Final price: 1 200 ₸', request: false }], artifact: { title: 'Price', body: '1 200 ₸' } });
+    }
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => ['completed', 'paused'].includes(app.engine.get(run.id).status), 'finish');
+    assert.equal(app.engine.get(run.id).status, 'completed', app.engine.get(run.id).error);
+    assert.equal(promoCalls, 2);
+    assert.match(promoPrompt, /Final price: 1 200 ₸/);
+  } finally { await app.clean(); }
+});

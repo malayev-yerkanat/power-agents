@@ -8,6 +8,16 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-26 — M1.2 live check and waiting on colleagues
+
+- The 2026-10-23 live run used the facts board: all three agents published 22 owner-tagged facts. It paused because Gemini answered "waiting" after Codex said prices were not final; the engine treated that as an error. Now a task may wait without a question while colleagues are working, and wakes on a note or a finished task; stranded waits still fail. See [[Orchestration Engine]].
+- Verified: 153/153 Node tests, 81.56% line coverage, 35/35 Chromium tests, typecheck.
+
+## 2026-10-23 — M1.2 shared facts board
+
+- Answers may publish `facts`. The first publisher owns a fact, only the owner can change it (raising its version), and a non-owner change triggers the format retry. Every turn sees the board in its context; prompts tell agents to check it before asking. See [[Orchestration Engine]] and the [roadmap](../docs/roadmap.md).
+- Verified: 152/152 Node tests, 81.62% line coverage, 35/35 Chromium tests, typecheck.
+
 ## 2026-10-23 — M1.1 review remarks reach task owners
 
 - Review answers may list `revisions` per task. On `changes_requested` those tasks reopen, owners receive the remark as a note, and synthesis repeats after their rework; unknown task IDs trigger the format retry. See [[Orchestration Engine]] and the [roadmap](../docs/roadmap.md).

@@ -1,6 +1,6 @@
 # Power Agents roadmap
 
-Updated: 2026-10-23.
+Updated: 2026-10-26.
 
 ## North star
 
@@ -39,7 +39,7 @@ remains the source of intent; this roadmap orders the remaining work.
 
 1. Done in code on 2026-10-23: a reviewer's `changes_requested` remarks go to the owners of the affected tasks,
    who revise their work before the leader re-synthesizes.
-2. A shared facts board: owners publish values (prices, names, terms); other
+2. Done in code on 2026-10-23: a shared facts board: owners publish values (prices, names, terms); other
    participants read them from context instead of asking repeatedly.
 3. Resume after a restart never silently repeats a call whose result may already exist.
 

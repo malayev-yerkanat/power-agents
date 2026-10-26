@@ -37,6 +37,13 @@ test('the plan prompt tells the leader that synthesis and review are automatic',
 });
 test('prompts ask for parallel tasks with owned shared facts confirmed by question', () => {
   assert.match(promptFor({ run, memberId: 'a', purpose: 'plan' }), /Предпочитай параллельные задачи.*какой участник владеет каким фактом/);
-  assert.match(promptFor({ run, memberId: 'a', purpose: 'task' }), /общий факт, которым владеет коллега по параллельной задаче, не придумывай его: спроси владельца/);
-  assert.match(promptFor({ run, memberId: 'a', purpose: 'reply' }), /назови точное значение и придерживайся его в своей задаче/);
+  assert.match(promptFor({ run, memberId: 'a', purpose: 'task' }), /общий факт, которым владеет коллега по параллельной задаче, не придумывай его: сначала найди его в run\.facts, а если его там нет, спроси владельца/);
+  assert.match(promptFor({ run, memberId: 'a', purpose: 'reply' }), /назови точное значение, опубликуй его в facts и придерживайся его в своей задаче/);
+});
+test('prompts explain the shared facts board and show published facts', () => {
+  const withFacts: Run = { ...run, facts: [{ key: 'Цена', value: '1 200 ₸', ownerId: 'a', version: 1, updatedAt: '' }] };
+  const task = promptFor({ run: withFacts, memberId: 'b', purpose: 'task' });
+  assert.match(task, /сначала найди его в run\.facts/);
+  assert.match(task, /публикуй в facts, как только они окончательны; менять опубликованный факт может только его владелец/);
+  assert.match(task.split('\nCONTEXT:\n')[1], /"facts":\[\{"key":"Цена","value":"1 200 ₸","ownerId":"a"/);
 });
