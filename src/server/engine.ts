@@ -26,7 +26,9 @@ function read(job: Job, text: string, snapshot: Run, memberId: string) {
   if (job.purpose === 'plan') return { plan: parsePlan(text, ids), answer: undefined };
   const parsed = parseEnvelope(text, ids, memberId);
   // A reply keeps its answer even if it also asks something; the extra questions travel as notes.
-  // Closing turns drop messages: no task is left to answer them, and repeating a whole synthesis costs minutes.
+  // A leader that stops to ask for fixes instead of combining gets one repeat with this hint (seen live in run 958811b4).
+  if (job.purpose === 'synthesize' && !parsed.artifact) throw new AnswerFormatError('На этапе итога верни полный итог в artifact без новых запросов; спорные места отметь в самом итоге, доработки поручит проверка.');
+  // Closing turns drop other messages: no task is left to answer them, and repeating a whole synthesis costs minutes.
   const answer = job.purpose === 'reply' ? { ...parsed, messages: parsed.messages.map(m => ({ ...m, request: false })) }
     : CLOSING_PURPOSES.includes(job.purpose) ? { ...parsed, messages: [] } : parsed;
   if (answer.revisions?.some(r => !snapshot.tasks.some(t => t.id === r.taskId))) throw new AnswerFormatError('Замечания проверки ссылаются на неизвестную задачу. Используй id задач из плана.');

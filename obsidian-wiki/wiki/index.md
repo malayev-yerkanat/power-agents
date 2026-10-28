@@ -31,6 +31,8 @@ This catalog is updated by completed knowledge operations.
 
 ## Changes
 
+- 2026-10-28: [[changes/20261028-085709-m4-plain-text-artifact-accepted|M4: plain-text artifact accepted]]
+- 2026-10-28: [[changes/20261028-085434-m4-synthesis-without-a-document-is-repeated-acceptance-run|M4: synthesis without a document is repeated; acceptance run]]
 - 2026-10-28: [[changes/20261028-084313-m4-gemini-turns-measured|M4: Gemini turns measured]]
 - 2026-10-28: [[changes/20261028-084133-m4-speed-codex-stall-guard|M4 Speed: Codex stall guard]]
 - 2026-10-28: [[changes/20261028-083050-answer-claude-code-questions-from-telegram-buttons|Answer Claude Code questions from Telegram buttons]]

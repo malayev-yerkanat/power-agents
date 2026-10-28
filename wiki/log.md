@@ -8,6 +8,15 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-28 — M4: plain-text artifact accepted
+
+- An answer whose `artifact` is plain text is taken as the body (title «Результат») instead of repeating the turn; seen in reviews of runs `ec0727e0` and `958811b4`. Verified: 193/193 Node tests, 83.47% line coverage, typecheck.
+
+## 2026-10-28 — M4 acceptance run with Gemini Low
+
+- Run `958811b4` (baseline goal, Gemini on `gemini-3.8-flash-low`) completed with review passed first time in about 7.5 minutes active (baseline 12.5). Gemini's task took 28 s; its promo met every requirement at about a third of the baseline length.
+- Bug from the earlier M4 change: a synthesis that only asked for fixes lost its messages and had no final document, so the run paused. A synthesis without a document now gets one repeat with a hint. Verified: 192/192 Node tests, 83.46% line coverage, typecheck. Open: Claude sometimes sends `artifact` as a string, costing one review repeat.
+
 ## 2026-10-28 — M4: Gemini turns measured
 
 - agy logs (82 turns): median 10 s startup per turn before the first model call (18.6% of Gemini time); the rest is mostly one model call on "Gemini 3.8 Flash (High)", median 39 s, p90 120 s. Earlier "Flash (Low)" turns were faster (median 14 s) but on simpler runs. No code change. See the [roadmap](../docs/roadmap.md).

@@ -356,7 +356,7 @@ for (const purpose of ['synthesize', 'review'] as const) {
       await until(() => app.engine.get(run.id).status === 'awaiting_approval');
       app.engine.approve(run.id, app.engine.get(run.id).version);
       await until(() => app.engine.get(run.id).status === 'paused');
-      assert.match(app.engine.get(run.id).error!, purpose === 'synthesize' ? /итоговый материал/ : /заключение и аргументы/);
+      assert.match(app.engine.get(run.id).error!, purpose === 'synthesize' ? /полный итог в artifact/ : /заключение и аргументы/);
       assert.equal(app.engine.get(run.id).phase, purpose);
     } finally { await app.clean(); }
   });
@@ -526,7 +526,7 @@ test('agent answers tolerate null optional fields and format errors read clearly
   assert.equal(answer.artifact, undefined);
   assert.equal(answer.verdict, undefined);
   assert.equal(answer.messages[0].replyTo, undefined);
-  assert.throws(() => parseEnvelope(JSON.stringify({ summary: 'Done', status: 'done', messages: [], artifact: 'text' }), ['a', 'b'], 'a'),
+  assert.throws(() => parseEnvelope(JSON.stringify({ summary: 'Done', status: 'done', messages: [], artifact: 42 }), ['a', 'b'], 'a'),
     (error: Error) => /Ответ агента не соответствует формату: artifact/.test(error.message) && !error.message.includes('"code"'));
   assert.throws(() => parseEnvelope('Here is the result: {"summary"', ['a', 'b'], 'a'), /Начало ответа: «Here is the result: \{"summary"»/);
 });
@@ -1064,5 +1064,30 @@ test('a stalled turn is retried once, but not after it used a team tool', async 
     assert.equal(done.tasks.find(t => t.id === 'quiet')!.status, 'completed');
     assert.match(done.tasks.find(t => t.id === 'chatty')!.error ?? '', /не отвечал 150 с/);
     assert.equal(done.messages.filter(m => m.body === 'Привет').length, 1, 'the message is not sent twice');
+  } finally { await app.clean(); }
+});
+
+test('a synthesis that asks for fixes instead of combining is repeated once with a hint', async () => {
+  const prompts: string[] = [];
+  const runner: TurnRunner = async value => {
+    const { run } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run, [{ id: 't1', title: 'T1', description: 'Do it', assigneeId: 'b', dependsOn: [] }]);
+    if (value.purpose === 'synthesize') {
+      prompts.push(value.prompt);
+      if (prompts.length === 1) return envelope({ status: 'waiting', messages: [{ toId: 'b', body: 'Исправь рецептуру', request: true }] });
+    }
+    return successfulRunner(value);
+  };
+  const app = setup(runner);
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => ['completed', 'paused'].includes(app.engine.get(run.id).status), 'finish');
+    const done = app.engine.get(run.id);
+    assert.equal(done.status, 'completed', done.error);
+    assert.equal(prompts.length, 2);
+    assert.match(prompts[1], /верни полный итог в artifact без новых запросов/);
+    assert.ok(!done.messages.some(m => m.body === 'Исправь рецептуру'), 'the request is not delivered');
   } finally { await app.clean(); }
 });

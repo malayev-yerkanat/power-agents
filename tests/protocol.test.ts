@@ -9,3 +9,10 @@ test('an answer may publish up to 40 facts and name the facts it uses', () => {
   assert.deepEqual(parseEnvelope(raw({ usesFacts: ['price'] }), ['a', 'b'], 'a').usesFacts, ['price']);
   assert.throws(() => parseEnvelope(raw({ facts: [...facts, { key: 'one-more', value: 'x' }] }), ['a', 'b'], 'a'));
 });
+
+test('a plain-text artifact is taken as the body; an empty one is still refused', () => {
+  const raw = (extra: object) => JSON.stringify({ summary: 'ok', status: 'done', messages: [], ...extra });
+  assert.deepEqual(parseEnvelope(raw({ artifact: 'Проверка пройдена' }), ['a', 'b'], 'a').artifact, { title: 'Результат', body: 'Проверка пройдена' });
+  assert.deepEqual(parseEnvelope(raw({ artifact: { title: 'T', body: 'B' } }), ['a', 'b'], 'a').artifact, { title: 'T', body: 'B' });
+  assert.throws(() => parseEnvelope(raw({ artifact: '  ' }), ['a', 'b'], 'a'));
+});

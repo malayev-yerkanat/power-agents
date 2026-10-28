@@ -21,6 +21,8 @@ Vault initialized. No knowledge operations have completed yet.
 
 ## Recent Changes
 
+- 2026-10-28: M4: plain-text artifact accepted (wiki/changes/20261028-085709-m4-plain-text-artifact-accepted.md)
+- 2026-10-28: M4: synthesis without a document is repeated; acceptance run (wiki/changes/20261028-085434-m4-synthesis-without-a-document-is-repeated-acceptance-run.md)
 - 2026-10-28: M4: Gemini turns measured (wiki/changes/20261028-084313-m4-gemini-turns-measured.md)
 - 2026-10-28: M4 Speed: Codex stall guard (wiki/changes/20261028-084133-m4-speed-codex-stall-guard.md)
 - 2026-10-28: Answer Claude Code questions from Telegram buttons (wiki/changes/20261028-083050-answer-claude-code-questions-from-telegram-buttons.md)

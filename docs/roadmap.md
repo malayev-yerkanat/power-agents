@@ -124,7 +124,15 @@ or review.
   the agy default since 2026-10-22, median 39 s (p90 120 s). Older "Flash (Low)" turns took a
   median 14 s, but on simpler early runs, so the two are not comparable. No code change: the
   model can already be set per member when creating a run.
-- Open: a clean acceptance run (optionally with Gemini on a Low model to compare).
+- Acceptance run `958811b4` on 2026-10-28 (baseline goal, Gemini on `gemini-3.8-flash-low`):
+  completed, review passed first time, about 7.5 minutes of active time against 12.5 for the
+  baseline. Gemini's one task took 28 s and its promo section (4.5k characters, against 14.6k
+  in the baseline) met every requirement; Gemini's saved `promo.md` was attached by the platform.
+  Found and fixed in the run: the first synthesis asked Claude for fixes instead of combining;
+  dropping its messages left no final document and paused the run. A synthesis with no document
+  is now repeated once with a hint, and the run was resumed. One review answer was repeated
+  because Claude sent `artifact` as a string (also seen in run `ec0727e0`).
+- Done 2026-10-28: a plain-text `artifact` is taken as the body instead of repeating the turn.
 - Live run `619723ae` on 2026-10-28 (same goal as `99c6c723`): completed, second review passed,
   no answer repeats. Plan to first review verdict took about 8.5 minutes of active time
   (baseline 12.5 minutes to its single passing review); synthesis 85 s and 57 s (baseline 141 s

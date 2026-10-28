@@ -13,6 +13,18 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-28 08:57 UTC - M4: plain-text artifact accepted
+
+An answer whose artifact is plain text is now taken as the body instead of repeating the whole turn.
+
+Note: [[changes/20261028-085709-m4-plain-text-artifact-accepted|M4: plain-text artifact accepted]]
+
+### 2026-10-28 08:54 UTC - M4: synthesis without a document is repeated; acceptance run
+
+Fixed a pause caused by dropping a synthesis that only asked for fixes: such a synthesis now gets one repeat with a hint. Acceptance run 958811b4 with Gemini Low completed in about 7.5 minutes active versus 12.5 baseline.
+
+Note: [[changes/20261028-085434-m4-synthesis-without-a-document-is-repeated-acceptance-run|M4: synthesis without a document is repeated; acceptance run]]
+
 ### 2026-10-28 08:43 UTC - M4: Gemini turns measured
 
 Recorded Gemini turn timing from agy logs in the roadmap: median 10 s startup per turn, then mostly one model call on Flash (High), median 39 s.

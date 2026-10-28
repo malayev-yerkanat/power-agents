@@ -57,7 +57,8 @@ const optional = <T extends z.ZodType>(schema: T) => schema.nullish().transform(
 const envelopeSchema = z.object({
   summary: text(12000), status: z.enum(['done', 'working', 'waiting']),
   messages: z.array(z.object({ toId: id, body: text(12000), request: z.boolean(), replyTo: optional(id) })).max(8),
-  artifact: optional(z.object({ title: text(200), body: text(80000) })),
+  // Claude sometimes sends the artifact as plain text; taking it as the body saves repeating a whole review.
+  artifact: optional(z.union([z.object({ title: text(200), body: text(80000) }), text(80000).transform(body => ({ title: 'Результат', body }))])),
   verdict: optional(z.enum(['pass', 'changes_requested'])),
   revisions: optional(z.array(z.object({ taskId: id, remark: text(4000) })).max(12)),
   facts: optional(z.array(z.object({ key: text(80), value: text(1000) })).max(40)),
