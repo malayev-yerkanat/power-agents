@@ -248,6 +248,27 @@ export function createApiHandler(options: Options): (req: IncomingMessage, res: 
           if (!options.store.telegramRecipient()) throw new HttpError(409, 'Pair a Telegram chat first');
           options.telegram.queueTest(); json(res, 200, { queued: true }); return true;
         }
+        if (url.pathname === '/api/telegram/approval') {
+          if (!options.telegram?.status().ready) throw new HttpError(503, 'Telegram bot is unavailable');
+          if (!options.store.telegramRecipient()) throw new HttpError(409, 'Pair a Telegram chat first');
+          const { text } = z.object({ text: z.string().min(1).max(1000) }).strict().parse(await readBody(req));
+          // Claude Code kills the hook when the Mac dialog is answered first; drop the wait with it.
+          const closed = new AbortController();
+          res.on('close', () => closed.abort());
+          const allowed = await options.telegram.requestApproval(text, 570_000, closed.signal);
+          json(res, 200, { decision: allowed === undefined ? null : allowed ? 'allow' : 'deny' }); return true;
+        }
+        if (url.pathname === '/api/telegram/question') {
+          if (!options.telegram?.status().ready) throw new HttpError(503, 'Telegram bot is unavailable');
+          if (!options.store.telegramRecipient()) throw new HttpError(409, 'Pair a Telegram chat first');
+          const { text, options: labels } = z.object({ text: z.string().min(1).max(2000), options: z.array(z.string().min(1).max(40)).min(1).max(4) })
+            .strict().parse(await readBody(req));
+          // The Stop hook is killed when the user answers in the app or stops the turn; drop the wait with it.
+          const closed = new AbortController();
+          res.on('close', () => closed.abort());
+          const choice = await options.telegram.requestChoice(text, labels.map(label => ({ label, status: `Answered: ${label}` })), 570_000, closed.signal);
+          json(res, 200, { choice: choice ?? null }); return true;
+        }
         if (path[1] !== 'runs') throw new HttpError(404, 'API endpoint not found');
         const run = await mutate(path, await readBody(req), options);
         json(res, path.length === 2 ? 201 : 200, { run });

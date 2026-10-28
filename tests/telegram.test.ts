@@ -389,3 +389,67 @@ test('delivery respects retry_after, retries server errors, and disables blocked
     assert.equal(store.telegramDueMessages().length, 0);
   } finally { service.stop(); store.close(); }
 });
+
+test('approval buttons accept only the paired user on the sent message, and abort releases the wait', async () => {
+  const store = new Store(':memory:');
+  pair(store);
+  const calls: string[] = [];
+  let data = '';
+  let updates: unknown[] = [];
+  const fetcher: typeof fetch = async (input, init) => {
+    const method = String(input).split('/').at(-1)!;
+    calls.push(method);
+    const body = JSON.parse(String(init?.body ?? '{}')) as { reply_markup?: { inline_keyboard: { callback_data: string }[][] } };
+    if (method === 'sendMessage') {
+      data = body.reply_markup!.inline_keyboard[0][0].callback_data.slice(2);
+      return new Response(JSON.stringify({ ok: true, result: { message_id: 5 } }));
+    }
+    if (method === 'getUpdates') return new Response(JSON.stringify({ ok: true, result: updates }));
+    return new Response(JSON.stringify({ ok: true, result: true }));
+  };
+  const service = new TelegramService(store, 'token', { fetcher });
+  const tap = (update_id: number, action: string, from: number, message_id = 5) => ({ update_id,
+    callback_query: { id: `q${update_id}`, data: `${action}:${data}`, from: { id: from }, message: { message_id, chat: { id: 123 } } } });
+  try {
+    const pending = service.requestApproval('Run tests?', 60_000);
+    while (!data) await new Promise(resolve => setImmediate(resolve));
+    updates = [tap(1, '0', 999), tap(2, '0', 123, 6), tap(3, '1', 123)];
+    await service.pollOnce(0);
+    assert.equal(await pending, false);
+    assert.equal(store.telegramOffset(), 4);
+    assert.ok(calls.includes('editMessageText'));
+
+    data = '';
+    const aborted = new AbortController();
+    const second = service.requestApproval('Again?', 60_000, aborted.signal);
+    while (!data) await new Promise(resolve => setImmediate(resolve));
+    aborted.abort();
+    assert.equal(await second, undefined);
+  } finally { await service.stop(); store.close(); }
+});
+
+test('question buttons show each option and resolve the tapped index', async () => {
+  const store = new Store(':memory:');
+  pair(store);
+  let buttons: { text: string; callback_data: string }[] = [];
+  let edited = '';
+  let updates: unknown[] = [];
+  const fetcher: typeof fetch = async (input, init) => {
+    const method = String(input).split('/').at(-1)!;
+    const body = JSON.parse(String(init?.body ?? '{}')) as { text?: string; reply_markup?: { inline_keyboard: { text: string; callback_data: string }[][] } };
+    if (method === 'sendMessage') { buttons = body.reply_markup!.inline_keyboard[0]; return new Response(JSON.stringify({ ok: true, result: { message_id: 7 } })); }
+    if (method === 'editMessageText') edited = body.text!;
+    if (method === 'getUpdates') return new Response(JSON.stringify({ ok: true, result: updates }));
+    return new Response(JSON.stringify({ ok: true, result: true }));
+  };
+  const service = new TelegramService(store, 'token', { fetcher });
+  try {
+    const pending = service.requestChoice('Which fix?', ['Fix 1', 'Fix 2', 'Not now'].map(label => ({ label, status: `Answered: ${label}` })), 60_000);
+    while (!buttons.length) await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(buttons.map(button => button.text), ['Fix 1', 'Fix 2', 'Not now']);
+    updates = [{ update_id: 1, callback_query: { id: 'q1', data: buttons[1].callback_data, from: { id: 123 }, message: { message_id: 7, chat: { id: 123 } } } }];
+    await service.pollOnce(0);
+    assert.equal(await pending, 1);
+    assert.equal(edited, 'Which fix?\n\nAnswered: Fix 2');
+  } finally { await service.stop(); store.close(); }
+});

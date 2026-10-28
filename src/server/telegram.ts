@@ -6,8 +6,13 @@ const botSchema = z.object({ ok: z.literal(true), result: z.object({
   id: z.union([z.number().int().safe(), z.string().regex(/^\d+$/)]),
   username: z.string().regex(/^[A-Za-z0-9_]{5,32}$/),
 }) });
+const idSchema = z.union([z.number().int().safe(), z.string().regex(/^\d+$/)]);
 const updateSchema = z.object({
   update_id: z.number().int().safe().nonnegative(),
+  callback_query: z.object({
+    id: z.string().max(256), data: z.string().max(64).optional(), from: z.object({ id: idSchema }),
+    message: z.object({ message_id: z.number().int().safe(), chat: z.object({ id: idSchema }) }).optional(),
+  }).optional(),
   message: z.object({
     text: z.string().optional(),
     from: z.object({ id: z.union([z.number().int().safe(), z.string().regex(/^\d+$/)]) }).optional(),
@@ -17,6 +22,7 @@ const updateSchema = z.object({
 const updatesSchema = z.object({ ok: z.literal(true), result: z.array(updateSchema).max(100) });
 const retrySchema = z.object({ parameters: z.object({ retry_after: z.number().int().positive().max(3600) }).optional() }).passthrough();
 
+interface PendingChoice { resolve: (choice: number | undefined) => void; chatId: string; messageId?: number; text: string; options: { label: string; status: string }[] }
 interface TelegramOptions { fetcher?: typeof fetch; retryDelayMs?: number }
 export interface TelegramStatus {
   configured: boolean; ready: boolean; connected: boolean; username?: string; pending?: { expiresAt: string };
@@ -50,6 +56,7 @@ export class TelegramService {
   private lastSentAt = 0;
   private loops: Promise<void>[] = [];
   private readonly retryDelayMs: number;
+  private readonly choices = new Map<string, PendingChoice>();
 
   constructor(private readonly store: Store, private readonly token: string, options: TelegramOptions = {}) {
     this.fetcher = options.fetcher ?? fetch;
@@ -94,12 +101,13 @@ export class TelegramService {
 
   async pollOnce(timeoutSeconds: 0 | 25 = 25): Promise<void> {
     const response = await this.request('getUpdates', {
-      offset: this.store.telegramOffset(), timeout: timeoutSeconds, allowed_updates: ['message'], limit: 100,
+      offset: this.store.telegramOffset(), timeout: timeoutSeconds, allowed_updates: ['message', 'callback_query'], limit: 100,
     });
     const parsed = updatesSchema.safeParse(response);
     if (!parsed.success) throw new Error('Telegram returned invalid updates');
     for (const update of parsed.data.result) {
       if (update.update_id < this.store.telegramOffset()) continue;
+      if (update.callback_query) await this.answerChoice(update.callback_query);
       const message = update.message;
       const match = message?.chat.type === 'private' && message.from
         && String(message.chat.id) === String(message.from.id)
@@ -112,6 +120,63 @@ export class TelegramService {
         });
       } else this.store.processTelegramUpdate(update.update_id);
     }
+  }
+
+  /** Sends text with Approve/Decline buttons; resolves true/false on a tap, undefined on timeout or abort. */
+  async requestApproval(text: string, timeoutMs: number, signal?: AbortSignal): Promise<boolean | undefined> {
+    const choice = await this.requestChoice(text, [{ label: 'Approve', status: 'Approved.' }, { label: 'Decline', status: 'Declined.' }], timeoutMs, signal);
+    return choice === undefined ? undefined : choice === 0;
+  }
+
+  /** Sends text with one button per option; resolves the tapped index, undefined on timeout or abort. */
+  async requestChoice(text: string, options: { label: string; status: string }[], timeoutMs: number, signal?: AbortSignal): Promise<number | undefined> {
+    const chatId = this.store.telegramRecipient();
+    if (!chatId) throw new Error('Pair a Telegram chat first');
+    const id = randomBytes(12).toString('base64url');
+    let pending!: PendingChoice;
+    const answer = new Promise<number | undefined>(resolve => { pending = { resolve, chatId, text, options }; });
+    this.choices.set(id, pending);
+    const timer = setTimeout(() => pending.resolve(undefined), timeoutMs);
+    const abort = (): void => pending.resolve(undefined);
+    signal?.addEventListener('abort', abort, { once: true });
+    try {
+      const sent = z.object({ ok: z.literal(true), result: z.object({ message_id: z.number().int().safe() }) })
+        .safeParse(await this.request('sendMessage', { chat_id: chatId, text, reply_markup: { inline_keyboard: [
+          options.map((option, index) => ({ text: option.label, callback_data: `${index}:${id}` })),
+        ] } }));
+      if (!sent.success) throw new Error('Telegram rejected the request');
+      pending.messageId = sent.data.result.message_id;
+      if (signal?.aborted) pending.resolve(undefined);
+      const choice = await answer;
+      if (choice === undefined) await this.closeChoice(pending, 'Answered on the Mac or expired.');
+      return choice;
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', abort);
+      this.choices.delete(id);
+    }
+  }
+
+  private async answerChoice(query: NonNullable<z.infer<typeof updateSchema>['callback_query']>): Promise<void> {
+    const match = /^(\d):([A-Za-z0-9_-]{16})$/.exec(query.data ?? '');
+    const pending = match ? this.choices.get(match[2]) : undefined;
+    const option = pending?.options[Number(match?.[1])];
+    // Only the paired user, in the paired chat, on the message we sent, may decide.
+    const authorized = !!option && String(query.from.id) === this.store.telegramUserId()
+      && String(query.message?.chat.id) === pending!.chatId && query.message?.message_id === pending!.messageId;
+    try { await this.request('answerCallbackQuery', { callback_query_id: query.id,
+      text: authorized ? option.status : 'This request is no longer active' }); }
+    catch { /* the decision still applies; the button spinner just times out */ }
+    if (!authorized) return;
+    this.choices.delete(match![2]);
+    pending!.resolve(Number(match![1]));
+    await this.closeChoice(pending!, option.status);
+  }
+
+  private async closeChoice(pending: PendingChoice, status: string): Promise<void> {
+    if (pending.messageId === undefined) return;
+    try { await this.request('editMessageText', { chat_id: pending.chatId, message_id: pending.messageId, text: `${pending.text}\n\n${status}` }); }
+    catch { /* buttons stay visible but a late tap gets "no longer active" */ }
   }
 
   deliverOnce(): Promise<void> {
@@ -231,7 +296,7 @@ export class TelegramService {
     this.store.telegramReschedule(id, attempts, new Date(Date.now() + wait).toISOString());
   }
 
-  private async request(method: 'getMe' | 'getUpdates', body: object): Promise<unknown> {
+  private async request(method: 'getMe' | 'getUpdates' | 'sendMessage' | 'answerCallbackQuery' | 'editMessageText', body: object): Promise<unknown> {
     let response: Response;
     try {
       response = await this.fetcher(`https://api.telegram.org/bot${this.token}/${method}`, {

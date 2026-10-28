@@ -21,6 +21,13 @@ Vault initialized. No knowledge operations have completed yet.
 
 ## Recent Changes
 
+- 2026-10-28: Answer Claude Code questions from Telegram buttons (wiki/changes/20261028-083050-answer-claude-code-questions-from-telegram-buttons.md)
+- 2026-10-28: M4 live timing run (wiki/changes/20261028-083028-m4-live-timing-run.md)
+- 2026-10-28: Claude Code turn-end alerts via Telegram (wiki/changes/20261028-082722-claude-code-turn-end-alerts-via-telegram.md)
+- 2026-10-28: Approve or decline Claude Code requests from Telegram (wiki/changes/20261028-081925-approve-or-decline-claude-code-requests-from-telegram.md)
+- 2026-10-28: M4 Speed: no double writing of saved files (wiki/changes/20261028-081436-m4-speed-no-double-writing-of-saved-files.md)
+- 2026-10-28: Claude Code approval alerts via Telegram (wiki/changes/20261028-081354-claude-code-approval-alerts-via-telegram.md)
+- 2026-10-28: M4 Speed: no repeats in closing turns (wiki/changes/20261028-080849-m4-speed-no-repeats-in-closing-turns.md)
 - 2026-10-26: M3 acceptance (wiki/changes/20261026-153027-m3-acceptance.md)
 - 2026-10-26: M3 steps 3-4: CLI wiring and docs (wiki/changes/20261026-145356-m3-steps-3-4-cli-wiring-and-docs.md)
 - 2026-10-26: M3 steps 0-2: team tools over MCP (wiki/changes/20261026-145008-m3-steps-0-2-team-tools-over-mcp.md)

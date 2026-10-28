@@ -190,6 +190,7 @@ export class Store {
   }
 
   telegramRecipient(): string | undefined { return this.telegramSettings().chat_id ?? undefined; }
+  telegramUserId(): string | undefined { return this.telegramSettings().user_id ?? undefined; }
   telegramOffset(): number { return this.telegramSettings().update_offset; }
   telegramPendingPairing(): { expiresAt: string } | undefined {
     const row = this.telegramSettings();

@@ -13,6 +13,48 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-28 08:30 UTC - Answer Claude Code questions from Telegram buttons
+
+Turn-end questions with options now arrive in Telegram as buttons; a tap is handed back to Claude Code as the user's answer through the Stop hook.
+
+Note: [[changes/20261028-083050-answer-claude-code-questions-from-telegram-buttons|Answer Claude Code questions from Telegram buttons]]
+
+### 2026-10-28 08:30 UTC - M4 live timing run
+
+Live run 619723ae with the baseline goal completed with no answer repeats; about 8.5 minutes active to the first review verdict versus 12.5 for the baseline.
+
+Note: [[changes/20261028-083028-m4-live-timing-run|M4 live timing run]]
+
+### 2026-10-28 08:27 UTC - Claude Code turn-end alerts via Telegram
+
+A global Stop hook sends the paired Telegram chat each finished Claude Code turn's recap, plus the open question and options when one waits, so sessions can be followed without the app open.
+
+Note: [[changes/20261028-082722-claude-code-turn-end-alerts-via-telegram|Claude Code turn-end alerts via Telegram]]
+
+### 2026-10-28 08:19 UTC - Approve or decline Claude Code requests from Telegram
+
+Claude Code approval alerts now carry Approve/Decline buttons; the Power Agents server sends them, handles the tap, and returns the decision to the PermissionRequest hook.
+
+Note: [[changes/20261028-081925-approve-or-decline-claude-code-requests-from-telegram|Approve or decline Claude Code requests from Telegram]]
+
+### 2026-10-28 08:14 UTC - M4 Speed: no double writing of saved files
+
+Measured inside slow turns from CLI transcripts. The platform now attaches saved task file text to the result, so agents no longer write each document twice.
+
+Note: [[changes/20261028-081436-m4-speed-no-double-writing-of-saved-files|M4 Speed: no double writing of saved files]]
+
+### 2026-10-28 08:13 UTC - Claude Code approval alerts via Telegram
+
+Added a Claude Code PermissionRequest hook script that sends the paired Power Agents Telegram chat a message whenever a session waits for approval.
+
+Note: [[changes/20261028-081354-claude-code-approval-alerts-via-telegram|Claude Code approval alerts via Telegram]]
+
+### 2026-10-28 08:08 UTC - M4 Speed: no repeats in closing turns
+
+Started milestone M4 Speed with a measured baseline. Synthesis, review and resolve turns no longer get team tools, and messages in their answers are dropped instead of repeating the whole turn.
+
+Note: [[changes/20261028-080849-m4-speed-no-repeats-in-closing-turns|M4 Speed: no repeats in closing turns]]
+
 ### 2026-10-26 15:30 UTC - M3 acceptance
 
 A live run showed Claude and Codex using team tools under platform-checked identity while forged and browser requests were refused; criterion 12 is done, with Gemini running without team tools.

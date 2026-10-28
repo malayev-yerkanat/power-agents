@@ -31,6 +31,13 @@ This catalog is updated by completed knowledge operations.
 
 ## Changes
 
+- 2026-10-28: [[changes/20261028-083050-answer-claude-code-questions-from-telegram-buttons|Answer Claude Code questions from Telegram buttons]]
+- 2026-10-28: [[changes/20261028-083028-m4-live-timing-run|M4 live timing run]]
+- 2026-10-28: [[changes/20261028-082722-claude-code-turn-end-alerts-via-telegram|Claude Code turn-end alerts via Telegram]]
+- 2026-10-28: [[changes/20261028-081925-approve-or-decline-claude-code-requests-from-telegram|Approve or decline Claude Code requests from Telegram]]
+- 2026-10-28: [[changes/20261028-081436-m4-speed-no-double-writing-of-saved-files|M4 Speed: no double writing of saved files]]
+- 2026-10-28: [[changes/20261028-081354-claude-code-approval-alerts-via-telegram|Claude Code approval alerts via Telegram]]
+- 2026-10-28: [[changes/20261028-080849-m4-speed-no-repeats-in-closing-turns|M4 Speed: no repeats in closing turns]]
 - 2026-10-26: [[changes/20261026-153027-m3-acceptance|M3 acceptance]]
 - 2026-10-26: [[changes/20261026-145356-m3-steps-3-4-cli-wiring-and-docs|M3 steps 3-4: CLI wiring and docs]]
 - 2026-10-26: [[changes/20261026-145008-m3-steps-0-2-team-tools-over-mcp|M3 steps 0-2: team tools over MCP]]
