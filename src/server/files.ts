@@ -1,4 +1,4 @@
-import { lstatSync, readdirSync } from 'node:fs';
+import { lstatSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 import type { ArtifactFile } from '../shared/types.ts';
 
@@ -34,4 +34,22 @@ export function resolveFile(dir: string, path: string): string | undefined {
   const full = resolve(root, path);
   if (!full.startsWith(root + sep)) return undefined;
   try { return lstatSync(full).isFile() ? full : undefined; } catch { return undefined; }
+}
+
+// shortcut: inlines at most 40 KB of text per task, the rest stays listed only; raise it if long documents get cut.
+const INLINE_BYTES = 40 * 1024;
+/** Text of a task's listed files, added to its result so authors need not write each document twice. */
+export function inlineText(dir: string, files: ArtifactFile[]): string {
+  let budget = INLINE_BYTES;
+  const parts: string[] = [];
+  for (const file of files) {
+    const full = file.bytes <= budget ? resolveFile(dir, file.path) : undefined;
+    if (!full) continue;
+    let text: string;
+    try { text = new TextDecoder('utf-8', { fatal: true }).decode(readFileSync(full)); } catch { continue; }
+    if (text.includes('\0')) continue;
+    budget -= file.bytes;
+    parts.push(`\n\n--- ${file.path} ---\n${text}`);
+  }
+  return parts.join('');
 }

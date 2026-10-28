@@ -10,7 +10,7 @@ import { demoRunner } from './core/demo.ts';
 import { AnswerFormatError, InputError, validateInput, parseEnvelope, parsePlan } from './core/protocol.ts';
 import { promptFor } from './core/prompts.ts';
 import { applyResult, findFact, type Job } from './core/results.ts';
-import { listFiles, taskFolder } from './files.ts';
+import { inlineText, listFiles, taskFolder } from './files.ts';
 import { runTeamTool, teamToolNames, TeamToolError, type TeamGrant, type TeamToolName } from './core/team.ts';
 const finished = (run: Run, callId: string): Run => ({ ...run, inFlight: run.inFlight?.filter(c => c.id !== callId) });
 const callNames: Record<TurnPurpose, string> = { plan: 'план', task: 'задача', reply: 'ответ коллеге', synthesize: 'сборка итога', review: 'проверка', resolve: 'разрешение конфликта' };
@@ -26,8 +26,9 @@ function read(job: Job, text: string, snapshot: Run, memberId: string) {
   if (job.purpose === 'plan') return { plan: parsePlan(text, ids), answer: undefined };
   const parsed = parseEnvelope(text, ids, memberId);
   // A reply keeps its answer even if it also asks something; the extra questions travel as notes.
-  const answer = job.purpose === 'reply' ? { ...parsed, messages: parsed.messages.map(m => ({ ...m, request: false })) } : parsed;
-  if (['review', 'synthesize', 'resolve'].includes(job.purpose) && answer.messages.length) throw new AnswerFormatError('На этапе итога и проверки верните результат без новых запросов.');
+  // Closing turns drop messages: no task is left to answer them, and repeating a whole synthesis costs minutes.
+  const answer = job.purpose === 'reply' ? { ...parsed, messages: parsed.messages.map(m => ({ ...m, request: false })) }
+    : CLOSING_PURPOSES.includes(job.purpose) ? { ...parsed, messages: [] } : parsed;
   if (answer.revisions?.some(r => !snapshot.tasks.some(t => t.id === r.taskId))) throw new AnswerFormatError('Замечания проверки ссылаются на неизвестную задачу. Используй id задач из плана.');
   for (const fact of answer.facts ?? []) {
     const owned = findFact(snapshot.facts, fact.key);
@@ -44,6 +45,7 @@ interface TurnSetup {
 interface Options { store: Store; connections: Connection[]; workspaceRoot: string; runner?: TurnRunner; demoRunner?: TurnRunner; teamUrl?: string }
 /** Adapters that connect a per-run MCP server without touching the user's CLI settings (agy cannot, see the M3 spike). */
 const TEAM_TOOL_KINDS = new Set(['claude-cli', 'codex-cli', 'demo']);
+const CLOSING_PURPOSES: TurnPurpose[] = ['review', 'synthesize', 'resolve'];
 export class Engine {
   private readonly options: Options;
   private readonly active = new Map<string, { runId: string; memberId: string; controller: AbortController }>();
@@ -229,7 +231,8 @@ export class Engine {
     // CLIs keep conversations per working folder, so a task folder has its own conversation.
     const sessionKey = folders.own && connection.kind.endsWith('-cli') ? `${member.id}#${job.taskId ?? 'result'}` : member.id;
     const input = { runId: snapshot.id, member, connection, purpose: job.purpose, prompt: promptFor({ run: snapshot, ...job, folders, ...(job.purpose === 'plan' && this.options.teamUrl ? { toolMembers: this.toolMembers(snapshot) } : {}) }), cwd: folders.own ?? runDir, writable: !!folders.own, readDirs: folders.read, sessionId: Object.hasOwn(snapshot.sessions, sessionKey) ? snapshot.sessions[sessionKey] : undefined, signal: controller.signal, onProgress: () => {} };
-    const token = this.options.teamUrl && TEAM_TOOL_KINDS.has(connection.kind) ? randomBytes(32).toString('hex') : undefined;
+    // Closing turns may not message anyone (see the answer check), so tools there only invite a rejected answer and a repeat.
+    const token = this.options.teamUrl && TEAM_TOOL_KINDS.has(connection.kind) && !CLOSING_PURPOSES.includes(job.purpose) ? randomBytes(32).toString('hex') : undefined;
     if (token) this.teamTokens.set(token, { runId: snapshot.id, memberId: member.id, purpose: job.purpose, taskId: job.taskId, callId });
     try { await this.executeTurn(snapshot, job, controller, callId, { member, connection, runner, folders, sessionKey, token }, input); }
     finally { if (token) this.teamTokens.delete(token); }
@@ -268,7 +271,7 @@ export class Engine {
       const added = applied.artifacts.length > current.artifacts.length ? applied.artifacts.at(-1) : undefined;
       const listing = folders.own && !snapshot.repo && added?.taskId === job.taskId ? listFiles(folders.own) : undefined;
       const next = finished(listing && (listing.files.length || listing.omitted)
-        ? { ...applied, artifacts: [...applied.artifacts.slice(0, -1), { ...added!, files: listing.files, ...(listing.omitted ? { omittedFiles: listing.omitted } : {}) }] } : applied, callId);
+        ? { ...applied, artifacts: [...applied.artifacts.slice(0, -1), { ...added!, body: added!.body + inlineText(folders.own!, listing.files), files: listing.files, ...(listing.omitted ? { omittedFiles: listing.omitted } : {}) }] } : applied, callId);
       return { ...next, sessions: result.sessionId ? { ...next.sessions, [sessionKey]: result.sessionId } : next.sessions };
     }, 'turn_completed', plan ? 'План готов к согласованию.' : answer!.summary.slice(0, 600), member.id);
     if (job.purpose === 'resolve') await this.finishResolve(snapshot.id);

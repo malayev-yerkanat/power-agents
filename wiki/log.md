@@ -8,6 +8,23 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-28 — M4 live timing run
+
+- Run `619723ae` (same goal as `99c6c723`) completed with the second review passed and no answer repeats. Active time to the first review verdict was about 8.5 minutes against 12.5 for the baseline; synthesis 85 s / 57 s (baseline 141 s with a repeat). The first review caught a cost error (975 → 875 ₸), adding one 2 min 43 s rework round. Claude's `recipe.md` text was attached to its result.
+- Not a clean acceptance: the Claude CLI sign-in failed at the start (paused 2 min 13 s, resumed after re-login) and no Codex stall occurred this time. See the [roadmap](../docs/roadmap.md).
+
+## 2026-10-28 — M4: measured inside turns, no double writing
+
+- CLI transcripts show the slowest turns are Codex waits before any output (414 s for a 503-token synthesis; 180 s before a task's first tool call), likely provider-side. Claude wrote each saved document twice: file (~30 s) and full answer text (~22 s).
+- The platform now attaches saved task file text to the result (`inlineText` in `src/server/files.ts`, 40 KB per task); the task prompt no longer asks for the full text when files were saved.
+- Verified: 188/188 Node tests, 83.28% line coverage, typecheck.
+
+## 2026-10-28 — M4 Speed started
+
+- Baseline from live runs since 2026-10-20 (average / slowest turn): synthesis 124 s / 419 s, task 57–82 s, review 46 s, plan 39 s; a three-provider document run takes 11–13 minutes. See the [roadmap](../docs/roadmap.md).
+- Synthesis, review and resolve turns no longer get team tools, and messages in their answers are dropped instead of repeating the turn (two of the last three Codex syntheses repeated for this, about a minute each).
+- Verified: 187/187 Node tests, 83.21% line coverage, typecheck.
+
 ## 2026-10-26 — M3 acceptance
 
 - Live run `99c6c723`: Claude (20) and Codex (19) used team tools mid-turn, each call a `team_tool` event by the calling member; probes with no token, a forged token, a browser Origin and a foreign Host were refused during and after the run. Roadmap criterion 12 done; Gemini stays without team tools.

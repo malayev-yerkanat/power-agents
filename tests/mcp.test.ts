@@ -78,7 +78,9 @@ test('agents use team tools as themselves; impersonation, stale tokens and brows
       seen.promote = await client.callTool({ name: 'add_task', arguments: { title: 'Mine', description: 'x', assigneeId: 'b' } });
       await client.close();
     }
+    if (['synthesize', 'review'].includes(value.purpose)) ((seen.closingTeam ??= []) as unknown[]).push(value.team);
     if (value.purpose === 'review') return envelope({ verdict: 'pass', artifact: { title: 'Review', body: 'ok' } });
+    if (value.purpose === 'synthesize') return envelope({ artifact: { title: 'Итог', body: 'Done' }, messages: [{ toId: 'b', body: 'Готово?', request: true }] });
     return envelope({ artifact: { title: value.purpose, body: 'Done' } });
   };
   engine = new Engine({ store, connections: [], workspaceRoot, demoRunner: runner, teamUrl: url });
@@ -89,6 +91,9 @@ test('agents use team tools as themselves; impersonation, stale tokens and brows
     await until(() => ['completed', 'paused'].includes(engine.get(run.id).status), 'finish');
     const done = engine.get(run.id);
     assert.equal(done.status, 'completed', done.error);
+    assert.deepEqual(seen.closingTeam, [undefined, undefined], 'synthesis and review get no team tools');
+    assert.ok(!done.messages.some(m => m.body === 'Готово?'), 'a closing turn drops its messages');
+    assert.ok(!store.eventBatch(run.id, 0).some(e => e.type === 'format_retry'), 'and is not repeated for them');
     assert.match(String(seen.leaderPrompt), /командные инструменты MCP-сервера team/);
     assert.match(String(seen.leaderPrompt), /^Ты участник команды Power Agents\. Сначала, до ответа, вызови инструменты team_status и read_inbox MCP-сервера team/);
     assert.ok((seen.leaderTools as string[]).includes('add_task'));

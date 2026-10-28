@@ -1,6 +1,6 @@
 # Power Agents roadmap
 
-Updated: 2026-10-26 (M1, M2 and M3 accepted).
+Updated: 2026-10-28 (M1–M3 accepted; M4 Speed started).
 
 ## North star
 
@@ -94,6 +94,35 @@ its global settings, which the platform does not change.
 
 Found on the way: Codex had the tools but answered at once while the prompt opened with
 "answer only with JSON"; tool users' prompts now open with the tool step.
+
+### M4 — Speed
+
+Runs finish faster without losing quality. Baseline from live runs since 2026-10-20
+(average / slowest turn): synthesis 124 s / 419 s, task 57–82 s / ~540 s, review 46 s / 85 s,
+plan 39 s / 53 s. A three-provider document run took 11–13 minutes end to end.
+
+Done when the same three-provider document run (same goal as `99c6c723`) completes with
+review passed in clearly less time than the baseline, with no answer repeats in synthesis
+or review.
+
+- Done 2026-10-28: synthesis, review and conflict-resolve turns no longer get team tools, and
+  messages in their answers are dropped instead of repeating the turn (two of the last three
+  Codex syntheses were repeated for this, about a minute each).
+- Measured 2026-10-28 from CLI transcripts: the slowest turns are Codex waits before any
+  output (414 s for a 503-token synthesis, 180 s before a task's first tool call), while a
+  normal synthesis writes about 4,000 tokens in 80 s. The cause is not in Codex's logs and
+  is likely on the provider side. Claude wrote each saved document twice, into the file
+  (~30 s) and again as the full text in its answer (~22 s).
+- Done 2026-10-28: saved task files are attached to the result by the platform (up to 40 KB
+  of text per task) and agents no longer repeat their text in the answer.
+- Open: guarding against Codex stalls; Gemini turns are not measured yet.
+- Live run `619723ae` on 2026-10-28 (same goal as `99c6c723`): completed, second review passed,
+  no answer repeats. Plan to first review verdict took about 8.5 minutes of active time
+  (baseline 12.5 minutes to its single passing review); synthesis 85 s and 57 s (baseline 141 s
+  with a repeat), review 62 s and 44 s. The first review caught a real cost error (975 → 875 ₸),
+  which added one 2 min 43 s rework round. Claude's saved `recipe.md` reached later turns
+  through the attached file text. Not a clean acceptance: the Claude CLI sign-in failed at the
+  start, the run was paused 2 min 13 s and resumed, and no Codex stall happened this time.
 
 ## Backlog
 

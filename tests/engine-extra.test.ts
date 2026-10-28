@@ -974,6 +974,8 @@ test('task turns write files in their own folder; later turns can read them and 
     assert.deepEqual(combine.readDirs, [draft.cwd, edit.cwd]);
     const work = app.engine.get(run.id).artifacts.find(a => a.kind === 'work' && a.taskId === 'draft')!;
     assert.deepEqual(work.files, [{ path: 'docs/menu.md', bytes: 6 }]);
+    assert.match(work.body, /\n--- docs\/menu\.md ---\n# Menu$/, 'saved text travels with the result');
+    assert.match(edit.prompt, /Не повторяй текст сохранённых файлов в artifact/);
     assert.match(combine.prompt, /docs\/menu\.md/);
   } finally { await app.clean(); }
 });
