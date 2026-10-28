@@ -21,6 +21,8 @@ Vault initialized. No knowledge operations have completed yet.
 
 ## Recent Changes
 
+- 2026-10-28: M4: Gemini turns measured (wiki/changes/20261028-084313-m4-gemini-turns-measured.md)
+- 2026-10-28: M4 Speed: Codex stall guard (wiki/changes/20261028-084133-m4-speed-codex-stall-guard.md)
 - 2026-10-28: Answer Claude Code questions from Telegram buttons (wiki/changes/20261028-083050-answer-claude-code-questions-from-telegram-buttons.md)
 - 2026-10-28: M4 live timing run (wiki/changes/20261028-083028-m4-live-timing-run.md)
 - 2026-10-28: Claude Code turn-end alerts via Telegram (wiki/changes/20261028-082722-claude-code-turn-end-alerts-via-telegram.md)

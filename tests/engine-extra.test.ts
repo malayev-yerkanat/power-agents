@@ -54,11 +54,11 @@ function seedRun(fields: Partial<Run> = {}): Run {
     createdAt: now, updatedAt: now, version: 3, ...fields,
   };
 }
-function setup(runner: TurnRunner = successfulRunner, seed?: Run) {
+function setup(runner: TurnRunner = successfulRunner, seed?: Run, teamUrl?: string) {
   const workspaceRoot = mkdtempSync(join(tmpdir(), 'power-engine-extra-'));
   const store = new Store(':memory:');
   if (seed) store.createRun(seed, { type: 'seed', message: 'Previously running work' });
-  const engine = new Engine({ store, connections: [], workspaceRoot, demoRunner: runner });
+  const engine = new Engine({ store, connections: [], workspaceRoot, demoRunner: runner, teamUrl });
   return {
     store, engine,
     async clean() {
@@ -1030,5 +1030,39 @@ test('a write outside the task folder is retried once with a hint about the fold
     assert.equal(app.engine.get(run.id).status, 'completed', app.engine.get(run.id).error);
     assert.equal(prompts.length, 2);
     assert.match(prompts[1], /CLI запретил действие: write_file \/elsewhere\/promo\.md\. Команды терминала недоступны: .*сохраняй их только в .*tasks[/\\]promo/);
+  } finally { await app.clean(); }
+});
+
+test('a stalled turn is retried once, but not after it used a team tool', async () => {
+  const { StalledError } = await import('../src/server/adapters/common.ts');
+  const calls: Record<string, number> = {};
+  const tasks: TaskSpec[] = [
+    { id: 'quiet', title: 'Quiet', description: 'Stalls once', assigneeId: 'a', dependsOn: [] },
+    { id: 'chatty', title: 'Chatty', description: 'Stalls after a message', assigneeId: 'b', dependsOn: [] },
+  ];
+  let engine: Engine | undefined;
+  const runner: TurnRunner = async value => {
+    const { run, taskId } = contextOf(value);
+    if (value.purpose === 'plan') return plan(run, tasks);
+    if (taskId) calls[taskId] = (calls[taskId] ?? 0) + 1;
+    if (taskId === 'quiet' && calls.quiet === 1) throw new StalledError(150);
+    if (taskId === 'chatty') {
+      engine!.call(value.team!.token, 'send_message', { toId: 'a', body: 'Привет' });
+      throw new StalledError(150);
+    }
+    return successfulRunner(value);
+  };
+  const app = setup(runner, undefined, 'http://127.0.0.1:1/mcp');
+  engine = app.engine;
+  try {
+    const run = app.engine.create(input);
+    await until(() => app.engine.get(run.id).status === 'awaiting_approval');
+    app.engine.approve(run.id, app.engine.get(run.id).version);
+    await until(() => app.engine.get(run.id).status === 'paused', 'pause');
+    const done = app.engine.get(run.id);
+    assert.deepEqual(calls, { quiet: 2, chatty: 1 });
+    assert.equal(done.tasks.find(t => t.id === 'quiet')!.status, 'completed');
+    assert.match(done.tasks.find(t => t.id === 'chatty')!.error ?? '', /не отвечал 150 с/);
+    assert.equal(done.messages.filter(m => m.body === 'Привет').length, 1, 'the message is not sent twice');
   } finally { await app.clean(); }
 });

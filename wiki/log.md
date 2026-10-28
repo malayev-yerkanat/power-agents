@@ -8,6 +8,15 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-28 — M4: Gemini turns measured
+
+- agy logs (82 turns): median 10 s startup per turn before the first model call (18.6% of Gemini time); the rest is mostly one model call on "Gemini 3.8 Flash (High)", median 39 s, p90 120 s. Earlier "Flash (Low)" turns were faster (median 14 s) but on simpler runs. No code change. See the [roadmap](../docs/roadmap.md).
+
+## 2026-10-28 — M4: Codex stall guard
+
+- Across 109 live Codex turns normal silent waits stayed under 95 s; 4 stalls ran 180–414 s with little output. Codex turns now stop after 150 s with no output (`StalledError`, `idleMs` in `runProcess`) and are repeated once, unless the turn already used a team tool.
+- Verified: 191/191 Node tests, 83.50% line coverage, typecheck.
+
 ## 2026-10-28 — M4 live timing run
 
 - Run `619723ae` (same goal as `99c6c723`) completed with the second review passed and no answer repeats. Active time to the first review verdict was about 8.5 minutes against 12.5 for the baseline; synthesis 85 s / 57 s (baseline 141 s with a repeat). The first review caught a cost error (975 → 875 ₸), adding one 2 min 43 s rework round. Claude's `recipe.md` text was attached to its result.

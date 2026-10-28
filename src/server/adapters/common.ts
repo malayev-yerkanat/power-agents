@@ -5,6 +5,12 @@ export const TURN_TIMEOUT_MS = 5 * 60 * 1000;
 export class DeniedActionError extends Error {
   constructor(detail: string) { super(`CLI запретил действие: ${detail}`); }
 }
+/** The CLI printed nothing for too long; a turn that has not touched the team yet may be retried. */
+export class StalledError extends Error {
+  constructor(seconds: number) { super(`Агент не отвечал ${seconds} с.`); }
+}
+/** Codex prints an event per finished item: across 109 live turns normal silences stayed under 95 s, stalls ran 180–414 s. */
+export const CODEX_STALL_MS = 150 * 1000;
 /** Combining and reviewing read every result, so they get the design's 15-minute ceiling. */
 export const turnTimeoutMs = (purpose: TurnPurpose) => purpose === 'synthesize' || purpose === 'review' ? 15 * 60 * 1000 : TURN_TIMEOUT_MS;
 

@@ -13,6 +13,18 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-28 08:43 UTC - M4: Gemini turns measured
+
+Recorded Gemini turn timing from agy logs in the roadmap: median 10 s startup per turn, then mostly one model call on Flash (High), median 39 s.
+
+Note: [[changes/20261028-084313-m4-gemini-turns-measured|M4: Gemini turns measured]]
+
+### 2026-10-28 08:41 UTC - M4 Speed: Codex stall guard
+
+A Codex turn with no output for 150 s is stopped and repeated once, unless it already used a team tool. Based on 109 live Codex turns: normal silences under 95 s, stalls 180-414 s.
+
+Note: [[changes/20261028-084133-m4-speed-codex-stall-guard|M4 Speed: Codex stall guard]]
+
 ### 2026-10-28 08:30 UTC - Answer Claude Code questions from Telegram buttons
 
 Turn-end questions with options now arrive in Telegram as buttons; a tap is handed back to Claude Code as the user's answer through the Stop hook.

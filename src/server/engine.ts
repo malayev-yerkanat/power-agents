@@ -5,7 +5,7 @@ import type { Connection, InFlightCall, Run, TeamTask, TurnPurpose, TurnRunner }
 import { abortMerge, commitTask, conflictsResolved, createResultWorktree, createTaskWorktree, diffStat, finishMerge, mergeTask, removeWorktrees, runCheck } from './workspace.ts';
 import { Store } from './store.ts';
 import { runTurn } from './adapters/index.ts';
-import { DeniedActionError, redactError } from './adapters/common.ts';
+import { DeniedActionError, StalledError, redactError } from './adapters/common.ts';
 import { demoRunner } from './core/demo.ts';
 import { AnswerFormatError, InputError, validateInput, parseEnvelope, parsePlan } from './core/protocol.ts';
 import { promptFor } from './core/prompts.ts';
@@ -54,6 +54,8 @@ export class Engine {
   private readonly gitBusy = new Set<string>();
   /** Turn tokens for team tools; kept in memory only, so a restart revokes them all. */
   private readonly teamTokens = new Map<string, TeamGrant>();
+  /** Calls that used a team tool: repeating them could send a message or task twice. */
+  private readonly toolCalls = new Set<string>();
   private stopped = false;
   constructor(options: Options) {
     this.options = options;
@@ -137,6 +139,7 @@ export class Engine {
     if (!grant) throw new TeamToolError('Доступ недействителен: ход завершён.');
     let result: unknown;
     this.change(grant.runId, run => { const out = runTeamTool(run, grant, name, args); result = out.result; return out.run; }, 'team_tool', `Инструмент ${name}`, grant.memberId);
+    this.toolCalls.add(grant.callId);
     this.schedule();
     return result;
   }
@@ -235,13 +238,17 @@ export class Engine {
     const token = this.options.teamUrl && TEAM_TOOL_KINDS.has(connection.kind) && !CLOSING_PURPOSES.includes(job.purpose) ? randomBytes(32).toString('hex') : undefined;
     if (token) this.teamTokens.set(token, { runId: snapshot.id, memberId: member.id, purpose: job.purpose, taskId: job.taskId, callId });
     try { await this.executeTurn(snapshot, job, controller, callId, { member, connection, runner, folders, sessionKey, token }, input); }
-    finally { if (token) this.teamTokens.delete(token); }
+    finally { if (token) this.teamTokens.delete(token); this.toolCalls.delete(callId); }
   }
   private async executeTurn(snapshot: Run, job: Job, controller: AbortController, callId: string, turn: TurnSetup, baseInput: Parameters<TurnRunner>[0]): Promise<void> {
     const { member, connection, runner, folders, sessionKey, token } = turn;
     const input = token ? { ...baseInput, team: { url: this.options.teamUrl!, token }, prompt: promptFor({ run: snapshot, ...job, folders, team: teamToolNames(snapshot, { runId: snapshot.id, memberId: member.id, purpose: job.purpose, taskId: job.taskId, callId: '' }) }) } : baseInput;
     const stale = () => controller.signal.aborted || this.stopped || !['planning', 'running'].includes(this.get(snapshot.id).status);
     let result = await runner(input).catch(async (error: unknown) => {
+      if (error instanceof StalledError && !this.toolCalls.has(callId) && !stale()) {
+        this.change(snapshot.id, r => ({ ...r, turnCount: r.turnCount + 1 }), 'format_retry', `${error.message} Запрошен повтор.`, member.id);
+        return runner(input);
+      }
       if (!(error instanceof DeniedActionError) || !folders.own || stale()) throw error;
       // An agent that tried a terminal command or a write elsewhere usually succeeds once told what it may do.
       this.change(snapshot.id, r => ({ ...r, turnCount: r.turnCount + 1 }), 'format_retry', `Действие запрещено, запрошен повтор. ${error.message}`.slice(0, 600), member.id);

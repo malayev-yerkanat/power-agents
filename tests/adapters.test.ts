@@ -119,6 +119,9 @@ test('process runner uses stdin, enforces output bound, and aborts promptly', as
   const promise = runProcess(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { ...options, signal: controller.signal });
   setTimeout(() => controller.abort(), 50);
   await assert.rejects(promise, /отмен/i);
+  const { StalledError } = await import('../src/server/adapters/common.js');
+  await assert.rejects(runProcess(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { ...options, idleMs: 50 }), (error: Error) => error instanceof StalledError);
+  assert.equal(await runProcess(process.execPath, ['-e', 'let n=0;const t=setInterval(()=>{process.stdout.write("."); if(++n===8){clearInterval(t)}},100)'], { ...options, idleMs: 300 }), '........', 'steady output keeps the turn alive');
   const alreadyAborted = AbortSignal.abort();
   await assert.rejects(runProcess('nonexistent-command', [], { ...options, signal: alreadyAborted }), /отмен/i);
 });

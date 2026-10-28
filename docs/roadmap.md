@@ -115,7 +115,16 @@ or review.
   (~30 s) and again as the full text in its answer (~22 s).
 - Done 2026-10-28: saved task files are attached to the result by the platform (up to 40 KB
   of text per task) and agents no longer repeat their text in the answer.
-- Open: guarding against Codex stalls; Gemini turns are not measured yet.
+- Done 2026-10-28: a Codex turn that prints nothing for 150 s is stopped and repeated once,
+  unless it already used a team tool (a repeat could send a message twice). Across 109 live
+  Codex turns normal silences stayed under 95 s; the 4 stalls ran 180–414 s.
+- Measured 2026-10-28 from agy logs (82 Gemini turns): startup before the first model call
+  takes a median 10 s (max 25 s, 18.6% of Gemini time) — agy starts a language server and
+  signs in on every turn. Almost all the rest is one model call: "Gemini 3.8 Flash (High)",
+  the agy default since 2026-10-22, median 39 s (p90 120 s). Older "Flash (Low)" turns took a
+  median 14 s, but on simpler early runs, so the two are not comparable. No code change: the
+  model can already be set per member when creating a run.
+- Open: a clean acceptance run (optionally with Gemini on a Low model to compare).
 - Live run `619723ae` on 2026-10-28 (same goal as `99c6c723`): completed, second review passed,
   no answer repeats. Plan to first review verdict took about 8.5 minutes of active time
   (baseline 12.5 minutes to its single passing review); synthesis 85 s and 57 s (baseline 141 s
