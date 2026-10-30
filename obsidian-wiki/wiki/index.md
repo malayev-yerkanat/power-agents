@@ -31,6 +31,9 @@ This catalog is updated by completed knowledge operations.
 
 ## Changes
 
+- 2026-10-30: [[changes/20261030-061122-flows-canvas-fixes-hidden-nodes-and-inspector-labels|Flows canvas fixes: hidden nodes and inspector labels]]
+- 2026-10-30: [[changes/20261030-060428-f2-flow-canvas-workspace|F2 flow canvas workspace]]
+- 2026-10-30: [[changes/20261030-055510-reel-flow-engine-f1-headless|Reel Flow engine F1 (headless)]]
 - 2026-10-28: [[changes/20261028-085709-m4-plain-text-artifact-accepted|M4: plain-text artifact accepted]]
 - 2026-10-28: [[changes/20261028-085434-m4-synthesis-without-a-document-is-repeated-acceptance-run|M4: synthesis without a document is repeated; acceptance run]]
 - 2026-10-28: [[changes/20261028-084313-m4-gemini-turns-measured|M4: Gemini turns measured]]

@@ -2,7 +2,7 @@
 type: index
 status: active
 created: 2026-10-07
-updated: 2026-10-20
+updated: 2026-10-30
 tags: [navigation, repository]
 ---
 
@@ -25,6 +25,9 @@ Start with [[hot|Hot Cache]] for recent changes or [[Architecture Overview]] for
 - [[Pixel Art Consistency]] — approved visual constraint and Airy Pixel implementation scope
 
 ## Modules
+
+- [[Flows UI]] — canvas, typed ports, inspector and flow event refresh
+- [[Flow Engine]] — headless typed DAG registry, gates and demo execution
 
 - [[Server Runtime]]
 - [[Orchestration Engine]]

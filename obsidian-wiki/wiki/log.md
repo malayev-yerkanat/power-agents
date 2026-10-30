@@ -13,6 +13,24 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-30 06:11 UTC - Flows canvas fixes: hidden nodes and inspector labels
+
+Fixed canvas nodes turning invisible after a flow refetch (React Flow measured size was dropped) and gave inspector config fields explicit accessible names so textarea content no longer leaks into their labels.
+
+Note: [[changes/20261030-061122-flows-canvas-fixes-hidden-nodes-and-inspector-labels|Flows canvas fixes: hidden nodes and inspector labels]]
+
+### 2026-10-30 06:04 UTC - F2 flow canvas workspace
+
+Added the Russian Flows list, React Flow canvas, typed node editing and actions, registry metadata and SSE refetch updates. Updated the canonical prototype and project wiki; live executors and media remain planned.
+
+Note: [[changes/20261030-060428-f2-flow-canvas-workspace|F2 flow canvas workspace]]
+
+### 2026-10-30 05:55 UTC - Reel Flow engine F1 (headless)
+
+Added a headless node-graph flow engine for the Reel Flow workspace: typed nodes, approval gates, reject-with-note re-runs, stale propagation, auto-run, a render lane and restart safety, plus /api/flows routes and a roblox-reel template.
+
+Note: [[changes/20261030-055510-reel-flow-engine-f1-headless|Reel Flow engine F1 (headless)]]
+
 ### 2026-10-28 08:57 UTC - M4: plain-text artifact accepted
 
 An answer whose artifact is plain text is now taken as the body instead of repeating the whole turn.

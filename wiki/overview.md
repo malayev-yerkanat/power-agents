@@ -2,7 +2,7 @@
 type: overview
 status: active
 created: 2026-10-07
-updated: 2026-10-22
+updated: 2026-10-30
 tags: [product, architecture]
 ---
 
@@ -19,6 +19,8 @@ Recent run summaries and journal entries load in bounded pages, with older histo
 Optional [[Telegram Notifications]] pair one private chat and send brief alerts when a plan needs approval or a reviewed run completes. Pairing and alert preferences live in Settings. Approval remains in the local browser; Telegram does not give a phone access to the loopback-only app.
 
 ## Current boundaries
+
+A separate [[Flow Engine]] provides typed DAGs and demo runs via the protected local API, including approval gates, rejection notes, stale outputs, global scheduling and restart recovery. F2 [[Flows UI]] adds `#/flows` and `#/flows/<id>`, template creation, the dark React Flow canvas, typed connectors, node actions, a config inspector and SSE invalidation/refetch. [[Reel Flow Execution]] documents the implemented demo path. Live LLM executors (F3), pipeline/upload/media routes (F4) and flow Telegram actions (F5) remain planned; choosing live mode does not enable those executors.
 
 - One active team at a time; up to three concurrent turns and one turn per participant.
 - Text and Markdown results; providers do not edit external repositories.

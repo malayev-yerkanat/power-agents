@@ -3,40 +3,18 @@ type: meta
 title: "Hot Cache"
 status: active
 created: 2026-10-07
-updated: 2026-10-22
+updated: 2026-10-30
 tags: [context]
 ---
 
 # Hot Cache
 
-## Last Updated
+F2 adds [[Flows UI]] beside the existing team workspace. Read [[Reel Flow Execution]], then [prototype guide](../docs/prototype.md). **Потоки** opens `#/flows`, lists saved graphs and creates the `roblox-reel` template with demo/live selection. Demo makes no model calls; live provider/pipeline executors remain planned for F3/F4.
 
-2026-10-23. M1 accepted live 2026-10-26: review rework, facts board (changed facts reopen tasks that used them), safe resume. Combine/review calls get 15 minutes. M2 accepted live 2026-10-26 (task files, git worktree code runs). M3 accepted live 2026-10-26: MCP team tools with per-turn tokens (Claude, Codex). Connection failures show their reason; unreadable answers get one retry.
+Each `#/flows/<id>` opens a dark dotted React Flow canvas with pan/zoom, initial fit, controls, minimap, typed coloured ports and status cards. Run **Бренд**, run **Идея**, approve its result, then run **Сценарий**. Rejection requires a note and reruns. Drag saves positions after debounce; connect checks port types (`text` accepts any); Delete removes selection; **+ Узел** uses registry defaults. The inspector edits title, gate and generated config fields and shows full output JSON, notes, version and errors. Toolbar **Автозапуск** uses the existing scheduler.
 
-## Direction
+`GET /api/flows/registry` exposes client-safe type/title/ports/gate/lane/config defaults. The global `/api/events` stream emits `flow` invalidations from `subscribeFlows`. The canvas refetches detail after matching events and stream open/reconnect, recovering missed notifications without a separate flow replay cursor. Client writes queue against the current version; rejected writes refetch, 409 asks the user to repeat, and server errors show in a toast.
 
-[Roadmap](../docs/roadmap.md): M1 finishes the core loop (review rework, shared facts, safe resume), then M2 file/code output, M3 MCP team tools.
+[[Flow Engine]] retains F1 gates, stale propagation, three global executions, named lanes, version/hash directories and restart failure without silent rerun. Demo outputs are inline fixtures; file paths show a media placeholder. Live LLM nodes (F3), uploads/pipeline/playable media (F4), and Telegram flow approvals (F5) remain planned.
 
-## Repository State
-
-All work through the review fixes is pushed to `main` (CI green). M1 follow-ups are being committed on 2026-10-26. Local checks: 158/158 Node tests, 81.45% line coverage, 35/35 Chromium tests, typecheck.
-
-## Current System
-
-- Power Agents is a local TypeScript/React/SQLite prototype. The Node server binds to `127.0.0.1:4317`; one team runs at a time with up to three parallel provider turns.
-- A leader plans, the user approves, participants work and ask questions, then the leader synthesizes and another participant reviews. Universal MCP tools and external repository edits remain planned.
-- `/api/bootstrap` returns 30 recent run summaries and an event cursor. Older runs and journal events load in pages; SSE replay requests a snapshot resync for gaps over 100 events.
-- SQLite stores runs, events, Telegram settings and a durable alert outbox. [[Backup and Restore Flow]] captures SQLite and workspaces only while the server is stopped. Backups contain private task content; `.env` and logs are excluded.
-- Telegram pairs one private chat with a one-use `/start` link for brief plan-ready and completion alerts. Approval stays in the local app; polling failure disables pairing and test controls until recovery.
-- Codex, Claude and Antigravity CLI plus OpenAI/Anthropic APIs are available when configured. CLIs use their own sign-in and never receive `OPENAI_API_KEY`/`ANTHROPIC_API_KEY`. Each turn receives only the documents it needs. Gemini receives prompts through CLI stdin. CLI plan/read-only controls are not an OS isolation boundary. Automated provider tests use mocks; a small Codex/Gemini live run passed on 2026-10-07.
-- A user LaunchAgent can start the built server at macOS login while the Mac is awake. CI checks tests with an 80% line-coverage gate, synthetic Chromium flows, type checking, build and dependency audit.
-
-## Current UI
-
-Task entry comes before a compact team summary and optional preview. Ambient city art loads on first expansion; the approved expanded pixel scale is unchanged. Completed runs show the accepted result above the optional encounter. Documents support safe Markdown, source view, copying and downloads. Paused/failed runs expose latest-review context when present and a clarification focus action; sending feedback and resuming remain separate.
-
-Drafts survive reload within one tab (`sessionStorage`). Fragment routes keep run/tab context. History search covers loaded pages; older pages load on request. [[Pixel Art Consistency]] remains authoritative for visuals.
-
-## Scope Boundaries
-
-See the roadmap backlog. Archive/rename, Telegram checks, dark mode, sprites and screen-reader checks also remain open.
+Pure helper/navigation tests and real-engine/API demo browser tests cover the new routes and execution path; see [[log|Operation Log]] for recorded verification results. Browser checks need a local Vite listener, and socket-based tests may be blocked by sandbox `listen EPERM`. Existing team-run and Telegram behavior remains separate. Runtime state, `.env`, private workspaces and immutable `.raw/` snapshots stay out of wiki source material.

@@ -21,6 +21,9 @@ Vault initialized. No knowledge operations have completed yet.
 
 ## Recent Changes
 
+- 2026-10-30: Flows canvas fixes: hidden nodes and inspector labels (wiki/changes/20261030-061122-flows-canvas-fixes-hidden-nodes-and-inspector-labels.md)
+- 2026-10-30: F2 flow canvas workspace (wiki/changes/20261030-060428-f2-flow-canvas-workspace.md)
+- 2026-10-30: Reel Flow engine F1 (headless) (wiki/changes/20261030-055510-reel-flow-engine-f1-headless.md)
 - 2026-10-28: M4: plain-text artifact accepted (wiki/changes/20261028-085709-m4-plain-text-artifact-accepted.md)
 - 2026-10-28: M4: synthesis without a document is repeated; acceptance run (wiki/changes/20261028-085434-m4-synthesis-without-a-document-is-repeated-acceptance-run.md)
 - 2026-10-28: M4: Gemini turns measured (wiki/changes/20261028-084313-m4-gemini-turns-measured.md)

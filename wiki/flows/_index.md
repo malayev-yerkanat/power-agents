@@ -2,11 +2,13 @@
 type: index
 status: active
 created: 2026-10-07
-updated: 2026-10-08
+updated: 2026-10-30
 tags: [flows]
 ---
 
 # Flows Index
+
+- [[Reel Flow Execution]] — canvas demo graph, approvals, stale output and restart safety
 
 - [[Data Flow]] — a team run from goal to reviewed result
 - [[Session and API Flow]] — browser authentication and event refresh

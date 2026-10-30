@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowClockwise, ArrowUpRight, CaretRight, Check, FolderSimple, List, PlugsConnected, Plus, SidebarSimple, X } from '@phosphor-icons/react';
 import type { Bootstrap, CreateRunInput, EventHistoryPage, ModelCatalog, Run, RunDetail, RunEvent, RunSummary, RunSummaryPage } from '../shared/types';
+import { FlowList } from './flows/FlowList';
+import { flowEventName } from './flows/useFlow';
 import { Composer } from './Composer';
 import { CityBackdrop } from './CityBackdrop';
 import { HistoryView } from './HistoryView';
@@ -10,6 +12,8 @@ import { api, createSessionRequest } from './session';
 import { TelegramSettings } from './TelegramSettings';
 import { useWorkspaceLocation } from './useWorkspaceLocation';
 import { dateLabel, ErrorNote, statusLabels } from './ui';
+
+const FlowCanvas = lazy(() => import('./flows/FlowCanvas').then(module => ({ default: module.FlowCanvas })));
 
 function summary(run: Run): RunSummary {
   return { id: run.id, title: run.title, status: run.status, mode: run.mode,
@@ -92,6 +96,7 @@ export function App() {
     stream.onopen = () => {
       if (disposed) return;
       setStreamStatus('connected');
+      window.dispatchEvent(new CustomEvent(flowEventName));
       stableTimer = setTimeout(() => { if (!disposed) streamRecoveryCount.current = 0; }, 30_000);
     };
     const recover = () => {
@@ -145,8 +150,15 @@ export function App() {
         }
       }, 180);
     };
+    const receiveFlow = (event: MessageEvent<string>) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (typeof data?.flowId === 'string') window.dispatchEvent(new CustomEvent(flowEventName, { detail: data }));
+      } catch { /* Ignore malformed invalidations. */ }
+    };
+    stream.addEventListener('flow', receiveFlow);
     stream.addEventListener('run', receive);
-    return () => { disposed = true; if (timer) clearTimeout(timer); if (reconnectTimer) clearTimeout(reconnectTimer); if (stableTimer) clearTimeout(stableTimer); stream.removeEventListener('run', receive); stream.removeEventListener('resync', recover); stream.close(); };
+    return () => { disposed = true; if (timer) clearTimeout(timer); if (reconnectTimer) clearTimeout(reconnectTimer); if (stableTimer) clearTimeout(stableTimer); stream.removeEventListener('flow', receiveFlow); stream.removeEventListener('run', receive); stream.removeEventListener('resync', recover); stream.close(); };
   }, [!!bootstrap, applyBootstrap, fetchBootstrap, loadBootstrap, request, streamVersion]);
   useEffect(() => {
     setDetail(null); setDetailError('');
@@ -210,6 +222,10 @@ export function App() {
     ? <div className="bootstrap-state">{error
         ? <><ErrorNote>{error}</ErrorNote><button className="secondary-button mt-4" onClick={() => void refresh()}><ArrowClockwise size={16} />Повторить подключение</button></>
         : <><div className="skeleton skeleton-title" /><div className="skeleton skeleton-copy" /><div className="skeleton skeleton-composer" /><p className="text-sm text-muted mt-5">Подключаем рабочее пространство…</p></>}</div>
+    : location.view === 'flows'
+      ? <FlowList request={request} csrfToken={bootstrap.csrfToken} open={id => goTo({ view: 'flow', flowId: id })} />
+      : location.view === 'flow'
+        ? <Suspense fallback={<div className="flows-list"><h1 id="workspace-heading" tabIndex={-1}>Загружаем канвас…</h1></div>}><FlowCanvas key={location.flowId} id={location.flowId} request={request} csrfToken={bootstrap.csrfToken} back={() => goTo({ view: 'flows' })} /></Suspense>
     : location.view === 'history'
       ? <HistoryView runs={bootstrap.runs} totalRuns={bootstrap.totalRuns} hasMore={!!bootstrap.nextCursor}
           loading={loadingHistory} loadMore={() => void loadOlderRuns()} select={id => select(id)} />
@@ -240,6 +256,7 @@ export function App() {
       <button className="new-task-button" onClick={() => select(null)}><Plus size={17} />Новая задача<ArrowUpRight size={15} className="ml-auto opacity-50" /></button>
       <div className="sidebar-section-title"><span>РАБОЧЕЕ ПРОСТРАНСТВО</span><SidebarSimple size={15} /></div>
       <button className={`sidebar-nav ${location.view === 'history' ? 'is-active' : ''}`} onClick={() => goTo({ view: 'history' })}><FolderSimple size={18} /><span>Все задачи</span><span className="sidebar-count">{bootstrap?.totalRuns || 0}</span></button>
+      <button className={`sidebar-nav ${location.view === 'flows' || location.view === 'flow' ? 'is-active' : ''}`} onClick={() => goTo({ view: 'flows' })}><FolderSimple size={18} /><span>Потоки</span></button>
       <div className="sidebar-section-title mt-7"><span>ИСТОРИЯ ЗАПУСКОВ</span></div>
       <nav className="run-history" aria-label="История запусков">{bootstrap?.runs.length ? <>{bootstrap.runs.map(run => <button key={run.id} className={`history-item ${selectedId === run.id ? 'is-selected' : ''}`} aria-current={selectedId === run.id ? 'page' : undefined} onClick={() => select(run.id)}><span className={`history-dot history-${run.status}`} /><span className="min-w-0 flex-1"><span className="history-title">{run.title}</span><span className="history-meta">{run.mode === 'demo' ? 'Демо · ' : ''}{statusLabels[run.status]}<span>{dateLabel(run.createdAt)}</span></span></span></button>)}{bootstrap.nextCursor && <button className="history-item" disabled={loadingHistory} onClick={() => void loadOlderRuns()}>{loadingHistory ? 'Загружаем…' : 'Показать более ранние запуски'}</button>}</> : <div className="history-empty"><p>Пока чистый лист</p><span>Ваши задачи и результаты<br />будут сохраняться здесь.</span></div>}</nav>
       <div className="sidebar-bottom"><button className="connection-button" onClick={() => { setSidebarOpen(false); setSettings(true); }}><PlugsConnected size={19} /><span>Подключения<small>{bootstrap ? `${connectionsReady} из ${bootstrap.connections.length} доступны` : 'Проверяем окружение'}</small></span><CaretRight size={13} /></button><div className="local-status"><span className={`connection-dot ${streamStatus === 'connected' ? 'is-connected' : ''}`} /><span>{streamStatus === 'connected' ? 'Локальное пространство' : streamStatus === 'disconnected' ? 'Переподключение…' : 'Подключаемся…'}</span><span className="ml-auto">v0.1</span></div></div>
@@ -249,11 +266,12 @@ export function App() {
       <nav className="header-nav" aria-label="Разделы пространства">
         <button className={!sidebarOpen ? 'is-active' : ''} onClick={() => setSidebarOpen(false)}>Пространство</button>
         <button aria-expanded={sidebarOpen} aria-controls="run-navigation" onClick={() => setSidebarOpen(value => !value)}><List size={17} />Запуски</button>
+        <button className={location.view === 'flows' || location.view === 'flow' ? 'is-active' : ''} onClick={() => goTo({ view: 'flows' })}>Потоки</button>
         <button onClick={() => setSettings(true)}><PlugsConnected size={17} />Подключения<span className={`connection-dot ${streamStatus === 'connected' ? 'is-connected' : ''}`} aria-label={streamStatus === 'connected' ? 'Сервер подключён' : 'Нет потока событий'} /></button>
       </nav>
       <button className="primary-button header-new-task" onClick={() => select(null)}><Plus size={17} /><span>Новая задача</span></button>
     </header>
-      <CityBackdrop initiallyCollapsed />
+      {location.view !== 'flows' && location.view !== 'flow' && <CityBackdrop initiallyCollapsed />}
       {bootstrap && error && <div className="px-8 pt-4"><ErrorNote>{error}</ErrorNote></div>}
       {workspace}
     </div>

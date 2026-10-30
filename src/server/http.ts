@@ -10,6 +10,7 @@ import { createModelCatalogLoader } from './adapters/models.ts';
 import type { TelegramService } from './telegram.ts';
 import { resolveFile, taskFolder } from './files.ts';
 import { repoInfo } from './workspace.ts';
+import { handleFlows, type FlowApi } from './flows/http.ts';
 
 interface EngineApi {
   create(input: CreateRunInput, repo?: { root: string; baseCommit: string }): Run | Promise<Run>;
@@ -17,7 +18,7 @@ interface EngineApi {
   control(id: string, action: 'pause' | 'resume' | 'cancel', confirmRepeat?: boolean): Run | Promise<Run>;
   message(id: string, body: string): Run | Promise<Run>;
 }
-interface Options { store: Store; engine: EngineApi; connections: Connection[]; workspaceRoot?: string; models?: (connection: Connection) => Promise<ModelCatalog>; telegram?: TelegramService; telegramError?: string }
+interface Options { store: Store; engine: EngineApi; connections: Connection[]; workspaceRoot?: string; models?: (connection: Connection) => Promise<ModelCatalog>; telegram?: TelegramService; telegramError?: string; flows?: FlowApi }
 class HttpError extends Error {
   statusCode: number;
   constructor(statusCode: number, message: string) { super(message); this.statusCode = statusCode; }
@@ -115,9 +116,14 @@ function eventStream(req: IncomingMessage, res: ServerResponse, store: Store, ru
   }
   if (res.destroyed) return;
   const unsubscribe = store.subscribe(send);
+  const unsubscribeFlows = runId ? undefined : store.subscribeFlows(event => {
+    if (res.destroyed || res.writableLength > 1024 * 1024) { res.destroy(); return; }
+    // Flow changes are refetch signals, not replayable run events; leave the run cursor unchanged.
+    res.write(`event: flow\ndata: ${JSON.stringify(event)}\n\n`);
+  });
   const heartbeat = setInterval(() => { res.write(': heartbeat\n\n'); }, 15_000);
   heartbeat.unref();
-  const cleanup = () => { clearInterval(heartbeat); unsubscribe(); };
+  const cleanup = () => { clearInterval(heartbeat); unsubscribe(); unsubscribeFlows?.(); };
   res.once('close', cleanup); res.once('error', cleanup);
 }
 
@@ -198,6 +204,14 @@ export function createApiHandler(options: Options): (req: IncomingMessage, res: 
       const cookie = req.headers.cookie?.split(';').map(value => value.trim())
         .find(value => value.startsWith(`${cookieName}=`))?.slice(cookieName.length + 1);
       if (!secureEqual(cookie, session)) throw new HttpError(401, 'Open the application to start a session');
+      if (path[1] === 'flows') {
+        if (req.method !== 'GET') {
+          const token = req.headers['x-csrf-token'];
+          if (typeof token !== 'string' || !secureEqual(token, csrfToken)) throw new HttpError(403, 'Invalid CSRF token');
+        }
+        await handleFlows(req, res, path, options.store, options.flows, { readBody, json, HttpError });
+        return true;
+      }
       if (req.method === 'GET') {
         if (url.pathname === '/api/events') eventStream(req, res, options.store);
         else if (url.pathname === '/api/runs') {

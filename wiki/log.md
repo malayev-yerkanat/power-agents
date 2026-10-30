@@ -2,11 +2,22 @@
 type: log
 status: active
 created: 2026-10-07
-updated: 2026-10-22
+updated: 2026-10-30
 tags: [history]
 ---
 
 # Operation Log
+
+## 2026-10-30 — F2 flow canvas workspace
+
+- Added the **Потоки** list and fragment routes, demo/live Roblox-template creation, dark React Flow canvas, status/output cards, typed connectors, run/approve/reject controls, note dialog, inspector, node/edge deletion, add-node menu and auto-run setting. Layout and edits use queued versioned writes with refetch on conflict.
+- Added client-safe registry metadata and global SSE `flow` invalidations from store subscriptions. Flow detail/list refresh on events and SSE open/reconnect. Updated the prototype and linked module/flow pages. Live executors (F3/F4), upload/media playback (F4) and Telegram flow gates (F5) remain planned.
+- Verification: `npm test` reports 194/211 passing; all 17 failures are sandbox `listen EPERM` (all 14 in `tests/http.test.ts`, occupied-port preflight in `tests/launchd.test.ts`, the team-tools security integration in `tests/mcp.test.ts`, and the settings API test in `tests/telegram.test.ts`). The six helper/navigation tests and all 13 flow engine/API tests pass. `npm run typecheck` and `npm run build` pass; the build retains a non-blocking large-chunk warning. Measured overall line coverage is 80.81%. `npm run test:e2e` cannot start Vite on `127.0.0.1:4318` (`listen EPERM`): zero executed; Playwright lists 39 scenarios, including four F2 tests. No lint script is defined.
+
+## 2026-10-30 — F1 headless flow engine
+
+- Added the typed node registry and Roblox reel template, separate DAG scheduler, gates/rejection reruns, stale propagation, version/hash directories, global concurrency/render lane and complete interrupted-execution recovery. Added protected flow routes and server lifecycle wiring while preserving existing Telegram work.
+- Added engine and API tests, including the four-node demo through two approvals. Updated canonical prototype and wiki pages; UI, live executors, uploads/media and flow Telegram actions remain planned. Verification: 11/11 F1 tests pass; full suite 188/205 pass, with all 17 failures caused by sandbox `listen EPERM`; typecheck and production build pass. Measured overall line coverage is 81.51%; flow modules have over 99% line coverage.
 
 ## 2026-10-28 — M4: plain-text artifact accepted
 

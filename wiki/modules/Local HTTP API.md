@@ -6,11 +6,13 @@ status: active
 language: typescript
 purpose: "Expose local JSON routes, artifact downloads, and SSE"
 created: 2026-10-07
-updated: 2026-10-08
+updated: 2026-10-30
 tags: [module, api, security]
 ---
 
 # Local HTTP API
+
+F1 adds `/api/flows` list/create, flow detail with recent node runs, version-checked graph patches, and node run/approve/reject actions. Delegation occurs after the existing session and mutation CSRF checks. See [[Reel Flow Execution]] and [flow route implementation](../../src/server/flows/http.ts). Missing resources return 404; version/transition conflicts return 409. F2 adds `GET /api/flows/registry` with client-safe ports/gate/lane/config defaults, plus `flow` invalidations on global `/api/events` from `store.subscribeFlows`; clients refetch rather than applying node patches. Uploads and media routes remain planned for F4.
 
 The API provides `/api/bootstrap`, protected `GET /api/models/:connectionId`, health, run creation/detail, approval, control, messages, artifact download, and event streams. Telegram routes expose connection status, pairing, a test alert, preferences, and disconnect; they do not expose the bot token. Request bodies use Zod schemas and a 64 KiB limit. It checks loopback host and origin, uses a session cookie on protected routes, requires a CSRF token on mutations, and rate limits requests.
 

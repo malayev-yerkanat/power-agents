@@ -4,6 +4,7 @@ import { resolve, join, extname, sep } from 'node:path';
 import { createServer as createViteServer } from 'vite';
 import { Store } from './store.ts';
 import { Engine } from './engine.ts';
+import { FlowEngine } from './flows/engine.ts';
 import { discoverConnections } from './adapters/index.ts';
 import { createApiHandler } from './http.ts';
 import { createMcpHandler } from './mcp.ts';
@@ -17,11 +18,12 @@ const store = new Store(join(dataRoot, 'state.sqlite'));
 const connections = await discoverConnections();
 const workspaceRoot = join(dataRoot, 'workspaces');
 const engine = new Engine({ store, connections, workspaceRoot, teamUrl: `http://127.0.0.1:${port}/mcp` });
+const flows = new FlowEngine({ store, root: join(dataRoot, 'flows') });
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
 const telegramError = telegramToken && !isTelegramToken(telegramToken)
   ? 'TELEGRAM_BOT_TOKEN has an invalid BotFather token format.' : undefined;
 const telegram = telegramToken && !telegramError ? new TelegramService(store, telegramToken) : undefined;
-const api = createApiHandler({ store, engine, connections, workspaceRoot, telegram, telegramError });
+const api = createApiHandler({ store, engine, flows, connections, workspaceRoot, telegram, telegramError });
 const mcp = createMcpHandler({ grant: token => engine.grant(token), tools: grant => engine.tools(grant), call: (token, name, args) => engine.call(token, name, args) });
 const production = process.env.NODE_ENV === 'production';
 const server = createServer();
@@ -53,6 +55,7 @@ telegram?.start();
 server.on('error', error => {
   console.error(error.message);
   engine.shutdown();
+  flows.shutdown();
   void (async () => { await telegram?.stop(); store.close(); })();
   process.exitCode = 1;
   void vite?.close();
@@ -61,6 +64,7 @@ let stopping = false;
 async function stop(): Promise<void> {
   if (stopping) return; stopping = true;
   engine.shutdown();
+  flows.shutdown();
   await telegram?.stop();
   void vite?.close();
   server.close();
