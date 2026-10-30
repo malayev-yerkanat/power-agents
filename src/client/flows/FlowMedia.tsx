@@ -13,7 +13,7 @@ export function FlowMedia({ flowId, node }: { flowId: string; node: FlowNode }) 
     return <div key={`${port}:${path}`}>
       {/\.mp4$/i.test(path) && <video controls preload="metadata" src={url} aria-label={`${port}: ${path}`} />}
       {/\.mp3$/i.test(path) && <audio controls preload="metadata" src={url} aria-label={`${port}: ${path}`} />}
-      <a href={url} target="_blank" rel="noreferrer">{path}</a>
+      <a href={url} target="_blank" rel="noreferrer">{path}<span className="sr-only"> {t('(откроется в новой вкладке)')}</span></a>
     </div>;
   })}</div>;
 }

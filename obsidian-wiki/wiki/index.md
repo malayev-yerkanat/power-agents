@@ -31,6 +31,9 @@ This catalog is updated by completed knowledge operations.
 
 ## Changes
 
+- 2026-10-30: [[changes/20261030-150507-flow-ui-p3-polish|Flow UI P3 polish]]
+- 2026-10-30: [[changes/20261030-145708-flow-ui-p2-design-fixes|Flow UI P2 design fixes]]
+- 2026-10-30: [[changes/20261030-145407-flow-ui-p1-design-fixes|Flow UI P1 design fixes]]
 - 2026-10-30: [[changes/20261030-113907-agent-avatars-use-approved-ranger-pfps|Agent avatars use approved Ranger pfps]]
 - 2026-10-30: [[changes/20261030-113539-codex-pfp-badge-reshaped-to-7-lobe-cloud|Codex pfp badge reshaped to 7-lobe cloud]]
 - 2026-10-30: [[changes/20261030-112703-pfps-v14-and-gemini-sprite-without-visor-mark|Pfps v14 and Gemini sprite without visor mark]]

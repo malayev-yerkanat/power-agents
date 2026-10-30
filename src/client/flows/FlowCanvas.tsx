@@ -5,7 +5,7 @@ import { FlowCard } from './FlowCard';
 import { FlowInspector } from './FlowInspector';
 import { compatiblePorts, nodeLabels, patchNodes, toCanvas, type CanvasNode } from './helpers';
 import { useFlow, type Request } from './useFlow';
-import { t } from '../i18n';
+import { t, useLanguage } from '../i18n';
 import { uiMessage } from '../uiMessages';
 
 const nodeTypes = { flowCard: FlowCard };
@@ -29,6 +29,17 @@ export function FlowCanvas({ id, request, csrfToken, back }: { id: string; reque
   const positions = useRef<Record<string, { x: number; y: number }>>({});
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const rejectDialog = useRef<HTMLDialogElement>(null);
+  const addMenu = useRef<HTMLDivElement>(null);
+  const addToggle = useRef<HTMLButtonElement>(null);
+  const { language } = useLanguage();
+  const labels = useMemo(ariaLabels, [language]);
+  useEffect(() => {
+    if (!menu) return;
+    addMenu.current?.querySelector('button')?.focus();
+    const outside = (event: PointerEvent) => { if (!addMenu.current?.parentElement?.contains(event.target as Node)) setMenu(false); };
+    document.addEventListener('pointerdown', outside);
+    return () => document.removeEventListener('pointerdown', outside);
+  }, [menu]);
   const act = useCallback((nodeId: string, kind: 'run' | 'approve' | 'reject') => {
     if (kind === 'reject') { setRejectId(nodeId); setNote(''); }
     else void action(nodeId, kind);
@@ -86,21 +97,23 @@ export function FlowCanvas({ id, request, csrfToken, back }: { id: string; reque
   }
   const selectedNode = flow?.nodes.find(n => n.id === selected);
   const definition = types.find(t => t.type === selectedNode?.type);
+  // Inside the canvas body so a wrapped toolbar never pushes the toast over it.
+  const toast = error && <div className="flow-toast" role="alert"><span>{uiMessage(error)}</span><button className="flow-icon-button" onClick={() => setError('')} aria-label={t('Закрыть сообщение')}>×</button></div>;
   return <main className="flow-workspace">
-    {error && <div className="flow-toast" role="alert"><span>{uiMessage(error)}</span><button onClick={() => setError('')} aria-label={t('Закрыть сообщение')}>×</button></div>}
-    {!flow ? <div className="flows-list"><h1 id="workspace-heading" tabIndex={-1}>{t('Поток')}</h1><p>{error ? t('Поток не загружен.') : t('Загружаем поток…')}</p>
+    {!flow ? <div className="flows-list">{toast}<h1 id="workspace-heading" tabIndex={-1}>{t('Поток')}</h1><p>{error ? t('Поток не загружен.') : t('Загружаем поток…')}</p>
       <button onClick={() => void refetch().catch(cause => setError(String(cause)))}>{t('Повторить')}</button><button onClick={back}>{t('К потокам')}</button></div>
       : <><div className="flow-toolbar"><button onClick={back}>{t('← Потоки')}</button><h1 id="workspace-heading" tabIndex={-1}>{flow.title}</h1>
           <span className={`flow-mode flow-mode-${flow.mode}`}>{flow.mode === 'demo' ? t('Демо') : t('Живой')}</span>
           <label className="flow-checkbox"><input type="checkbox" checked={flow.autoRun} disabled={pending}
             onChange={e => { const autoRun = e.target.checked; void patch(() => ({ autoRun })); }} />{t('Автозапуск')}</label>
-          <div className="flow-add"><button onClick={() => setMenu(value => !value)} aria-expanded={menu} disabled={!types.length || pending}>{t('+ Узел')}</button>
-            {menu && <div className="flow-add-menu">{types.map(type => <button key={type.type} onClick={() => addNode(type.type)}>{t(nodeLabels[type.type] ?? '') || type.title}</button>)}</div>}
+          <div className="flow-add" onKeyDown={e => { if (e.key === 'Escape' && menu) { e.stopPropagation(); setMenu(false); addToggle.current?.focus(); } }}>
+            <button ref={addToggle} onClick={() => setMenu(value => !value)} aria-expanded={menu} aria-controls="flow-add-menu" disabled={!types.length || pending}>{t('+ Узел')}</button>
+            {menu && <div className="flow-add-menu" id="flow-add-menu" ref={addMenu}>{types.map(type => <button key={type.type} onClick={() => addNode(type.type)}>{t(nodeLabels[type.type] ?? '') || type.title}</button>)}</div>}
           </div></div>
-        <div className="flow-body"><div className="flow-graph" aria-label={t('Канвас потока')}>
+        <div className="flow-body">{toast}<div className="flow-graph" role="region" aria-label={t('Канвас потока')}>
           {types.length > 0 && <ReactFlow<CanvasNode, Edge> nodes={nodes} edges={edges} nodeTypes={nodeTypes}
             onInit={value => { instance.current = value; }} fitView fitViewOptions={{ padding: 0.15 }} minZoom={0.15} maxZoom={2}
-            colorMode="dark" ariaLabelConfig={ariaLabels()} deleteKeyCode={['Delete', 'Backspace']}
+            colorMode="dark" ariaLabelConfig={labels} deleteKeyCode={['Delete', 'Backspace']}
             onNodesChange={changes => {
               for (const change of changes) if (change.type === 'position' && change.position)
                 positions.current = { ...positions.current, [change.id]: change.position };
@@ -118,9 +131,9 @@ export function FlowCanvas({ id, request, csrfToken, back }: { id: string; reque
             }}
             isValidConnection={validConnection} onConnect={connect}
             onConnectEnd={(_, state) => { if (state.toHandle && !state.isValid) setError('Соединение недопустимо. Проверьте типы портов; текстовый вход принимает любой тип.'); }}
-            defaultEdgeOptions={{ type: 'default', style: { stroke: '#697381', strokeWidth: 1.2 }, interactionWidth: 18 }}>
-            <Background variant={BackgroundVariant.Dots} color="#353a43" bgColor="#0c0e12" gap={20} size={1} />
-            <Controls /><MiniMap<CanvasNode> nodeColor={node => node.data.node.status === 'approved' ? '#438d65' : '#485363'} pannable zoomable />
+            defaultEdgeOptions={{ type: 'default', style: { stroke: 'var(--flow-edge)', strokeWidth: 1.2 }, interactionWidth: 18 }}>
+            <Background variant={BackgroundVariant.Dots} color="var(--flow-line)" bgColor="var(--flow-bg)" gap={20} size={1} />
+            <Controls /><MiniMap<CanvasNode> nodeColor={node => node.data.node.status === 'approved' ? 'var(--flow-ok)' : 'var(--flow-line-strong)'} pannable zoomable />
           </ReactFlow>}
         </div>
         {selectedNode && definition && <FlowInspector key={JSON.stringify([selectedNode.id, selectedNode.title, selectedNode.gate, selectedNode.config])} node={selectedNode} definition={definition}

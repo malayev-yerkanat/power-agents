@@ -456,4 +456,5 @@ export const en: Record<string, string> = {
   "Доставлено сообщений: {count}.": "Messages delivered: {count}.",
   "Получено ответов: {count}.": "Replies received: {count}.",
   "Шаблон: ролик ROBLOX. В демо запросы к моделям не выполняются. В живом режиме доступны текстовые шаги и медиапайплайн. Для медиа настройте ElevenLabs и папку этапов.": "Template: ROBLOX reel. Demo mode makes no model calls. Live mode supports text steps and the media pipeline. To use media, configure ElevenLabs and the stages folder.",
+  "(откроется в новой вкладке)": "(opens in a new tab)",
 };

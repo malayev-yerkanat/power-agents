@@ -21,6 +21,8 @@ test('file outputs render native media controls and downloadable links for every
   assert.match(markup, /<audio[^>]*controls=""/);
   for (const file of ['clip%20one.mp4', 'frame.png', 'narration.mp3', 'edit.json']) assert.ok(markup.includes(`/api/flows/f/files/capture/v3/${file}`));
   assert.doesNotMatch(markup, /autoplay/);
+  // Links open a new tab, so screen readers hear that before following one.
+  assert.equal(markup.match(/<span class="sr-only"> \(откроется в новой вкладке\)<\/span><\/a>/g)?.length, 4);
 });
 
 test('retained media keeps its successful output version during a new execution', () => {

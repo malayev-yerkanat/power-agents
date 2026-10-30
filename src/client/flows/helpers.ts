@@ -8,10 +8,9 @@ export type FlowCardData = {
   pending?: boolean; action?: (id: string, action: 'run' | 'approve' | 'reject') => void;
 };
 export type CanvasNode = Node<FlowCardData, 'flowCard'>;
-export const portColors: Record<PortType, string> = {
-  text: '#aeb8c5', brand: '#b794f6', idea: '#ffd166', script: '#80bfff', audio: '#f59bb5',
-  timings: '#72dcc6', scenes: '#afcd79', video: '#cd9eff', edit: '#ffb478', report: '#7edaa0',
-};
+// Values live in flows.css (--flow-port-*) with the rest of the canvas palette.
+const portTypes: PortType[] = ['text', 'brand', 'idea', 'script', 'audio', 'timings', 'scenes', 'video', 'edit', 'report'];
+export const portColors = Object.fromEntries(portTypes.map(type => [type, `var(--flow-port-${type})`])) as Record<PortType, string>;
 export const nodeLabels: Record<string, string> = {
   brand: 'Бренд', idea: 'Идея', script: 'Сценарий', voice: 'Озвучка', scenes: 'Сцены', capture: 'Съёмка',
   edit: 'План монтажа', preview: 'Превью', qa: 'Проверка качества', final: 'Финальный рендер', prompt: 'Заметка',

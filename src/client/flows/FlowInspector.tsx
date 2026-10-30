@@ -23,7 +23,7 @@ export function FlowInspector({ node, definition, connections, pending, save, cl
   const busy = pending || ['queued', 'running'].includes(node.status);
   return <aside className="flow-inspector" aria-label={t('Инспектор узла')}>
     <div className="flow-inspector-heading"><h2>{t(nodeLabels[node.type] ?? '') || definition.title}</h2>
-      <button onClick={close} aria-label={t('Закрыть инспектор')}>×</button></div>
+      <button className="flow-icon-button" onClick={close} aria-label={t('Закрыть инспектор')}>×</button></div>
     <form onSubmit={async event => { event.preventDefault(); setSaved(false); if (await save({ title: title ?? node.title, gate, config })) setSaved(true); }}>
       <label>{t('Название узла')}<input value={title ?? nodeTitle(node, definition)} required maxLength={200} disabled={busy} onChange={e => { setTitle(e.target.value); setSaved(false); }} /></label>
       <label className="flow-checkbox"><input type="checkbox" checked={gate} disabled={busy} onChange={e => { setGate(e.target.checked); setSaved(false); }} />{t('Требовать одобрение')}</label>
@@ -51,7 +51,8 @@ export function FlowInspector({ node, definition, connections, pending, save, cl
                 : <textarea aria-label={label} rows={4} value={String(value)} disabled={busy} onChange={e => set(e.target.value)} />}
         </label>;
       })}
-      <button type="submit" disabled={busy}>{t('Сохранить')}</button>{saved && <span role="status"> {t('Сохранено')}</span>}
+      <button type="submit" disabled={busy}>{t('Сохранить')}</button>{/* Always mounted: a live region inserted together with its text is often not announced. */}
+      <span role="status">{saved ? t('Сохранено') : ''}</span>
     </form>
     <p>{t('Версия результата:')} {node.version}</p>
     {node.needsHuman && <p className="flow-human-status" role="status">{t('Нужно действие')}</p>}

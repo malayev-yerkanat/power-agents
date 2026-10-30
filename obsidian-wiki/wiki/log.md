@@ -13,6 +13,24 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-30 15:05 UTC - Flow UI P3 polish
+
+Flow toolbar and mobile inspector respect safe-area insets; the running pulse and button hover use duration tokens; media links tell screen readers they open in a new tab.
+
+Note: [[changes/20261030-150507-flow-ui-p3-polish|Flow UI P3 polish]]
+
+### 2026-10-30 14:57 UTC - Flow UI P2 design fixes
+
+Add-node menu gains focus management, Escape and outside-click close, and aria-controls; save status is a persistent live region; error toast sits inside the canvas body; radii follow a 6px control / 10px surface scale; React Flow aria labels are memoized per language.
+
+Note: [[changes/20261030-145708-flow-ui-p2-design-fixes|Flow UI P2 design fixes]]
+
+### 2026-10-30 14:54 UTC - Flow UI P1 design fixes
+
+Flow canvas colors moved to --flow-* CSS tokens with one accent; controls raised to 44px targets, text to 12px minimum, canvas given a region role.
+
+Note: [[changes/20261030-145407-flow-ui-p1-design-fixes|Flow UI P1 design fixes]]
+
 ### 2026-10-30 11:39 UTC - Agent avatars use approved Ranger pfps
 
 The Avatar component now shows the approved v14 Ranger portraits for Codex, Claude and Gemini connections; other connections keep their initials.

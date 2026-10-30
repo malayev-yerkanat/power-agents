@@ -190,7 +190,7 @@ test('Capture offers an upload on the card and inspector and displays versioned 
   await inspector.getByLabel('Загрузить съёмку', { exact: true }).setInputFiles({ name: 'take.mp4', mimeType: 'video/mp4', buffer: Buffer.from('take') });
   await expect(card(page, 'capture')).toContainText('take.mp4');
   await expect(card(page, 'capture').locator('video')).toHaveAttribute('controls', '');
-  await expect(inspector.getByRole('link', { name: 'footage.mp4', exact: true }))
+  await expect(inspector.getByRole('link', { name: 'footage.mp4 (откроется в новой вкладке)', exact: true }))
     .toHaveAttribute('href', `/api/flows/${id}/files/capture/v1/footage.mp4`);
 });
 
@@ -294,4 +294,19 @@ test('canvas persists adding and dragging a node, connecting ports, and deleting
   await expect(card(page, 'brand')).toHaveCount(0);
   await expect.poll(() => flows.engine.get(id).edges.length).toBe(0);
   expect(flows.engine.get(id).nodes.map(node => node.id)).toEqual(['idea', added.id]);
+});
+
+test('add-node menu takes focus, closes on Escape and outside clicks, and the canvas is a named region', async ({ page, flows }) => {
+  await createDemoFlow(page, flows);
+  await expect(page.getByRole('region', { name: 'Канвас потока', exact: true })).toBeVisible();
+  const toggle = page.getByRole('button', { name: '+ Узел', exact: true });
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('#flow-add-menu button').first()).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#flow-add-menu')).toHaveCount(0);
+  await expect(toggle).toBeFocused();
+  await toggle.click();
+  await page.getByRole('heading', { level: 1 }).click();
+  await expect(page.locator('#flow-add-menu')).toHaveCount(0);
 });
