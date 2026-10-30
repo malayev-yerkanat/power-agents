@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { compatiblePorts, toCanvas, isRunnable, patchNodes, nodeTitle, outputExcerpt } from '../src/client/flows/helpers.ts';
+import { FlowInspector } from '../src/client/flows/FlowInspector.tsx';
 import type { Flow, FlowRegistryNode } from '../src/shared/flow-types.ts';
 
 const types: FlowRegistryNode[] = [
@@ -55,4 +58,30 @@ test('default titles are Russian while user titles and output excerpts are prese
   assert.equal(outputExcerpt(undefined), 'Результат появится после запуска');
   assert.match(outputExcerpt({ score: 18 }), /"score": 18/);
   assert.equal(outputExcerpt('x'.repeat(300)).length, 261);
+});
+
+test('live idea and script excerpts show the chosen topic and hook without raw JSON', () => {
+  const idea = { candidates: [{ topic: 'Skipped', hook: 'Skipped explained in Roblox' },
+    { topic: 'Inflation', hook: 'Inflation explained in Roblox' }], chosen: 1 };
+  assert.equal(outputExcerpt(idea, 'idea'), 'Inflation\nInflation explained in Roblox');
+  assert.equal(outputExcerpt({ hook: 'Inflation explained in Roblox', wordCount: 142 }, 'script'),
+    'Inflation explained in Roblox\n142 слов');
+  assert.match(outputExcerpt({ candidates: [], chosen: 2 }, 'idea'), /"candidates"/);
+  assert.equal(outputExcerpt('Demo script', 'script'), 'Demo script');
+});
+
+test('inspector offers auto and available connections while showing an unavailable saved choice', () => {
+  const markup = renderToStaticMarkup(createElement(FlowInspector, {
+    node: { ...flow.nodes[1], config: { connectionId: 'old' } },
+    definition: { ...types[1], configDefaults: { connectionId: '' } }, pending: false,
+    connections: [
+      { id: 'claude', name: 'Claude Code', kind: 'claude-cli', available: true, detail: '' },
+      { id: 'codex', name: 'Codex CLI', kind: 'codex-cli', available: false, detail: '' },
+    ], save: async () => true, close: () => {},
+  }));
+  assert.match(markup, /<select aria-label="Подключение"/);
+  assert.match(markup, /<option value="">Авто<\/option>/);
+  assert.match(markup, /<option value="claude">Claude Code<\/option>/);
+  assert.doesNotMatch(markup, /value="codex"/);
+  assert.match(markup, /value="old" disabled="" selected="">old · недоступно/);
 });

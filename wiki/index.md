@@ -27,7 +27,7 @@ Start with [[hot|Hot Cache]] for recent changes or [[Architecture Overview]] for
 ## Modules
 
 - [[Flows UI]] — canvas, typed ports, inspector and flow event refresh
-- [[Flow Engine]] — headless typed DAG registry, gates and demo execution
+- [[Flow Engine]] — typed DAG registry, gates, demo and live Idea/Script/Scenes
 
 - [[Server Runtime]]
 - [[Orchestration Engine]]

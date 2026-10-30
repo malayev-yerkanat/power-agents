@@ -4,7 +4,7 @@ title: "Flow Engine"
 path: "src/server/flows/engine.ts"
 status: active
 language: typescript
-purpose: "Execute typed DAG nodes with approval gates and demo outputs"
+purpose: "Execute typed DAG nodes with approval gates, demo outputs and live text nodes"
 created: 2026-10-30
 updated: 2026-10-30
 tags: [module, flows, scheduling]
@@ -22,4 +22,10 @@ The scheduler limits all flows together to three active calls and one per named 
 
 [API routes](../../src/server/flows/http.ts) reuse local session, CSRF, request-size, origin and rate checks through [[Local HTTP API]]. The engine emits store flow events after updates; the global `/api/events` stream now delivers `flow` invalidations driven by `subscribeFlows`. [[Flows UI]] refetches the selected graph after matching events and stream open/reconnect. [Engine tests](../../tests/flow-engine.test.ts) and [API tests](../../tests/flow-http.test.ts) use in-memory SQLite and injected executors.
 
-F2 implements the canvas and inspector in [[Flows UI]], with client-safe registry metadata exposed at `GET /api/flows/registry`. Uploads, Range-served media, live provider/pipeline executors and Telegram gate actions remain planned for F3–F5. Live execution without an injected executor fails explicitly with `not available until F3/F4`. Demo fixtures are not media files.
+F2 implements the canvas and inspector in [[Flows UI]], with registry metadata at `GET /api/flows/registry`. F3 adds [live executors](../../src/server/flows/executors.ts) and [output validation](../../src/server/flows/outputs.ts) for Idea, Script and Scenes. Runtime passes discovered connections and `runTurn`; tests inject a `TurnRunner`. Brand returns static configured values in live mode; demo keeps its fixtures. Other live nodes fail with `not available until F4`. Uploads, Range-served media and pipeline executors remain planned for F4; Telegram gates remain planned for F5.
+
+Connection/model come from config. Auto selects available Claude Code → Codex → Gemini CLI; explicit unavailable choices and missing CLI fallbacks fail in Russian. A synthetic member uses purpose `flow`, the node version directory and read-only access, without team tools or session reuse. `GET /api/flows/connections` exposes connection metadata without executable paths to the protected inspector.
+
+English prompts include connected brand text/rules, upstream values, extra instructions and all rejection notes. Idea follows the content brief's topic sources, safety hard-no list and five-score rubric; validation enforces 3–5 candidates, score sums, exact hook pattern and highest-score selection ≥18. Safety semantics remain prompt guidance plus human approval, not a claim of automated moderation. Script builds the metaphor map first, validates actual 130–160-word text and count consistency, the hook and five fixed 0–55-second beats. Scenes checks ordered complete beat coverage, unique IDs and intervals. Optional timings accept five named `beats` or aligned `words` with one interval per script word; absent timings use beat times. Optional brand ports are available on all three LLM nodes.
+
+Parsing/validation failure gets one stateless repair with the shape, error and prior response. Word errors state the measured count. A second failure is stored as a failed node; provider errors bypass formatting retries. [Executor tests](../../tests/flow-executors.test.ts) cover prompts, connections, JSON/count repair and scene contracts; engine and socket-free HTTP tests establish live-only provider calls and protected API execution. No live-provider acceptance run was performed for F3; see [[log|Operation Log]] for checks.

@@ -1,10 +1,12 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { z } from 'zod';
 import type { CreateFlowInput, Flow, FlowPatch, FlowRegistryNode } from '../../shared/flow-types.ts';
+import type { Connection } from '../../shared/types.ts';
 import type { Store } from '../store.ts';
 import { registry } from './registry.ts';
 
 export interface FlowApi {
+  connections?(): Connection[];
   create(input: CreateFlowInput): Flow | Promise<Flow>;
   update(id: string, patch: FlowPatch): Flow | Promise<Flow>;
   run(id: string, nodeId: string): Flow | Promise<Flow>;
@@ -32,6 +34,9 @@ export async function handleFlows(req: IncomingMessage, res: ServerResponse, pat
   flows: FlowApi | undefined, { readBody, json, HttpError }: Helpers): Promise<void> {
   if (!flows) throw new HttpError(404, 'API endpoint not found');
   if (req.method === 'GET' && path.length === 2) { json(res, 200, { flows: store.listFlows() }); return; }
+  if (req.method === 'GET' && path.length === 3 && path[2] === 'connections') {
+    json(res, 200, { connections: flows.connections?.() ?? [] }); return;
+  }
   if (req.method === 'GET' && path.length === 3 && path[2] === 'registry') {
     const types: FlowRegistryNode[] = Object.values(registry).map(({ type, title, inputs, outputs, gate, lane, config }) => ({
       type, title, inputs, outputs, gate, ...(lane ? { lane } : {}), configDefaults: config.parse({}),

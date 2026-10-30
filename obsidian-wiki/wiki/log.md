@@ -13,6 +13,18 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-30 06:30 UTC - Idea avoids made topics; Scenes runs before F4
+
+Idea now gets an avoid list (its config plus approved ideas from other flows) and retries if it repeats one; the Roblox template seeds Inflation (reel 001) and no longer wires Voice timings into Scenes until F4.
+
+Note: [[changes/20261030-063043-idea-avoids-made-topics-scenes-runs-before-f4|Idea avoids made topics; Scenes runs before F4]]
+
+### 2026-10-30 06:28 UTC - F3 live LLM executors for Idea, Script, Scenes
+
+Live flows now run Idea, Script and Scenes through the existing model connections with brief-based prompts, zod-validated JSON output, one retry, connection fallback and readable card excerpts.
+
+Note: [[changes/20261030-062805-f3-live-llm-executors-for-idea-script-scenes|F3 live LLM executors for Idea, Script, Scenes]]
+
 ### 2026-10-30 06:11 UTC - Flows canvas fixes: hidden nodes and inspector labels
 
 Fixed canvas nodes turning invisible after a flow refetch (React Flow measured size was dropped) and gave inspector config fields explicit accessible names so textarea content no longer leaks into their labels.

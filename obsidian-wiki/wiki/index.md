@@ -31,6 +31,8 @@ This catalog is updated by completed knowledge operations.
 
 ## Changes
 
+- 2026-10-30: [[changes/20261030-063043-idea-avoids-made-topics-scenes-runs-before-f4|Idea avoids made topics; Scenes runs before F4]]
+- 2026-10-30: [[changes/20261030-062805-f3-live-llm-executors-for-idea-script-scenes|F3 live LLM executors for Idea, Script, Scenes]]
 - 2026-10-30: [[changes/20261030-061122-flows-canvas-fixes-hidden-nodes-and-inspector-labels|Flows canvas fixes: hidden nodes and inspector labels]]
 - 2026-10-30: [[changes/20261030-060428-f2-flow-canvas-workspace|F2 flow canvas workspace]]
 - 2026-10-30: [[changes/20261030-055510-reel-flow-engine-f1-headless|Reel Flow engine F1 (headless)]]

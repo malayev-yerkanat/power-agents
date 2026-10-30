@@ -11,15 +11,19 @@ import { createApiHandler } from '../src/server/http.ts';
 import { FlowEngine } from '../src/server/flows/engine.ts';
 import { Store } from '../src/server/store.ts';
 
-async function setup() {
+import type { Connection, TurnRunner } from '../src/shared/types.ts';
+import { idea, script } from './fixtures/flow-results.ts';
+
+async function setup(runner?: TurnRunner) {
+  const connections: Connection[] = runner ? [{ id: 'claude', name: 'Claude Code', kind: 'claude-cli', available: true, detail: '', executable: '/private/cli' }] : [];
   const root = mkdtempSync(join(tmpdir(), 'power-flow-http-'));
   const store = new Store(':memory:');
-  const flows = new FlowEngine({ store, root });
+  const flows = new FlowEngine({ store, root, connections, runner });
   const engine = {
     create() { throw new Error('Unexpected team run'); }, approve() { throw new Error('Unexpected team approval'); },
     control() { throw new Error('Unexpected team control'); }, message() { throw new Error('Unexpected team message'); },
   };
-  const handler = createApiHandler({ store, engine, flows, connections: [] });
+  const handler = createApiHandler({ store, engine, flows, connections });
   const base = 'http://127.0.0.1:43123';
   async function rawRequest(path: string, options: { method?: string; headers?: Record<string, string>; body?: string } = {}) {
     const req = Readable.from(options.body === undefined ? [] : [Buffer.from(options.body)]) as IncomingMessage;
@@ -195,5 +199,40 @@ test('flow API validates bodies and returns not-found and transition conflicts',
     flow = await waitFor(app, flow.id, 'idea', 'awaiting_approval');
     assert.equal(flow.nodes.find(node => node.id === 'idea')!.version, 2);
     assert.match(JSON.stringify(flow.nodes.find(node => node.id === 'idea')!.output), /Use a clearer hook/);
+  } finally { await app.close(); }
+});
+
+
+test('protected HTTP runs live Brand → Idea → approval → Script with an injected runner; demo makes no calls', async () => {
+  const calls: string[] = [];
+  const app = await setup(async input => {
+    calls.push(input.member.id);
+    assert.equal(input.purpose, 'flow');
+    assert.equal(input.writable, false);
+    assert.match(input.prompt, /No victim mockery/);
+    return { text: JSON.stringify(input.member.id === 'idea' ? idea : script()) };
+  });
+  try {
+    assert.equal((await app.rawRequest('/api/flows/connections')).status, 401);
+    const catalog = await (await app.request('/connections')).json() as { connections: Connection[] };
+    assert.equal(catalog.connections[0].id, 'claude');
+    assert.equal(catalog.connections[0].executable, undefined);
+    for (const mode of ['demo', 'live']) {
+      let flow = await flowResponse(await app.request('', 'POST', { title: 'F3', mode }));
+      const patch = graph(flow.version);
+      flow = await flowResponse(await app.request(`/${flow.id}`, 'PATCH', { ...patch,
+        nodes: patch.nodes!.map(n => n.id === 'brand' ? { ...n, config: { text: 'English reels', rules: ['No victim mockery'] } } : n) }));
+      await app.request(`/${flow.id}/nodes/brand/run`, 'POST', {});
+      await waitFor(app, flow.id, 'brand', 'approved');
+      await app.request(`/${flow.id}/nodes/idea/run`, 'POST', {});
+      flow = await waitFor(app, flow.id, 'idea', 'awaiting_approval');
+      if (mode === 'demo') { assert.equal(calls.length, 0); continue; }
+      assert.deepEqual(flow.nodes.find(n => n.id === 'idea')!.output!.idea.value, idea);
+      await app.request(`/${flow.id}/nodes/idea/approve`, 'POST', {});
+      await app.request(`/${flow.id}/nodes/script/run`, 'POST', {});
+      flow = await waitFor(app, flow.id, 'script', 'awaiting_approval');
+      assert.deepEqual(flow.nodes.find(n => n.id === 'script')!.output!.script.value, script());
+      assert.deepEqual(calls, ['idea', 'script']);
+    }
   } finally { await app.close(); }
 });

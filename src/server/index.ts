@@ -5,7 +5,7 @@ import { createServer as createViteServer } from 'vite';
 import { Store } from './store.ts';
 import { Engine } from './engine.ts';
 import { FlowEngine } from './flows/engine.ts';
-import { discoverConnections } from './adapters/index.ts';
+import { discoverConnections, runTurn } from './adapters/index.ts';
 import { createApiHandler } from './http.ts';
 import { createMcpHandler } from './mcp.ts';
 import { TelegramService, isTelegramToken } from './telegram.ts';
@@ -18,7 +18,7 @@ const store = new Store(join(dataRoot, 'state.sqlite'));
 const connections = await discoverConnections();
 const workspaceRoot = join(dataRoot, 'workspaces');
 const engine = new Engine({ store, connections, workspaceRoot, teamUrl: `http://127.0.0.1:${port}/mcp` });
-const flows = new FlowEngine({ store, root: join(dataRoot, 'flows') });
+const flows = new FlowEngine({ store, root: join(dataRoot, 'flows'), connections, runner: runTurn });
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
 const telegramError = telegramToken && !isTelegramToken(telegramToken)
   ? 'TELEGRAM_BOT_TOKEN has an invalid BotFather token format.' : undefined;

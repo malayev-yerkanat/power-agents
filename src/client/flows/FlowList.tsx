@@ -34,7 +34,7 @@ export function FlowList({ request, csrfToken, open }: { request: Request; csrfT
     <div className="flow-list-actions"><label>Режим нового потока <select value={mode} onChange={e => setMode(e.target.value as 'demo' | 'live')}>
       <option value="demo">Демо</option><option value="live">Живой</option></select></label>
       <button onClick={() => void create()} disabled={pending}>Новый поток</button></div>
-    <p className="flow-muted">Шаблон: ролик ROBLOX. В демо запросы к моделям не выполняются. Живые исполнители запланированы для F3/F4.</p>
+    <p className="flow-muted">Шаблон: ролик ROBLOX. В демо запросы к моделям не выполняются. В живом режиме доступны идея, сценарий и сцены. Медиапайплайн запланирован для F4.</p>
     {error && <p role="alert">{error}</p>}
     {flows === null ? <p>Загружаем потоки…</p> : !flows.length ? <p>Потоков пока нет. Создайте первый из шаблона.</p>
       : <ul className="flow-list-items">{flows.map(flow => <li key={flow.id}><button onClick={() => open(flow.id)}>

@@ -6,6 +6,8 @@ import { join } from 'node:path';
 import { Store } from '../src/server/store.ts';
 import { FlowEngine } from '../src/server/flows/engine.ts';
 import { registry, demoExecutor, robloxReel, type Executor } from '../src/server/flows/registry.ts';
+import type { Connection, TurnRunner } from '../src/shared/types.ts';
+import { idea } from './fixtures/flow-results.ts';
 import type { Flow, FlowEdge, FlowPatch } from '../src/shared/flow-types.ts';
 const node = (id: string, type = id, gate = registry[type].gate): FlowPatch['nodes'] extends (infer T)[] | undefined ? T : never =>
   ({ id, type, title: id, position: { x: 0, y: 0 }, config: {}, gate });
@@ -14,10 +16,10 @@ async function until(get: () => Flow, predicate: (flow: Flow) => boolean) {
   for (let i = 0; i < 500; i++) { const flow = get(); if (predicate(flow)) return flow; await new Promise(r => setTimeout(r, 5)); }
   throw new Error(`Timed out: ${JSON.stringify(get())}`);
 }
-function setup(executors?: Record<string, Executor>, maxConcurrent?: number) {
+function setup(executors?: Record<string, Executor>, maxConcurrent?: number, live: { connections?: Connection[]; runner?: TurnRunner } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'power-flow-'));
   const store = new Store(':memory:');
-  const engine = new FlowEngine({ store, root, executors, maxConcurrent });
+  const engine = new FlowEngine({ store, root, executors, maxConcurrent, ...live });
   const create = (nodes: NonNullable<FlowPatch['nodes']>, edges: FlowEdge[] = [], autoRun = false, mode: 'live' | 'demo' = 'demo') => {
     const f = engine.create({ title: 'Flow', mode });
     return engine.update(f.id, { version: f.version, nodes, edges, autoRun });
@@ -150,7 +152,7 @@ test('template includes all typed ports and final waits on QA; live missing exec
     const live = create([node('p', 'prompt')], [], false, 'live');
     engine.run(live.id, 'p');
     const failed = await until(() => store.getFlow(live.id)!, f => status(f, 'p') === 'failed');
-    assert.match(failed.nodes[0].error!, /not available until F3\/F4/);
+    assert.match(failed.nodes[0].error!, /not available until F4/);
     assert.equal(store.nodeRuns(live.id)[0].status, 'failed');
   } finally { clean(); }
 });
@@ -186,4 +188,30 @@ test('recovery includes flows outside list pagination and all unfinished history
       assert.ok(store.nodeRuns(f.id, 200).every(r => r.status === 'failed'));
     } finally { recovered.shutdown(); }
   } finally { clean(); }
+});
+
+
+test('engine selects real LLM executors only for live mode and optional disconnected inputs do not block', async () => {
+  let calls = 0;
+  const { engine, store, create, clean } = setup(undefined, undefined, {
+    connections: [{ id: 'codex', kind: 'codex-cli', name: 'Codex', available: true, detail: '' }],
+    runner: async () => { calls++; return { text: JSON.stringify(idea) }; },
+  });
+  try {
+    for (const mode of ['demo', 'live'] as const) {
+      const flow = create([node('idea')], [], false, mode);
+      engine.run(flow.id, 'idea');
+      const result = await until(() => store.getFlow(flow.id)!, f => status(f, 'idea') === 'awaiting_approval');
+      if (mode === 'live') assert.deepEqual(result.nodes[0].output!.idea.value, idea);
+      else assert.equal(calls, 0);
+    }
+    assert.equal(calls, 1);
+    assert.ok(registry.scenes.inputs.find(p => p.name === 'timings')?.optional);
+    assert.ok(registry.scenes.inputs.find(p => p.name === 'brand')?.optional);
+  } finally { clean(); }
+});
+test('roblox template lets Scenes run on script beats and seeds Idea with reel 001', () => {
+  const template = robloxReel();
+  assert.ok(!template.edges.some(edge => edge.to.node === 'scenes' && edge.to.port === 'timings'));
+  assert.deepEqual(template.nodes.find(node => node.id === 'idea')!.config.avoid, ['Inflation']);
 });

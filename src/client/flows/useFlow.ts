@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Flow, FlowEvent, FlowPatch, FlowRegistryNode } from '../../shared/flow-types';
+import type { Connection } from '../../shared/types';
 import { ApiError } from '../session';
 
 export type Request = <T>(path: string, options?: RequestInit) => Promise<T>;
@@ -7,6 +8,7 @@ export const flowEventName = 'power-agents:flow';
 export function useFlow(id: string, request: Request, csrfToken: string) {
   const [flow, setFlow] = useState<Flow | null>(null);
   const [types, setTypes] = useState<FlowRegistryNode[]>([]);
+  const [connections, setConnections] = useState<Connection[]>([]);
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
   const current = useRef<Flow | null>(null);
@@ -31,6 +33,8 @@ export function useFlow(id: string, request: Request, csrfToken: string) {
     void refetch().catch(report);
     void request<{ types: FlowRegistryNode[] }>('/api/flows/registry')
       .then(data => { if (mounted.current) setTypes(data.types); }).catch(report);
+    void request<{ connections: Connection[] }>('/api/flows/connections')
+      .then(data => { if (mounted.current) setConnections(data.connections); }).catch(report);
     const receive = (event: Event) => {
       const detail = (event as CustomEvent<FlowEvent | undefined>).detail;
       if (!detail || detail.flowId === id) void refetch().catch(report);
@@ -66,5 +70,5 @@ export function useFlow(id: string, request: Request, csrfToken: string) {
   const action = useCallback((nodeId: string, action: 'run' | 'approve' | 'reject', note?: string) =>
     mutate(() => ({ url: `${path}/nodes/${encodeURIComponent(nodeId)}/${action}`, method: 'POST',
       body: action === 'reject' ? { note } : {} })), [mutate, path]);
-  return { flow, types, error, setError, pending, patch, action, refetch };
+  return { flow, types, connections, error, setError, pending, patch, action, refetch };
 }

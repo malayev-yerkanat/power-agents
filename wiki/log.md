@@ -8,6 +8,22 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-30 — F3 live Idea, Script and Scenes
+
+- Implemented live text executors using discovered connections and injectable `TurnRunner`, read-only version directories, no team tools or session reuse. English brief-derived prompts include brand/upstream values, extra instructions and every rejection note. Zod validates candidate scores/selection, measured script length and five beats, and ordered scene coverage. One invalid-output correction includes JSON shape and measured count. Static live Brand is available; media remains planned for F4.
+- Added the protected connection catalog, Russian inspector select with **Авто**, and readable Idea/Script excerpts. Updated canonical prototype, module/flow pages and overview. The template's connected Voice timings still require F4; removing that edge enables Scenes' script-time fallback. Hard-no topic safety is prompt guidance plus human approval, not deterministic semantic moderation.
+- TDD source: [F3 plan](../.claude/plans/reel-flow-workspace.plan.md). Journeys: choose connection → generate Idea → approve → generate Script → approve → generate Scenes; reject with notes → revise; demo → no provider. RED: `node --import tsx --test tests/flow-executors.test.ts` failed with `ERR_MODULE_NOT_FOUND` for the not-yet-created executor. GREEN: `node --import tsx --test tests/flow*.test.ts` passes **34/34**. No checkpoint commits were created, as explicitly requested by the user.
+
+| Guarantee | Evidence | Result |
+|---|---|---|
+| All prompts include connected brand/upstream data, extra instructions and rejection notes; turns are isolated/read-only | `tests/flow-executors.test.ts` unit tests | PASS |
+| JSON/schema/count errors get one repair; unavailable connections fail; scenes cover beats and respect supplied timings | `tests/flow-executors.test.ts` unit tests | PASS |
+| Engine uses providers for live only; HTTP runs live Idea and Script through approval without opening a socket | `tests/flow-engine.test.ts`, `tests/flow-http.test.ts` integration tests | PASS |
+| Cards show chosen topic/hook and script count; inspector offers available connections and Auto | `tests/flow-canvas.test.ts` helper/render tests | PASS |
+
+- `npm test`: **211/228 pass**, **17 fail**, all `listen EPERM`: all 14 tests in `tests/http.test.ts`; occupied-port preflight in `tests/launchd.test.ts`; team-tool impersonation/security integration in `tests/mcp.test.ts`; settings API test in `tests/telegram.test.ts`. No cancellations or skips. `npm run test:coverage` has the same 17 listener failures and measures **81.49%** overall line coverage; new `executors.ts` and `outputs.ts` each have 100% line coverage.
+- `npm run typecheck` and `npm run build`: PASS (non-blocking Rollup annotation and large-chunk warnings). No lint script is defined. `npm run test:e2e`: Vite startup blocked by `listen EPERM` on `127.0.0.1:4318`; **0 executed**, **39 discovered** with `playwright test --list`. Real-provider F3 acceptance remains unverified; no actual model calls, dependency installs, `.env` edits, commits or pushes. Existing Telegram changes were left alone.
+
 ## 2026-10-30 — F2 flow canvas workspace
 
 - Added the **Потоки** list and fragment routes, demo/live Roblox-template creation, dark React Flow canvas, status/output cards, typed connectors, run/approve/reject controls, note dialog, inspector, node/edge deletion, add-node menu and auto-run setting. Layout and edits use queued versioned writes with refetch on conflict.

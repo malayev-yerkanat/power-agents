@@ -20,7 +20,7 @@ Optional [[Telegram Notifications]] pair one private chat and send brief alerts 
 
 ## Current boundaries
 
-A separate [[Flow Engine]] provides typed DAGs and demo runs via the protected local API, including approval gates, rejection notes, stale outputs, global scheduling and restart recovery. F2 [[Flows UI]] adds `#/flows` and `#/flows/<id>`, template creation, the dark React Flow canvas, typed connectors, node actions, a config inspector and SSE invalidation/refetch. [[Reel Flow Execution]] documents the implemented demo path. Live LLM executors (F3), pipeline/upload/media routes (F4) and flow Telegram actions (F5) remain planned; choosing live mode does not enable those executors.
+A separate [[Flow Engine]] provides typed DAGs and demo runs via the protected local API, including approval gates, rejection notes, stale outputs, global scheduling and restart recovery. F2 [[Flows UI]] adds `#/flows` and `#/flows/<id>`, template creation, the dark React Flow canvas, typed connectors, node actions, a config inspector and SSE invalidation/refetch. [[Reel Flow Execution]] documents demo and live text paths. F3 implements Idea, Script and Scenes through read-only provider turns, validated JSON, one repair attempt, connection selection and readable card excerpts. Pipeline/upload/media routes (F4) and flow Telegram actions (F5) remain planned; live text behavior is verified with fake runners, without a real-provider acceptance run.
 
 - One active team at a time; up to three concurrent turns and one turn per participant.
 - Text and Markdown results; providers do not edit external repositories.

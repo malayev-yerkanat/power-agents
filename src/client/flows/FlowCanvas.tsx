@@ -16,7 +16,7 @@ const ariaLabels = { 'controls.ariaLabel': 'Управление канвасо�
   'edge.a11yDescription.default': 'Выберите связь. Delete удаляет выбранное.' };
 
 export function FlowCanvas({ id, request, csrfToken, back }: { id: string; request: Request; csrfToken: string; back: () => void }) {
-  const { flow, types, error, setError, pending, patch, action, refetch } = useFlow(id, request, csrfToken);
+  const { flow, types, connections, error, setError, pending, patch, action, refetch } = useFlow(id, request, csrfToken);
   const [nodes, setNodes] = useState<CanvasNode[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -89,7 +89,7 @@ export function FlowCanvas({ id, request, csrfToken, back }: { id: string; reque
     {!flow ? <div className="flows-list"><h1 id="workspace-heading" tabIndex={-1}>Поток</h1><p>{error ? 'Поток не загружен.' : 'Загружаем поток…'}</p>
       <button onClick={() => void refetch().catch(cause => setError(String(cause)))}>Повторить</button><button onClick={back}>К потокам</button></div>
       : <><div className="flow-toolbar"><button onClick={back}>← Потоки</button><h1 id="workspace-heading" tabIndex={-1}>{flow.title}</h1>
-          <span className={`flow-mode flow-mode-${flow.mode}`}>{flow.mode === 'demo' ? 'Демо' : 'Живой · исполнители запланированы'}</span>
+          <span className={`flow-mode flow-mode-${flow.mode}`}>{flow.mode === 'demo' ? 'Демо' : 'Живой'}</span>
           <label className="flow-checkbox"><input type="checkbox" checked={flow.autoRun} disabled={pending}
             onChange={e => { const autoRun = e.target.checked; void patch(() => ({ autoRun })); }} />Автозапуск</label>
           <div className="flow-add"><button onClick={() => setMenu(value => !value)} aria-expanded={menu} disabled={!types.length || pending}>+ Узел</button>
@@ -122,7 +122,7 @@ export function FlowCanvas({ id, request, csrfToken, back }: { id: string; reque
           </ReactFlow>}
         </div>
         {selectedNode && definition && <FlowInspector key={JSON.stringify([selectedNode.id, selectedNode.title, selectedNode.gate, selectedNode.config])} node={selectedNode} definition={definition}
-          pending={pending} close={() => setSelected(null)} save={value => patch(latest => ({ nodes: patchNodes(latest).map(n => n.id === selectedNode.id ? { ...n, ...value } : n) }))} />}
+          connections={connections} pending={pending} close={() => setSelected(null)} save={value => patch(latest => ({ nodes: patchNodes(latest).map(n => n.id === selectedNode.id ? { ...n, ...value } : n) }))} />}
         </div></>}
     <dialog ref={rejectDialog} className="flow-reject" onCancel={() => setRejectId(null)} aria-labelledby="flow-reject-title">
       <form onSubmit={async e => { e.preventDefault(); if (rejectId && await action(rejectId, 'reject', note)) setRejectId(null); }}>

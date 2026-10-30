@@ -13,7 +13,7 @@ import { applyResult, findFact, type Job } from './core/results.ts';
 import { inlineText, listFiles, taskFolder } from './files.ts';
 import { runTeamTool, teamToolNames, TeamToolError, type TeamGrant, type TeamToolName } from './core/team.ts';
 const finished = (run: Run, callId: string): Run => ({ ...run, inFlight: run.inFlight?.filter(c => c.id !== callId) });
-const callNames: Record<TurnPurpose, string> = { plan: 'план', task: 'задача', reply: 'ответ коллеге', synthesize: 'сборка итога', review: 'проверка', resolve: 'разрешение конфликта' };
+const callNames: Record<TurnPurpose, string> = { plan: 'план', task: 'задача', reply: 'ответ коллеге', synthesize: 'сборка итога', review: 'проверка', resolve: 'разрешение конфликта', flow: 'узел потока' };
 function callLabel(run: Run, call: InFlightCall): string {
   const task = run.tasks.find(t => t.id === call.taskId);
   return `${run.members.find(m => m.id === call.memberId)?.name ?? call.memberId} — ${callNames[call.purpose]}${task && call.purpose === 'task' ? ` «${task.title}»` : ''}`;

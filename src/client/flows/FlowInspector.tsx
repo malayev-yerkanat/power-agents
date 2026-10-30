@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import type { FlowNode, FlowRegistryNode } from '../../shared/flow-types';
+import type { Connection } from '../../shared/types';
 import { nodeLabels, nodeTitle } from './helpers';
 
 const fieldLabels: Record<string, string> = {
   text: 'Текст', rules: 'Правила (по одному на строку)', prompt: 'Инструкция', connectionId: 'Подключение', model: 'Модель',
-  topic: 'Тема', words: 'Число слов', voice: 'Голос', language: 'Язык', instructions: 'Указания', height: 'Высота кадра',
+  topic: 'Тема', avoid: 'Уже сделанные темы (по одной на строку)', words: 'Число слов', voice: 'Голос', language: 'Язык', instructions: 'Указания', height: 'Высота кадра',
 };
-export function FlowInspector({ node, definition, pending, save, close }: {
+export function FlowInspector({ node, definition, connections, pending, save, close }: {
   node: FlowNode; definition: FlowRegistryNode; pending: boolean;
+  connections: Connection[];
   save: (value: Pick<FlowNode, 'title' | 'gate' | 'config'>) => Promise<boolean | undefined>; close: () => void;
 }) {
   const [title, setTitle] = useState(nodeTitle(node, definition));
@@ -27,12 +29,20 @@ export function FlowInspector({ node, definition, pending, save, close }: {
         // Explicit name: a wrapping <label> would otherwise include a textarea's own text in its label text.
         const label = fieldLabels[key] || key;
         return <label key={key}>{label}
-          {typeof defaultValue === 'number'
+          {key === 'connectionId'
+            ? <select aria-label={label} value={String(value)} disabled={busy} onChange={e => set(e.target.value)}>
+                <option value="">Авто</option>
+                {connections.filter(connection => connection.available).map(connection =>
+                  <option key={connection.id} value={connection.id}>{connection.name}</option>)}
+                {value && !connections.some(connection => connection.id === value && connection.available)
+                  ? <option value={String(value)} disabled>{connections.find(connection => connection.id === value)?.name || String(value)} · недоступно</option> : null}
+              </select>
+            : typeof defaultValue === 'number'
             ? <input aria-label={label} type="number" value={typeof value === 'number' && Number.isFinite(value) ? value : ''} required disabled={busy} onChange={e => set(e.target.value === '' ? '' : Number(e.target.value))} />
             : Array.isArray(defaultValue)
               ? <textarea aria-label={label} rows={4} value={Array.isArray(value) ? value.join('\n') : ''} disabled={busy}
                   onChange={e => set(e.target.value ? e.target.value.split('\n') : [])} />
-              : ['connectionId', 'model', 'voice', 'language'].includes(key)
+              : ['model', 'voice', 'language'].includes(key)
                 ? <input aria-label={label} value={String(value)} disabled={busy} onChange={e => set(e.target.value)} />
                 : <textarea aria-label={label} rows={4} value={String(value)} disabled={busy} onChange={e => set(e.target.value)} />}
         </label>;

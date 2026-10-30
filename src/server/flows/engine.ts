@@ -3,6 +3,8 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { z } from 'zod';
 import type { CreateFlowInput, Flow, FlowNode, FlowPatch, PortValue } from '../../shared/flow-types.ts';
+import type { Connection, TurnRunner } from '../../shared/types.ts';
+import { createLiveExecutors } from './executors.ts';
 import { Store } from '../store.ts';
 import { registry, demoExecutor, robloxReel, type Executor } from './registry.ts';
 export class FlowError extends Error {
@@ -69,7 +71,7 @@ function ready(flow: Flow, node: FlowNode): boolean {
     return e ? flow.nodes.some(n => n.id === e.from.node && n.status === 'approved') : !!port.optional;
   });
 }
-interface Options { store: Store; root: string; executors?: Record<string, Executor>; maxConcurrent?: number }
+interface Options { store: Store; root: string; executors?: Record<string, Executor>; maxConcurrent?: number; connections?: Connection[]; runner?: TurnRunner }
 interface Active { flowId: string; nodeId: string; version: number; lane?: string; controller: AbortController }
 export class FlowEngine {
   private readonly active = new Map<number, Active>();
@@ -77,13 +79,25 @@ export class FlowEngine {
   private stopped = false;
   private scheduled = false;
   private readonly limit: number;
+  private readonly liveExecutors: Record<string, Executor>;
   constructor(private readonly options: Options) {
     this.limit = options.maxConcurrent ?? 3;
+    this.liveExecutors = createLiveExecutors({ connections: options.connections ?? [], runner: options.runner, madeTopics: id => this.madeTopics(id) });
     if (!Number.isSafeInteger(this.limit) || this.limit < 1) invalid('maxConcurrent must be a positive integer');
     for (const flow of options.store.unfinishedFlows()) {
       if (flow.nodes.some(busy)) this.change(flow.id, f => ({ ...f, nodes: f.nodes.map(n => busy(n) ? { ...n, status: 'failed', error: 'interrupted, run again' } : n) }), 'interrupted, run again');
       options.store.interruptNodeRuns(flow.id, 'interrupted, run again');
     }
+  }
+  connections(): Connection[] { return (this.options.connections ?? []).map(({ executable: _executable, ...connection }) => connection); }
+  /** Chosen topics of approved Idea nodes in every other flow. */
+  private madeTopics(exceptId: string): string[] {
+    return this.options.store.listFlows().filter(summary => summary.id !== exceptId).flatMap(summary =>
+      (this.options.store.getFlow(summary.id)?.nodes ?? []).filter(n => n.type === 'idea' && n.status === 'approved').flatMap(n => {
+        const value = n.output?.idea?.value as { candidates?: { topic?: unknown }[]; chosen?: number } | undefined;
+        const topic = value?.candidates?.[value.chosen ?? -1]?.topic;
+        return typeof topic === 'string' ? [topic] : [];
+      }));
   }
   get(id: string): Flow { const flow = this.options.store.getFlow(id); if (!flow) throw new FlowError(404, 'Flow not found'); return flow; }
   private node(flow: Flow, id: string): FlowNode { const node = flow.nodes.find(n => n.id === id); if (!node) throw new FlowError(404, 'Node not found'); return node; }
@@ -197,8 +211,8 @@ export class FlowEngine {
     try {
       const dir = join(this.options.root, flow.id, node.id, `v${node.version}`);
       mkdirSync(dir, { recursive: true });
-      const executor = this.options.executors?.[node.type] ?? (flow.mode === 'demo' ? demoExecutor : undefined);
-      if (!executor) throw new Error(`${node.type} executor is not available until F3/F4`);
+      const executor = this.options.executors?.[node.type] ?? (flow.mode === 'demo' ? demoExecutor : this.liveExecutors[node.type]);
+      if (!executor) throw new Error(`${node.type} executor is not available until F4`);
       const inputs: Record<string, PortValue> = Object.fromEntries(flow.edges.filter(e => e.to.node === node.id).map(e => [e.to.port, structuredClone(this.node(flow, e.from.node).output?.[e.from.port] ?? {})]));
       const result = await executor({ flow: structuredClone(flow), node: structuredClone(node), inputs, notes: [...node.notes], dir, signal });
       const output = z.record(z.string(), z.object({ value: z.unknown().optional(), files: z.array(z.string()).optional() }).strict()).parse(result);

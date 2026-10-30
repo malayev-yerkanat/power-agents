@@ -21,6 +21,8 @@ Vault initialized. No knowledge operations have completed yet.
 
 ## Recent Changes
 
+- 2026-10-30: Idea avoids made topics; Scenes runs before F4 (wiki/changes/20261030-063043-idea-avoids-made-topics-scenes-runs-before-f4.md)
+- 2026-10-30: F3 live LLM executors for Idea, Script, Scenes (wiki/changes/20261030-062805-f3-live-llm-executors-for-idea-script-scenes.md)
 - 2026-10-30: Flows canvas fixes: hidden nodes and inspector labels (wiki/changes/20261030-061122-flows-canvas-fixes-hidden-nodes-and-inspector-labels.md)
 - 2026-10-30: F2 flow canvas workspace (wiki/changes/20261030-060428-f2-flow-canvas-workspace.md)
 - 2026-10-30: Reel Flow engine F1 (headless) (wiki/changes/20261030-055510-reel-flow-engine-f1-headless.md)

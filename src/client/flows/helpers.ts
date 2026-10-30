@@ -42,8 +42,18 @@ export function toCanvas(flow: Flow, types: FlowRegistryNode[]): { nodes: Canvas
 export function patchNodes(flow: Flow): NonNullable<FlowPatch['nodes']> {
   return flow.nodes.map(({ id, type, title, position, config, gate }) => ({ id, type, title, position: { ...position }, config, gate }));
 }
-export function outputExcerpt(value: unknown): string {
+export function outputExcerpt(value: unknown, nodeType?: string): string {
   if (value === undefined) return 'Результат появится после запуска';
+  if (value && typeof value === 'object') {
+    const result = value as Record<string, unknown>;
+    if (nodeType === 'idea' && Array.isArray(result.candidates) && Number.isInteger(result.chosen)) {
+      const chosen = result.candidates[result.chosen as number];
+      if (chosen && typeof chosen.topic === 'string' && typeof chosen.hook === 'string')
+        return `${chosen.topic}\n${chosen.hook}`;
+    }
+    if (nodeType === 'script' && typeof result.hook === 'string' && typeof result.wordCount === 'number')
+      return `${result.hook}\n${result.wordCount} слов`;
+  }
   const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
   return text.length > 260 ? `${text.slice(0, 260)}…` : text;
 }

@@ -13,7 +13,9 @@ export function FlowCard({ data, selected }: NodeProps<CanvasNode>) {
       style={{ top: 48 + index * 23, background: portColors[port.type] }} />)}
     <header><span className="flow-type">{nodeLabels[node.type] || definition?.title || node.type}</span>
       <h2>{nodeTitle(node, definition)}</h2><span className="flow-status-chip">{statusLabels[node.status]}</span></header>
-    <div className="flow-preview"><pre>{outputExcerpt(value?.value)}</pre>
+    <div className="flow-preview">{['idea', 'script'].includes(node.type)
+      ? <p className="flow-text-preview">{outputExcerpt(value?.value, node.type)}</p>
+      : <pre>{outputExcerpt(value?.value)}</pre>}
       {file && <p className="flow-file">Медиафайл: {file}<br />Просмотр появится с медиапайплайном.</p>}
     </div>
     {node.error && <p className="flow-node-error">{node.error}</p>}
