@@ -17,13 +17,18 @@ export const ideaSchema = z.object({ candidates: z.array(z.object({
   if (!chosen || chosen.total < 18 || value.candidates.some(c => c.total > chosen.total)) ctx.addIssue({ code: 'custom', message: 'Choose the highest scoring candidate with total >= 18', path: ['chosen'] });
 });
 const interval = { start: z.number().finite().nonnegative(), end: z.number().finite().positive() };
-export const scriptSchema = z.object({ title: text, hook,
+/** Allowed spoken length around the node's target; the voice's pace decides the target, not the brief's 130–160. */
+export const scriptWordRange = (target: number): [number, number] => [Math.max(80, target - 10), Math.min(200, target + 10)];
+// Models miscount words, so wordCount is always replaced with the measured count before validation.
+export const scriptSchema = z.preprocess(value => value && typeof value === 'object' && typeof (value as { fullText?: unknown }).fullText === 'string'
+  ? { ...value, wordCount: wordCount((value as { fullText: string }).fullText) } : value, z.object({ title: text, hook,
   metaphorMap: z.array(z.object({ real: text, roblox: text }).strict()).min(1),
   beats: z.array(z.object({ name: z.enum(beatNames), ...interval, text }).strict()).length(5),
   wordCount: z.number().int(), fullText: text,
 }).strict().superRefine((value, ctx) => {
   const count = wordCount(value.fullText);
-  if (count < 130 || count > 160 || value.wordCount !== count) ctx.addIssue({ code: 'custom', message: `Script has ${count} words; return 130–160 words and an accurate wordCount`, path: ['wordCount'] });
+  // Outer bounds only; the Script node enforces its own target ±10 (see scriptWordRange).
+  if (count < 80 || count > 200) ctx.addIssue({ code: 'custom', message: `Script has ${count} words; return 80–200 words`, path: ['wordCount'] });
   const normalize = (s: string) => s.trim().replace(/\s+/gu, ' ');
   if (normalize(value.fullText) !== normalize(value.beats.map(b => b.text).join(' '))) ctx.addIssue({ code: 'custom', message: 'fullText must concatenate beat texts' });
   if (value.beats[0].text.replace(/[.!?]+$/, '') !== value.hook) ctx.addIssue({ code: 'custom', message: 'First beat must speak the hook' });
@@ -31,7 +36,7 @@ export const scriptSchema = z.object({ title: text, hook,
   value.beats.forEach((beat, i) => {
     if (beat.name !== beatNames[i] || beat.start !== starts[i] || beat.end !== ends[i]) ctx.addIssue({ code: 'custom', message: 'Use fixed hook 0–2, world 2–10, escalation 10–40, twist 40–50, loop 50–55 beat times', path: ['beats', i] });
   });
-});
+}));
 export const scenesSchema = z.object({ scenes: z.array(z.object({ id: text, beat: z.enum(beatNames), ...interval,
   set: text, cast: z.array(text), action: text, camera: text, onScreenText: text.optional(),
 }).strict()).min(5).max(100) }).strict();

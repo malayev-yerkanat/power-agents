@@ -123,3 +123,21 @@ test('idea avoids configured and already-made topics, retrying once when a repea
   assert.match(calls[1].prompt, /Topic already made: Inflation/);
   assert.deepEqual(output.idea.value, fresh);
 });
+test('script word range follows the node target instead of a fixed 130–160', async () => {
+  const calls: TurnInput[] = [];
+  const executor = createLiveExecutors({ connections, runner: async input => { calls.push(input); return { text: JSON.stringify(calls.length === 1 ? script(140) : script(125)) }; } }).script;
+  const output = await executor(context('script', { words: 125 }));
+  assert.match(calls[0].prompt, /115–135 words/);
+  assert.match(calls[1].prompt, /Script has 140 words; return 115–135 words/);
+  assert.equal((output.script.value as { wordCount: number }).wordCount, 125);
+});
+test('script receives only the chosen idea candidate', async () => {
+  const calls: TurnInput[] = [];
+  const executor = createLiveExecutors({ connections, runner: async input => { calls.push(input); return { text: JSON.stringify(script()) }; } }).script;
+  const ctx = context('script');
+  ctx.inputs.idea = { value: { ...idea, chosen: 1 } };
+  delete ctx.inputs.script;
+  await executor(ctx);
+  assert.match(calls[0].prompt, /FOMO explained in Roblox/);
+  assert.doesNotMatch(calls[0].prompt, /Inflation explained in Roblox|Trading explained in Roblox/);
+});

@@ -21,6 +21,7 @@ Vault initialized. No knowledge operations have completed yet.
 
 ## Recent Changes
 
+- 2026-10-30: Live reel 002 run fixes: voice, script, final size (wiki/changes/20261030-073041-live-reel-002-run-fixes-voice-script-final-size.md)
 - 2026-10-30: Review EN RU language toggle (wiki/changes/20261030-065316-review-en-ru-language-toggle.md)
 - 2026-10-30: F4 media pipeline: stages, uploads, playback (wiki/changes/20261030-064930-f4-media-pipeline-stages-uploads-playback.md)
 - 2026-10-30: F4 localization compatibility and final checks (wiki/changes/20261030-064800-f4-localization-compatibility-and-final-checks.md)

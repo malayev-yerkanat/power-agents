@@ -177,7 +177,7 @@ report does not claim the live F4 acceptance criterion has been observed.
 
 Set `REEL_PIPELINE_DIR` and `ELEVENLABS_API_KEY` in the server environment and
 restart before using the live pipeline. No `.env` was created or edited.
-The documented premade default voice is Rachel (`21m00Tcm4TlvDq8ikWAM`).
+The documented premade default voice is Liam (`TX3LPaxmHKxFdv7VOQHJ`); Rachel is a library voice the free-plan API refuses.
 `config.height` is vertical height: 540/1080; codec-safe rounded widths are
 304/608. QA allows the corresponding subpixel aspect rounding.
 

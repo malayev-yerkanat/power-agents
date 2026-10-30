@@ -31,6 +31,7 @@ This catalog is updated by completed knowledge operations.
 
 ## Changes
 
+- 2026-10-30: [[changes/20261030-073041-live-reel-002-run-fixes-voice-script-final-size|Live reel 002 run fixes: voice, script, final size]]
 - 2026-10-30: [[changes/20261030-065316-review-en-ru-language-toggle|Review EN RU language toggle]]
 - 2026-10-30: [[changes/20261030-064930-f4-media-pipeline-stages-uploads-playback|F4 media pipeline: stages, uploads, playback]]
 - 2026-10-30: [[changes/20261030-064800-f4-localization-compatibility-and-final-checks|F4 localization compatibility and final checks]]

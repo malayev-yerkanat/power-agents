@@ -4,7 +4,7 @@ import type { Connection, Member, TurnRunner } from '../../shared/types.ts';
 import { runTurn } from '../adapters/index.ts';
 import { parseJsonObject } from '../adapters/common.ts';
 import type { ExecutionContext, Executor } from './registry.ts';
-import { ideaSchema, scriptSchema, scenesSchema, sceneTimings, validateSceneCoverage } from './outputs.ts';
+import { ideaSchema, scriptSchema, scriptWordRange, scenesSchema, sceneTimings, validateSceneCoverage } from './outputs.ts';
 /** `madeTopics` lists topics already chosen in other flows, so Idea does not repeat a reel. */
 interface Options { connections: Connection[]; runner?: TurnRunner; madeTopics?: (flowId: string) => string[] }
 const sameTopic = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -65,8 +65,16 @@ export function createLiveExecutors(options: Options): Record<string, Executor> 
         if (repeat) throw new Error(`Topic already made: ${repeat.topic}. Replace it with a new topic.`);
       }) } };
     },
-    script: async ctx => ({ script: { value: await generate(ctx, options, 'script', scriptSchema,
-      `Use the upstream chosen idea. Draft the metaphor map FIRST (real concept → Roblox element), then the spoken script. Target ${ctx.node.config.words} words; fullText must contain 130–160 words measured by whitespace and wordCount must be accurate. Hook ends with "explained in Roblox" and is the entire first beat. Fixed five beats for a 55 s reel: hook 0–2, world rules 2–10, escalation 10–40 (three escalating developments), twist/real-world snap-back 40–50, loop line 50–55 flowing back into the hook. Join beat texts exactly into fullText. Keep the story original; no swapped-noun formula.`) } }),
+    script: async input => {
+      const [min, max] = scriptWordRange(Number(input.node.config.words));
+      // Pass only the chosen candidate: with all of them the model sometimes writes about another one.
+      const idea = ideaSchema.safeParse(input.inputs.idea?.value);
+      const ctx = idea.success ? { ...input, inputs: { ...input.inputs, idea: { value: { chosen: idea.data.candidates[idea.data.chosen] } } } } : input;
+      return { script: { value: await generate(ctx, options, 'script', scriptSchema,
+      `Use the upstream chosen idea. Draft the metaphor map FIRST (real concept → Roblox element), then the spoken script. Target ${ctx.node.config.words} words; fullText must contain ${min}–${max} words measured by whitespace. Hook ends with "explained in Roblox" and is the entire first beat. Fixed five beats for a 55 s reel: hook 0–2, world rules 2–10, escalation 10–40 (three escalating developments), twist/real-world snap-back 40–50, loop line 50–55 flowing back into the hook. Join beat texts exactly into fullText. Keep the story original; no swapped-noun formula.`, value => {
+        if (value.wordCount < min || value.wordCount > max) throw new Error(`Script has ${value.wordCount} words; return ${min}–${max} words (target ${ctx.node.config.words})`);
+      }) } };
+    },
     scenes: async ctx => {
       const script = scriptSchema.parse(ctx.inputs.script?.value);
       if (ctx.inputs.timings && ctx.inputs.timings.value === undefined) throw new Error('Подключённые тайминги должны содержать интервалы beats или words.');

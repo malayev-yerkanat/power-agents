@@ -13,6 +13,12 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-30 07:30 UTC - Live reel 002 run fixes: voice, script, final size
+
+First end-to-end live flow found and fixed five issues: free-plan ElevenLabs refuses library voices (default now Liam), script length follows the node word target, Script receives only the chosen idea, word count is measured not trusted, and Final renders full 1080x1920.
+
+Note: [[changes/20261030-073041-live-reel-002-run-fixes-voice-script-final-size|Live reel 002 run fixes: voice, script, final size]]
+
 ### 2026-10-30 06:53 UTC - Review EN RU language toggle
 
 Fixed missing platform translations, feedback that stayed in the previous language, and localized flow defaults being persisted as titles. Expanded translation regression coverage while preserving custom content and protected F4 files.

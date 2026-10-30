@@ -23,7 +23,7 @@ export const registry: Readonly<Record<string, NodeDefinition>> = Object.freeze(
   define('edit', 'Edit plan', ['timings', 'video', 'brand'], ['edit'], llm),
   define('preview', 'Preview', ['edit', 'video', 'audio'], ['video'], { height: z.union([z.literal(540), z.literal(1080)]).default(540) }, true, 'render'),
   define('qa', 'QA', ['video', 'edit'], ['report'], { instructions: text }, false),
-  define('final', 'Final', ['edit', 'video', 'audio', 'report'], ['video'], { height: z.union([z.literal(540), z.literal(1080)]).default(1080) }, true, 'render'),
+  define('final', 'Final', ['edit', 'video', 'audio', 'report'], ['video'], { height: z.union([z.literal(540), z.literal(1080), z.literal(1920)]).default(1920) }, true, 'render'),
   define('prompt', 'Prompt / Note', [], ['text'], { text }, false),
 ].map(definition => [definition.type, { ...definition, inputs: definition.inputs.map(port => (['idea', 'script', 'scenes'].includes(definition.type) && port.type === 'brand') || (definition.type === 'scenes' && port.type === 'timings') ? { ...port, optional: true } : port) }])));
 export const demoExecutor: Executor = async ({ node, notes }) => Object.fromEntries(registry[node.type].outputs.map(port =>
