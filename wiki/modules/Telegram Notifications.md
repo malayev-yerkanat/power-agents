@@ -6,7 +6,7 @@ status: active
 language: typescript
 purpose: "Pair one private Telegram chat and deliver run alerts"
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-30
 tags: [module, telegram, notifications]
 ---
 
@@ -18,6 +18,10 @@ Only two run transitions create automatic alerts: entry into `awaiting_approval`
 
 Readiness requires successful polling. Startup and recovery use an immediate poll, followed by normal long polling when healthy. A polling outage disables pairing and test actions until the service recovers; the open Settings panel refreshes status automatically.
 
-The first release supports one private chat and notification delivery only. Plans are approved in [[Client Interface]]. It does not expose the loopback-only app on a phone, accept Telegram approval buttons, or use a public webhook.
+Power Agents run plans are still approved in [[Client Interface]]. Claude hooks use the existing authenticated approval/question endpoints. Codex Desktop uses a dedicated bot and independent pairing database through `src/server/codex/service.ts`; it never borrows Claude’s token or polling offset. Native command/network and current-turn permission approvals, empty-form MCP tool confirmations (including Browser use downloads), plus structured blocking/async questions can be answered on the desktop or Telegram. Explicit replies are bound to the original bot message and paired private user. Unknown, secret, oversized, file-change, plan/option-picker, authentication and other MCP elicitation requests remain desktop-only.
+
+The Codex adapter validates private socket ownership, protocol versions, owner identity and request/turn identity. Canonical history is transiently inspected; no snapshots or chat text are logged or persisted by the bridge. Desktop resolution, disconnect, expiration and duplicate replies invalidate controls. Async replies use ordinary steering with a fresh-state check; the internal desktop API has no atomic expected-turn guard. See [setup, supported prompts and limitations](../../docs/codex-telegram.md).
 
 Evidence: [Telegram service](../../src/server/telegram.ts), [store](../../src/server/store.ts), [HTTP API](../../src/server/http.ts), and [tests](../../tests/telegram.test.ts).
+
+Browser use download prompts arrive as `mcpServer/elicitation/request`, not native permission grants. Empty-object forms explicitly classified `mcp_tool_call` use the desktop follower elicitation response with empty content and null response metadata. Offered session/always persistence is never copied. Unknown/auth/OTP/user-verification forms remain desktop-only.

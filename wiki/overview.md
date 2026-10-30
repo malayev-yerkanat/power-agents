@@ -47,3 +47,5 @@ Ambient city, cars and aircraft now use detailed generated raster artwork matche
 The ambient monsters now breathe, roar, stomp and perform three attack gestures each using aligned key poses. Shared ground anchors, fixed scale and padded logical canvases preserve pixel consistency. Minor generated art variation remains; see [[Client Interface]].
 
 Editor drafts survive navigation and reload within the current browser tab through validated `sessionStorage`; creation and run-specific steering remain separate. Fragment links preserve run/tab context and browser back/forward. History filtering covers loaded pages only, with older pages available on request. These client changes leave the API, SSE, provider execution and SQLite contracts intact; server-wide history search and reusable named teams remain planned work.
+
+Codex Desktop can use its own Telegram bot for supported approvals and structured questions, with desktop controls retained. Token, pairing, and polling state are independent of Claude. The private IPC adapter is version-checked and leaves unsupported prompts on desktop; see [[Telegram Notifications]] and [Codex setup](../docs/codex-telegram.md).

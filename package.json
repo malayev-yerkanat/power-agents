@@ -21,7 +21,9 @@
     "service:stop": "node --import tsx scripts/launchd.ts stop",
     "service:restart": "node --import tsx scripts/launchd.ts restart",
     "service:status": "node --import tsx scripts/launchd.ts status",
-    "service:uninstall": "node --import tsx scripts/launchd.ts uninstall"
+    "service:uninstall": "node --import tsx scripts/launchd.ts uninstall",
+    "codex:telegram:status": "node --env-file-if-exists=.env --import tsx scripts/codex-telegram.ts status",
+    "codex:telegram:pair": "node --env-file-if-exists=.env --import tsx scripts/codex-telegram.ts pair"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",

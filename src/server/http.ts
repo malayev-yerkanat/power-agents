@@ -11,6 +11,7 @@ import type { TelegramService } from './telegram.ts';
 import { resolveFile, taskFolder } from './files.ts';
 import { repoInfo } from './workspace.ts';
 import { handleFlows, type FlowApi } from './flows/http.ts';
+import type { CodexTelegramService } from './codex/service.ts';
 
 interface EngineApi {
   create(input: CreateRunInput, repo?: { root: string; baseCommit: string }): Run | Promise<Run>;
@@ -18,7 +19,7 @@ interface EngineApi {
   control(id: string, action: 'pause' | 'resume' | 'cancel', confirmRepeat?: boolean): Run | Promise<Run>;
   message(id: string, body: string): Run | Promise<Run>;
 }
-interface Options { store: Store; engine: EngineApi; connections: Connection[]; workspaceRoot?: string; models?: (connection: Connection) => Promise<ModelCatalog>; telegram?: TelegramService; telegramError?: string; flows?: FlowApi }
+interface Options { store: Store; engine: EngineApi; connections: Connection[]; workspaceRoot?: string; models?: (connection: Connection) => Promise<ModelCatalog>; telegram?: TelegramService; telegramError?: string; flows?: FlowApi; codexTelegram?: Pick<CodexTelegramService, 'status' | 'beginPairing'> }
 class HttpError extends Error {
   statusCode: number;
   constructor(statusCode: number, message: string) { super(message); this.statusCode = statusCode; }
@@ -214,6 +215,7 @@ export function createApiHandler(options: Options): (req: IncomingMessage, res: 
       }
       if (req.method === 'GET') {
         if (url.pathname === '/api/events') eventStream(req, res, options.store);
+        else if (url.pathname === '/api/telegram/codex') json(res, 200, options.codexTelegram?.status() ?? { enabled: false, configured: false, ready: false, connected: false, status: 'Disabled' });
         else if (url.pathname === '/api/runs') {
           const before = url.searchParams.get('before');
           if (before !== null && (!before || before.length > 128 || !options.store.hasRun(before))) throw new HttpError(400, 'Invalid run cursor');
@@ -249,6 +251,11 @@ export function createApiHandler(options: Options): (req: IncomingMessage, res: 
       } else if (req.method === 'POST') {
         const token = req.headers['x-csrf-token'];
         if (typeof token !== 'string' || !secureEqual(token, csrfToken)) throw new HttpError(403, 'Invalid CSRF token');
+        if (url.pathname === '/api/telegram/codex/pair') {
+          z.object({}).strict().parse(await readBody(req));
+          if (!options.codexTelegram?.status().ready) throw new HttpError(503, 'Configure the dedicated Codex bot token and wait for it to connect.');
+          json(res, 200, options.codexTelegram.beginPairing()); return true;
+        }
         if (url.pathname === '/api/telegram/pair') {
           if (!options.telegram) throw new HttpError(503, 'Configure TELEGRAM_BOT_TOKEN to enable Telegram');
           if (!options.telegram.status().ready) throw new HttpError(503, 'Telegram bot is unavailable. Check the token and network.');
@@ -261,27 +268,6 @@ export function createApiHandler(options: Options): (req: IncomingMessage, res: 
           z.object({}).strict().parse(await readBody(req));
           if (!options.store.telegramRecipient()) throw new HttpError(409, 'Pair a Telegram chat first');
           options.telegram.queueTest(); json(res, 200, { queued: true }); return true;
-        }
-        if (url.pathname === '/api/telegram/approval') {
-          if (!options.telegram?.status().ready) throw new HttpError(503, 'Telegram bot is unavailable');
-          if (!options.store.telegramRecipient()) throw new HttpError(409, 'Pair a Telegram chat first');
-          const { text } = z.object({ text: z.string().min(1).max(1000) }).strict().parse(await readBody(req));
-          // Claude Code kills the hook when the Mac dialog is answered first; drop the wait with it.
-          const closed = new AbortController();
-          res.on('close', () => closed.abort());
-          const allowed = await options.telegram.requestApproval(text, 570_000, closed.signal);
-          json(res, 200, { decision: allowed === undefined ? null : allowed ? 'allow' : 'deny' }); return true;
-        }
-        if (url.pathname === '/api/telegram/question') {
-          if (!options.telegram?.status().ready) throw new HttpError(503, 'Telegram bot is unavailable');
-          if (!options.store.telegramRecipient()) throw new HttpError(409, 'Pair a Telegram chat first');
-          const { text, options: labels } = z.object({ text: z.string().min(1).max(2000), options: z.array(z.string().min(1).max(40)).min(1).max(4) })
-            .strict().parse(await readBody(req));
-          // The Stop hook is killed when the user answers in the app or stops the turn; drop the wait with it.
-          const closed = new AbortController();
-          res.on('close', () => closed.abort());
-          const choice = await options.telegram.requestChoice(text, labels.map(label => ({ label, status: `Answered: ${label}` })), 570_000, closed.signal);
-          json(res, 200, { choice: choice ?? null }); return true;
         }
         if (path[1] !== 'runs') throw new HttpError(404, 'API endpoint not found');
         const run = await mutate(path, await readBody(req), options);

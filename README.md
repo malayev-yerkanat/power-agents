@@ -48,6 +48,8 @@ cp .env.example .env
 
 ### Telegram alerts
 
+Codex Desktop approvals and structured questions can use a separate bot while keeping desktop controls available. Set `CODEX_TELEGRAM_BOT_TOKEN`, enable `CODEX_TELEGRAM_ENABLED=true`, restart the service, then run `npm run codex:telegram:pair`. See [Codex–Telegram setup and supported prompts](docs/codex-telegram.md).
+
 Create a bot with BotFather, set `TELEGRAM_BOT_TOKEN` in `.env`, and restart the server. In the app's connection settings, generate a one-use pairing link and send the bot **Start** from a private chat. The bot can notify that a plan is ready for approval or that a run has completed review. Messages omit task text and artifacts. Pending alerts are saved in SQLite and retried when the app runs again; Telegram cannot approve a plan or open this loopback-only app on your phone.
 
 If Telegram polling fails, pairing and test alerts become unavailable until polling recovers. Open connection settings refresh their status automatically.

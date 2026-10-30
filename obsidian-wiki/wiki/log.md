@@ -13,6 +13,54 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-30 11:39 UTC - Agent avatars use approved Ranger pfps
+
+The Avatar component now shows the approved v14 Ranger portraits for Codex, Claude and Gemini connections; other connections keep their initials.
+
+Note: [[changes/20261030-113907-agent-avatars-use-approved-ranger-pfps|Agent avatars use approved Ranger pfps]]
+
+### 2026-10-30 11:35 UTC - Codex pfp badge reshaped to 7-lobe cloud
+
+Reshaped the Codex pfp chest badge into a seven-lobe cloud matching the official logo, with white clearance from the armour; colours and glyph unchanged.
+
+Note: [[changes/20261030-113539-codex-pfp-badge-reshaped-to-7-lobe-cloud|Codex pfp badge reshaped to 7-lobe cloud]]
+
+### 2026-10-30 11:27 UTC - Pfps v14 and Gemini sprite without visor mark
+
+Restyled the Codex pfp chest badge in the suit's own shaded blue, and removed the multicolour visor mark from the Gemini pfp and the in-app Gemini sprite.
+
+Note: [[changes/20261030-112703-pfps-v14-and-gemini-sprite-without-visor-mark|Pfps v14 and Gemini sprite without visor mark]]
+
+### 2026-10-30 10:55 UTC - Agent profile pictures (pixel pfps v10-v13)
+
+Added square retro pixel-art profile pictures for the Codex, Claude and Gemini Rangers, built from the approved sprites with official Codex and Gemini logo emblems. Concept assets awaiting approval; not wired into the app.
+
+Note: [[changes/20261030-105523-agent-profile-pictures-pixel-pfps-v10-v13|Agent profile pictures (pixel pfps v10-v13)]]
+
+### 2026-10-30 10:06 UTC - Claude Code Telegram hooks moved to their own bot
+
+Claude Code approval, turn and prompt hooks now run from ~/.claude/tools/claude-telegram with a dedicated bot and bridge service, so Power Agents no longer serves them; removed the old hook scripts, the /api/telegram/approval, /question and /cancel endpoints, and TELEGRAM_CHAT_ID from .env.example.
+
+Note: [[changes/20261030-100641-claude-code-telegram-hooks-moved-to-their-own-bot|Claude Code Telegram hooks moved to their own bot]]
+
+### 2026-10-30 08:28 UTC - Fix missing Browser use Telegram approvals
+
+Forward empty-form MCP tool confirmations, including Browser use download permissions, to the dedicated Codex bot. Approve once and decline use the desktop response format without persistent grants.
+
+Note: [[changes/20261030-082815-fix-missing-browser-use-telegram-approvals|Fix missing Browser use Telegram approvals]]
+
+### 2026-10-30 07:55 UTC - Verified dedicated Codex Telegram connection
+
+Paired the separate Codex bot and verified a live structured question reply from Telegram reaches the active Codex desktop chat. Enabled local desktop chat coverage without sharing Claude bot credentials.
+
+Note: [[changes/20261030-075535-verified-dedicated-codex-telegram-connection|Verified dedicated Codex Telegram connection]]
+
+### 2026-10-30 07:53 UTC - Dedicated Codex Telegram approvals and questions
+
+Added a separate Codex bot with isolated credentials, pairing and polling, plus desktop request mirroring and message-bound replies. Existing Claude integration is preserved.
+
+Note: [[changes/20261030-075325-dedicated-codex-telegram-approvals-and-questions|Dedicated Codex Telegram approvals and questions]]
+
 ### 2026-10-30 07:30 UTC - Live reel 002 run fixes: voice, script, final size
 
 First end-to-end live flow found and fixed five issues: free-plan ElevenLabs refuses library voices (default now Liam), script length follows the node word target, Script receives only the chosen idea, word count is measured not trusted, and Final renders full 1080x1920.
@@ -30,6 +78,12 @@ Note: [[changes/20261030-065316-review-en-ru-language-toggle|Review EN RU langua
 Live flows now run Voice (ElevenLabs), Capture (Studio take upload), Edit plan, Preview, QA and Final through JSON-contract Python stages in the content project, with streamed uploads, Range media playback in cards and a needs-human state.
 
 Note: [[changes/20261030-064930-f4-media-pipeline-stages-uploads-playback|F4 media pipeline: stages, uploads, playback]]
+
+### 2026-10-30 06:49 UTC - Telegram waiting state covers earlier turns and Codex jobs
+
+The turn alert now shows waiting on background work while a background agent or command from any turn has not reported back, or a Codex plugin job of the session is still running.
+
+Note: [[changes/20261030-064928-telegram-waiting-state-covers-earlier-turns-and-codex-jobs|Telegram waiting state covers earlier turns and Codex jobs]]
 
 ### 2026-10-30 06:48 UTC - F4 localization compatibility and final checks
 
@@ -73,11 +127,35 @@ Added the Russian Flows list, React Flow canvas, typed node editing and actions,
 
 Note: [[changes/20261030-060428-f2-flow-canvas-workspace|F2 flow canvas workspace]]
 
+### 2026-10-30 06:02 UTC - Telegram alert shows waiting on background work
+
+A turn that started a background agent, background command, Monitor or ScheduleWakeup now alerts as waiting on background work instead of done.
+
+Note: [[changes/20261030-060237-telegram-alert-shows-waiting-on-background-work|Telegram alert shows waiting on background work]]
+
+### 2026-10-30 06:00 UTC - Even shorter Telegram alerts
+
+Turn alerts keep only the first paragraph, at most 200 characters, and drop Markdown headings; approval alerts show at most 200 characters of the command.
+
+Note: [[changes/20261030-060004-even-shorter-telegram-alerts|Even shorter Telegram alerts]]
+
+### 2026-10-30 05:58 UTC - Shorter, structured Telegram alerts
+
+Claude Code turn and approval alerts now start with an emoji status line, strip Markdown, cap the body at 400 characters at a sentence end, and separate header, recap and question with blank lines.
+
+Note: [[changes/20261030-055831-shorter-structured-telegram-alerts|Shorter, structured Telegram alerts]]
+
 ### 2026-10-30 05:55 UTC - Reel Flow engine F1 (headless)
 
 Added a headless node-graph flow engine for the Reel Flow workspace: typed nodes, approval gates, reject-with-note re-runs, stale propagation, auto-run, a render lane and restart safety, plus /api/flows routes and a roblox-reel template.
 
 Note: [[changes/20261030-055510-reel-flow-engine-f1-headless|Reel Flow engine F1 (headless)]]
+
+### 2026-10-30 05:44 UTC - Answer Claude Code questions from the app or Telegram
+
+The Stop hook now exits 2 to hand a Telegram tap back, so it can run with asyncRewake and the turn ends at once; a new UserPromptSubmit hook cancels that session's open Telegram question when the user answers in the app.
+
+Note: [[changes/20261030-054417-answer-claude-code-questions-from-the-app-or-telegram|Answer Claude Code questions from the app or Telegram]]
 
 ### 2026-10-28 08:57 UTC - M4: plain-text artifact accepted
 

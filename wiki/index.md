@@ -16,7 +16,7 @@ Start with [[hot|Hot Cache]] for recent changes or [[Architecture Overview]] for
 - [[Data Flow]] — create, approve, execute, review
 - [[Session and API Flow]] — local API, cookie, CSRF, SSE
 - [[Model Selection Flow]] — model lists for each connection
-- [[Telegram Notification Flow]] — private-chat pairing and durable alerts
+- [[Telegram Notification Flow]] — private-chat pairing, durable alerts and separate Codex decision bot
 - [[macOS Autostart Flow]] — login startup and service controls
 - [[Backup and Restore Flow]] — offline backup and recovery of local state
 - [[Tech Stack]] — runtime and dependencies

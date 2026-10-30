@@ -3,7 +3,7 @@ type: flow
 title: "Telegram Notification Flow"
 status: active
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-30
 tags: [flow, telegram, notifications]
 ---
 
@@ -24,3 +24,9 @@ An invalid bot token, unavailable Bot API, blocked bot, or conflicting Telegram 
 After initialization, polling failure marks the bot unready and Settings disables pairing and test actions. An immediate retry poll restores readiness after recovery; healthy polling uses a 25-second long poll. Open Settings refreshes this status every three seconds.
 
 Evidence: [store](../../src/server/store.ts), [service](../../src/server/telegram.ts), [settings UI](../../src/client/TelegramSettings.tsx), [tests](../../tests/telegram.test.ts).
+
+## Codex Desktop decisions
+
+Configure `CODEX_TELEGRAM_BOT_TOKEN` and enable `CODEX_TELEGRAM_ENABLED`, restart, then use `npm run codex:telegram:pair` and press Start. This bot has its own `codex-telegram.sqlite`, recipient and poller. `npm run codex:telegram:status` reports readiness without exposing credentials. The bridge discovers up to 100 recent local top-level desktop chats, follows their owners, and mirrors supported pending requests. Buttons approve once or decline; questions also accept explicit Telegram replies. Desktop answers remove pending Telegram controls. Both services and an awake Mac are required. See [Codex–Telegram](../../docs/codex-telegram.md) for unsupported prompts and compatibility boundaries.
+
+Browser use download confirmation is an MCP empty-form tool approval. It is mirrored with the complete action parameters and approve-once/decline buttons. Desktop completion invalidates the Telegram wait; already accepted requests are not replayed. Authentication and nonempty forms stay on desktop.

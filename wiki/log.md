@@ -8,6 +8,19 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-30 — Browser use download approvals reach Telegram
+
+- Diagnosed the missed download request as `mcpServer/elicitation/request` with an empty MCP tool confirmation form, which the bridge previously left desktop-only. Added that exact request class with complete action previews and approve-once/decline responses.
+- Response metadata stays null, so offered session/always grants are never echoed. Authentication, OTP, verification, URL flows, populated/unknown forms and oversized previews remain desktop-only. Already accepted requests are not replayed.
+- TDD reproduced the missing prompt; 314/314 regression tests pass with 86.79% overall line coverage. Focused approval tests, build/typecheck and security review pass. No linter is configured. The live source request was inspected without answering it; a new live download approval was not executed as a test. Restarted the background service to activate the fix.
+
+## 2026-10-30 — Dedicated Codex Telegram decisions
+
+- Added a separate Codex bot token, pairing, poller and SQLite store while preserving Claude’s existing bot. Session/CSRF-protected pairing and credential-free status commands are available.
+- Added version-checked local desktop IPC, bounded chat discovery, canonical-history questions, native command/network and turn-scoped permission replies, free-text Telegram replies and stale/duplicate/desktop-first cancellation. Unsupported prompts remain desktop-only; no approval policy or sandbox changes.
+- Verification: 311/311 unit/integration tests pass with 86.72% overall line coverage; build/typecheck and all 44 browser regressions pass. Coverage includes identity binding, protocol validation, separate bot lifecycle, authorization and races. No linter is configured. Live desktop handshake, snapshot reads, dedicated bot pairing and a real Telegram-to-Codex async question reply verified. The user selected all local desktop chats. No real system approval was issued as a test.
+- Updated setup docs, prototype, module/flow maps and current wiki context. Existing user edits preserved; no commits or pushes.
+
 ## 2026-10-30 — EN/RU language toggle review
 
 - Fixed untranslated encounter task alt text, known connection descriptions/model notes and interpolated platform errors; corrected English team wording. Feedback retains source keys and translates on display, including field validation, draft errors, clipboard/Telegram notices and screen-reader announcements.
