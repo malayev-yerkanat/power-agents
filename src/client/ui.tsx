@@ -14,8 +14,11 @@ export function Status({ status }: { status: RunStatus | TaskStatus }) {
   const Icon = status === 'completed' ? Check : status === 'failed' ? WarningCircle : status === 'paused' ? Pause : status === 'cancelled' ? X : status === 'running' || status === 'planning' ? CircleNotch : Circle;
   return <span className={`status status-${status}`}><Icon size={13} weight="bold" />{t(statusLabels[status])}</span>;
 }
+/** Codex, Claude and Gemini show their approved Ranger portrait; other connections keep initials. */
+export const avatarAsset = (connectionId: string) => providerFor(connectionId) === 'neutral' ? undefined : `/art/avatars/${providerFor(connectionId)}.png`;
 export function Avatar({ member, index = 0, small = false }: { member?: Pick<Member, 'name'> & Partial<Pick<Member, 'connectionId'>>; index?: number; small?: boolean }) {
-  return <span className={`avatar avatar-${index % 4} avatar-provider-${providerFor(member?.connectionId || '')} ${small ? 'avatar-small' : ''}`} aria-hidden="true">{member?.name.slice(0, 2).toUpperCase() || 'PA'}</span>;
+  const portrait = avatarAsset(member?.connectionId || '');
+  return <span className={`avatar avatar-${index % 4} avatar-provider-${providerFor(member?.connectionId || '')} ${small ? 'avatar-small' : ''} ${portrait ? 'avatar-portrait' : ''}`} aria-hidden="true">{portrait ? <img src={portrait} alt="" width="128" height="128" draggable={false} /> : member?.name.slice(0, 2).toUpperCase() || 'PA'}</span>;
 }
 export function Empty({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return <div className="empty-state"><div className="empty-icon">{icon}</div><h3>{title}</h3><p>{children}</p></div>;

@@ -1,0 +1,46 @@
+{
+  "method": "Deterministic PIL; local 12px/13px cells; nearest-neighbour only",
+  "checklist": {
+    "codex_official_cloud_five_bands_white_terminal": true,
+    "gemini_concave_equal_tips_stepped_colors_no_black_outline": true,
+    "gemini_visor_eleven_cells_no_outline": true,
+    "claude_byte_identical": true,
+    "review_board_v12_v13_three_4x_comparisons_64_128_circles": true,
+    "zero_changes_outside_emblem_masks": true
+  },
+  "agents": {
+    "codex": {
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "opaque": true,
+      "changed_pixels_total": 48967,
+      "changed_pixels_outside_emblem_masks": 0,
+      "source_sha256": "b13e26a5ddd957bf4d6297e9e4a11ec62e368d1c2aaacacc1829f545d5ac9e74"
+    },
+    "gemini": {
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "opaque": true,
+      "changed_pixels_total": 33238,
+      "changed_pixels_outside_emblem_masks": 0,
+      "source_sha256": "3ff58df3970b40ced1c950fd0101f375c61b2ae0b58fddb9570b3710d2bb606c"
+    },
+    "claude": {
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "opaque": true,
+      "changed_pixels_total": 0,
+      "changed_pixels_outside_emblem_masks": 0,
+      "source_sha256": "d3e548e36902a719eb2cc57d13fe153dfa58551cd19f0832ef945543131840e7"
+    }
+  },
+  "remaining_issues": [],
+  "visual_checks": "Portraits and full review board inspected; logical-cell rounding approximates reference curves.",
+  "verify_command": "PYTHONDONTWRITEBYTECODE=1 python3 verify_v13.py"
+}
