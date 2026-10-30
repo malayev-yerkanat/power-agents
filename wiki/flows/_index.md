@@ -8,7 +8,7 @@ tags: [flows]
 
 # Flows Index
 
-- [[Reel Flow Execution]] — canvas demo graph, approvals, stale output and restart safety
+- [[Reel Flow Execution]] — live reel stages, take uploads, approvals, QA and media playback
 
 - [[Data Flow]] — a team run from goal to reviewed result
 - [[Session and API Flow]] — browser authentication and event refresh

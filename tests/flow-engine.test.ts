@@ -152,7 +152,7 @@ test('template includes all typed ports and final waits on QA; live missing exec
     const live = create([node('p', 'prompt')], [], false, 'live');
     engine.run(live.id, 'p');
     const failed = await until(() => store.getFlow(live.id)!, f => status(f, 'p') === 'failed');
-    assert.match(failed.nodes[0].error!, /not available until F4/);
+    assert.match(failed.nodes[0].error!, /executor is not available/);
     assert.equal(store.nodeRuns(live.id)[0].status, 'failed');
   } finally { clean(); }
 });
@@ -210,8 +210,20 @@ test('engine selects real LLM executors only for live mode and optional disconne
     assert.ok(registry.scenes.inputs.find(p => p.name === 'brand')?.optional);
   } finally { clean(); }
 });
-test('roblox template lets Scenes run on script beats and seeds Idea with reel 001', () => {
+test('roblox template connects live Voice timings and seeds Idea with reel 001', () => {
   const template = robloxReel();
-  assert.ok(!template.edges.some(edge => edge.to.node === 'scenes' && edge.to.port === 'timings'));
+  assert.ok(template.edges.some(edge => edge.from.node === 'voice' && edge.to.node === 'scenes' && edge.to.port === 'timings'));
   assert.deepEqual(template.nodes.find(node => node.id === 'idea')!.config.avoid, ['Inflation']);
+});
+test('pipeline human errors are distinct and a failed QA report remains visible', async () => {
+  const { PipelineError } = await import('../src/server/flows/pipeline.ts');
+  const report = { passed: false, checks: [{ name: 'loudness', ok: false, detail: '-20 LUFS' }] };
+  const app = setup({ prompt: async ({ node }) => { throw new PipelineError(node.id === 'human' ? 'Upload a take' : 'QA failed', node.id === 'human', node.id === 'qa-report' ? { report: { value: report } } : undefined); } });
+  try {
+    const flow = app.create([node('human', 'prompt'), node('qa-report', 'prompt')]);
+    app.engine.run(flow.id, 'human'); app.engine.run(flow.id, 'qa-report');
+    const failed = await until(() => app.store.getFlow(flow.id)!, f => f.nodes.every(n => n.status === 'failed'));
+    assert.equal(failed.nodes[0].needsHuman, true); assert.equal(failed.nodes[1].needsHuman, false);
+    assert.deepEqual(failed.nodes[1].output?.report.value, report); assert.equal(failed.nodes[1].outputVersion, 1);
+  } finally { app.clean(); }
 });

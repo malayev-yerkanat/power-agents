@@ -1,3 +1,4 @@
+import { pipelineExecutors } from './pipeline.ts';
 import { z } from 'zod';
 import type { Connection, Member, TurnRunner } from '../../shared/types.ts';
 import { runTurn } from '../adapters/index.ts';
@@ -53,6 +54,7 @@ async function generate<T>(ctx: ExecutionContext, options: Options, type: keyof 
 }
 export function createLiveExecutors(options: Options): Record<string, Executor> {
   return {
+    ...pipelineExecutors,
     brand: async ({ node }) => ({ brand: { value: { text: node.config.text, rules: node.config.rules } } }),
     idea: async ctx => {
       const avoid = [...new Set([...(Array.isArray(ctx.node.config.avoid) ? ctx.node.config.avoid.map(String) : []), ...(options.madeTopics?.(ctx.flow.id) ?? [])]

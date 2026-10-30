@@ -12,6 +12,8 @@ import { api, createSessionRequest } from './session';
 import { TelegramSettings } from './TelegramSettings';
 import { useWorkspaceLocation } from './useWorkspaceLocation';
 import { dateLabel, ErrorNote, statusLabels } from './ui';
+import { uiMessage } from './uiMessages';
+import { LanguageToggle, t, useLanguage } from './i18n';
 
 const FlowCanvas = lazy(() => import('./flows/FlowCanvas').then(module => ({ default: module.FlowCanvas })));
 
@@ -48,6 +50,7 @@ export function mergeDetail(current: RunDetail | null, incoming: RunDetail): Run
 }
 
 export function App() {
+  useLanguage();
   const [bootstrap, setBootstrap] = useState<Bootstrap | null>(null);
   const { location, navigate } = useWorkspaceLocation();
   const selectedId = location.view === 'run' ? location.runId : null;
@@ -220,18 +223,18 @@ export function App() {
   const connectionsReady = bootstrap?.connections.filter(connection => connection.available).length || 0;
   const workspace = !bootstrap
     ? <div className="bootstrap-state">{error
-        ? <><ErrorNote>{error}</ErrorNote><button className="secondary-button mt-4" onClick={() => void refresh()}><ArrowClockwise size={16} />Повторить подключение</button></>
-        : <><div className="skeleton skeleton-title" /><div className="skeleton skeleton-copy" /><div className="skeleton skeleton-composer" /><p className="text-sm text-muted mt-5">Подключаем рабочее пространство…</p></>}</div>
+        ? <><ErrorNote>{error}</ErrorNote><button className="secondary-button mt-4" onClick={() => void refresh()}><ArrowClockwise size={16} />{t('Повторить подключение')}</button></>
+        : <><div className="skeleton skeleton-title" /><div className="skeleton skeleton-copy" /><div className="skeleton skeleton-composer" /><p className="text-sm text-muted mt-5">{t('Подключаем рабочее пространство…')}</p></>}</div>
     : location.view === 'flows'
       ? <FlowList request={request} csrfToken={bootstrap.csrfToken} open={id => goTo({ view: 'flow', flowId: id })} />
       : location.view === 'flow'
-        ? <Suspense fallback={<div className="flows-list"><h1 id="workspace-heading" tabIndex={-1}>Загружаем канвас…</h1></div>}><FlowCanvas key={location.flowId} id={location.flowId} request={request} csrfToken={bootstrap.csrfToken} back={() => goTo({ view: 'flows' })} /></Suspense>
+        ? <Suspense fallback={<div className="flows-list"><h1 id="workspace-heading" tabIndex={-1}>{t('Загружаем канвас…')}</h1></div>}><FlowCanvas key={location.flowId} id={location.flowId} request={request} csrfToken={bootstrap.csrfToken} back={() => goTo({ view: 'flows' })} /></Suspense>
     : location.view === 'history'
       ? <HistoryView runs={bootstrap.runs} totalRuns={bootstrap.totalRuns} hasMore={!!bootstrap.nextCursor}
           loading={loadingHistory} loadMore={() => void loadOlderRuns()} select={id => select(id)} />
       : location.view === 'missing'
-        ? <main className="main-content history-content"><h1 id="workspace-heading" tabIndex={-1}>Страница не найдена</h1>
-            <button className="secondary-button" onClick={() => goTo({ view: 'history' })}>Открыть историю</button></main>
+        ? <main className="main-content history-content"><h1 id="workspace-heading" tabIndex={-1}>{t('Страница не найдена')}</h1>
+            <button className="secondary-button" onClick={() => goTo({ view: 'history' })}>{t('Открыть историю')}</button></main>
         : selectedId
           ? detail?.run.id === selectedId
             ? <RunWorkspace key={detail.run.id} detail={detail} mutate={mutate} loadOlderEvents={loadOlderEvents}
@@ -244,32 +247,33 @@ export function App() {
                     request<RunDetail>(`/api/runs/${encodeURIComponent(id)}`).then(incoming => {
                       if (selectedRef.current === id) setDetail(current => mergeDetail(current, incoming));
                     }).catch(cause => { if (selectedRef.current === id) setDetailError(cause instanceof Error ? cause.message : 'Не удалось загрузить задачу.'); });
-                  }}><ArrowClockwise size={15} />Повторить</button>
-                  <button className="secondary-button mt-4" onClick={() => goTo({ view: 'history' })}>Открыть историю</button></>
-                : <><div className="skeleton skeleton-title" /><div className="skeleton skeleton-composer" /><p className="text-sm text-muted mt-4">Загружаем задачу…</p></>}</div>
+                  }}><ArrowClockwise size={15} />{t('Повторить')}</button>
+                  <button className="secondary-button mt-4" onClick={() => goTo({ view: 'history' })}>{t('Открыть историю')}</button></>
+                : <><div className="skeleton skeleton-title" /><div className="skeleton skeleton-composer" /><p className="text-sm text-muted mt-4">{t('Загружаем задачу…')}</p></>}</div>
           : <Composer connections={bootstrap.connections} onCreate={create} openSettings={() => setSettings(true)} loadModels={loadModels} />;
   return <div className="app-shell" onKeyDown={event => { if (event.key === 'Escape') setSidebarOpen(false); }}>
-    <a className="skip-link" href="#workspace-heading" onClick={event => { const heading = document.getElementById('workspace-heading'); if (heading) { event.preventDefault(); heading.focus(); } }}>Перейти к рабочей области</a>
-    <dialog ref={historyDialog} id="run-navigation" className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`} aria-label="История запусков" onCancel={() => setSidebarOpen(false)} onClick={event => { if (event.target === event.currentTarget) { const bounds = event.currentTarget.getBoundingClientRect(); if (event.clientX > bounds.right || event.clientX < bounds.left) setSidebarOpen(false); } }}>
-      <button className="icon-button history-close" aria-label="Закрыть историю" onClick={() => setSidebarOpen(false)}><X size={18} /></button>
-      <button className="brand" onClick={() => select(null)} aria-label="Power Agents — новая задача"><span className="brand-bolt" aria-hidden="true" /><span>POWER AGENTS</span></button>
-      <button className="new-task-button" onClick={() => select(null)}><Plus size={17} />Новая задача<ArrowUpRight size={15} className="ml-auto opacity-50" /></button>
-      <div className="sidebar-section-title"><span>РАБОЧЕЕ ПРОСТРАНСТВО</span><SidebarSimple size={15} /></div>
-      <button className={`sidebar-nav ${location.view === 'history' ? 'is-active' : ''}`} onClick={() => goTo({ view: 'history' })}><FolderSimple size={18} /><span>Все задачи</span><span className="sidebar-count">{bootstrap?.totalRuns || 0}</span></button>
-      <button className={`sidebar-nav ${location.view === 'flows' || location.view === 'flow' ? 'is-active' : ''}`} onClick={() => goTo({ view: 'flows' })}><FolderSimple size={18} /><span>Потоки</span></button>
-      <div className="sidebar-section-title mt-7"><span>ИСТОРИЯ ЗАПУСКОВ</span></div>
-      <nav className="run-history" aria-label="История запусков">{bootstrap?.runs.length ? <>{bootstrap.runs.map(run => <button key={run.id} className={`history-item ${selectedId === run.id ? 'is-selected' : ''}`} aria-current={selectedId === run.id ? 'page' : undefined} onClick={() => select(run.id)}><span className={`history-dot history-${run.status}`} /><span className="min-w-0 flex-1"><span className="history-title">{run.title}</span><span className="history-meta">{run.mode === 'demo' ? 'Демо · ' : ''}{statusLabels[run.status]}<span>{dateLabel(run.createdAt)}</span></span></span></button>)}{bootstrap.nextCursor && <button className="history-item" disabled={loadingHistory} onClick={() => void loadOlderRuns()}>{loadingHistory ? 'Загружаем…' : 'Показать более ранние запуски'}</button>}</> : <div className="history-empty"><p>Пока чистый лист</p><span>Ваши задачи и результаты<br />будут сохраняться здесь.</span></div>}</nav>
-      <div className="sidebar-bottom"><button className="connection-button" onClick={() => { setSidebarOpen(false); setSettings(true); }}><PlugsConnected size={19} /><span>Подключения<small>{bootstrap ? `${connectionsReady} из ${bootstrap.connections.length} доступны` : 'Проверяем окружение'}</small></span><CaretRight size={13} /></button><div className="local-status"><span className={`connection-dot ${streamStatus === 'connected' ? 'is-connected' : ''}`} /><span>{streamStatus === 'connected' ? 'Локальное пространство' : streamStatus === 'disconnected' ? 'Переподключение…' : 'Подключаемся…'}</span><span className="ml-auto">v0.1</span></div></div>
+    <a className="skip-link" href="#workspace-heading" onClick={event => { const heading = document.getElementById('workspace-heading'); if (heading) { event.preventDefault(); heading.focus(); } }}>{t('Перейти к рабочей области')}</a>
+    <dialog ref={historyDialog} id="run-navigation" className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`} aria-label={t('История запусков')} onCancel={() => setSidebarOpen(false)} onClick={event => { if (event.target === event.currentTarget) { const bounds = event.currentTarget.getBoundingClientRect(); if (event.clientX > bounds.right || event.clientX < bounds.left) setSidebarOpen(false); } }}>
+      <button className="icon-button history-close" aria-label={t('Закрыть историю')} onClick={() => setSidebarOpen(false)}><X size={18} /></button>
+      <button className="brand" onClick={() => select(null)} aria-label={t('Power Agents — новая задача')}><span className="brand-bolt" aria-hidden="true" /><span>POWER AGENTS</span></button>
+      <button className="new-task-button" onClick={() => select(null)}><Plus size={17} />{t('Новая задача')}<ArrowUpRight size={15} className="ml-auto opacity-50" /></button>
+      <div className="sidebar-section-title"><span>{t('РАБОЧЕЕ ПРОСТРАНСТВО')}</span><SidebarSimple size={15} /></div>
+      <button className={`sidebar-nav ${location.view === 'history' ? 'is-active' : ''}`} onClick={() => goTo({ view: 'history' })}><FolderSimple size={18} /><span>{t('Все задачи')}</span><span className="sidebar-count">{bootstrap?.totalRuns || 0}</span></button>
+      <button className={`sidebar-nav ${location.view === 'flows' || location.view === 'flow' ? 'is-active' : ''}`} onClick={() => goTo({ view: 'flows' })}><FolderSimple size={18} /><span>{t('Потоки')}</span></button>
+      <div className="sidebar-section-title mt-7"><span>{t('ИСТОРИЯ ЗАПУСКОВ')}</span></div>
+      <nav className="run-history" aria-label={t('История запусков')}>{bootstrap?.runs.length ? <>{bootstrap.runs.map(run => <button key={run.id} className={`history-item ${selectedId === run.id ? 'is-selected' : ''}`} aria-current={selectedId === run.id ? 'page' : undefined} onClick={() => select(run.id)}><span className={`history-dot history-${run.status}`} /><span className="min-w-0 flex-1"><span className="history-title">{run.title}</span><span className="history-meta">{run.mode === 'demo' ? t('Демо · ') : ''}{t(statusLabels[run.status])}<span>{dateLabel(run.createdAt)}</span></span></span></button>)}{bootstrap.nextCursor && <button className="history-item" disabled={loadingHistory} onClick={() => void loadOlderRuns()}>{loadingHistory ? t('Загружаем…') : t('Показать более ранние запуски')}</button>}</> : <div className="history-empty"><p>{t('Пока чистый лист')}</p><span>{t('Ваши задачи и результаты')}<br />{t('будут сохраняться здесь.')}</span></div>}</nav>
+      <div className="sidebar-bottom"><button className="connection-button" onClick={() => { setSidebarOpen(false); setSettings(true); }}><PlugsConnected size={19} /><span>{t('Подключения')}<small>{bootstrap ? t('{ready} из {total} доступны', { ready: connectionsReady, total: bootstrap.connections.length }) : t('Проверяем окружение')}</small></span><CaretRight size={13} /></button><div className="local-status"><span className={`connection-dot ${streamStatus === 'connected' ? 'is-connected' : ''}`} /><span>{streamStatus === 'connected' ? t('Локальное пространство') : streamStatus === 'disconnected' ? t('Переподключение…') : t('Подключаемся…')}</span><span className="ml-auto">v0.1</span></div></div>
     </dialog>
     <div className="app-main"><header className="topbar">
-      <button className="header-brand" onClick={() => select(null)} aria-label="Power Agents — новая задача"><span className="brand-bolt" aria-hidden="true" /><span>POWER AGENTS</span></button>
-      <nav className="header-nav" aria-label="Разделы пространства">
-        <button className={!sidebarOpen ? 'is-active' : ''} onClick={() => setSidebarOpen(false)}>Пространство</button>
-        <button aria-expanded={sidebarOpen} aria-controls="run-navigation" onClick={() => setSidebarOpen(value => !value)}><List size={17} />Запуски</button>
-        <button className={location.view === 'flows' || location.view === 'flow' ? 'is-active' : ''} onClick={() => goTo({ view: 'flows' })}>Потоки</button>
-        <button onClick={() => setSettings(true)}><PlugsConnected size={17} />Подключения<span className={`connection-dot ${streamStatus === 'connected' ? 'is-connected' : ''}`} aria-label={streamStatus === 'connected' ? 'Сервер подключён' : 'Нет потока событий'} /></button>
+      <button className="header-brand" onClick={() => select(null)} aria-label={t('Power Agents — новая задача')}><span className="brand-bolt" aria-hidden="true" /><span>POWER AGENTS</span></button>
+      <nav className="header-nav" aria-label={t('Разделы пространства')}>
+        <button className={!sidebarOpen ? 'is-active' : ''} onClick={() => setSidebarOpen(false)}>{t('Пространство')}</button>
+        <button aria-expanded={sidebarOpen} aria-controls="run-navigation" onClick={() => setSidebarOpen(value => !value)}><List size={17} />{t('Запуски')}</button>
+        <button className={location.view === 'flows' || location.view === 'flow' ? 'is-active' : ''} onClick={() => goTo({ view: 'flows' })}>{t('Потоки')}</button>
+        <button onClick={() => setSettings(true)}><PlugsConnected size={17} />{t('Подключения')}<span className={`connection-dot ${streamStatus === 'connected' ? 'is-connected' : ''}`} aria-label={streamStatus === 'connected' ? t('Сервер подключён') : t('Нет потока событий')} /></button>
       </nav>
-      <button className="primary-button header-new-task" onClick={() => select(null)}><Plus size={17} /><span>Новая задача</span></button>
+      <LanguageToggle />
+      <button className="primary-button header-new-task" onClick={() => select(null)}><Plus size={17} /><span>{t('Новая задача')}</span></button>
     </header>
       {location.view !== 'flows' && location.view !== 'flow' && <CityBackdrop initiallyCollapsed />}
       {bootstrap && error && <div className="px-8 pt-4"><ErrorNote>{error}</ErrorNote></div>}
@@ -282,5 +286,5 @@ function Settings({ open, bootstrap, close, refresh, request }: { open: boolean;
   const dialog = useRef<HTMLDialogElement>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (open) dialog.current?.showModal(); else dialog.current?.close(); }, [open]);
-  return <dialog ref={dialog} className="settings-dialog" onCancel={close} onClick={event => { if (event.target === event.currentTarget) close(); }} aria-labelledby="settings-title"><div className="settings-inner"><div className="flex items-start justify-between gap-4"><div><span className="eyebrow">ОКРУЖЕНИЕ</span><h2 id="settings-title">Подключения</h2></div><button className="icon-button" aria-label="Закрыть подключения" onClick={close}><X size={19} /></button></div><p className="settings-intro">Используйте установленный CLI или API-подключение. Команда запускается на вашем компьютере.</p><div className="connection-list">{bootstrap?.connections.map(connection => <div className="connection-row" key={connection.id}><div className="flex items-center justify-between gap-3"><h3>{connection.name}</h3><span className={`connection-availability ${connection.available ? 'available' : ''}`}>{connection.available && <Check size={12} />}{connection.available ? 'Обнаружено' : 'Не настроено'}</span></div><p>{connection.detail}</p>{connection.executable && <code>{connection.executable}</code>}</div>)}</div>{bootstrap && <TelegramSettings open={open} request={request} csrfToken={bootstrap.csrfToken} />}<div className="settings-note"><strong>Перед первым запуском</strong><p>Наличие CLI не подтверждает авторизацию: войдите в аккаунт через соответствующий CLI в терминале. Авторизация проверяется при первом обращении к модели. Для API задайте OPENAI_API_KEY или ANTHROPIC_API_KEY в окружении сервера и перезапустите приложение.</p><p>API-запросы могут расходовать средства вашего провайдера. Пароли и ключи в этом интерфейсе не вводятся.</p></div><button className="secondary-button w-full" disabled={busy} onClick={async () => { setBusy(true); try { await refresh(); } finally { setBusy(false); } }}><ArrowClockwise size={16} />{busy ? 'Проверяем…' : 'Обновить статус'}</button></div></dialog>;
+  return <dialog ref={dialog} className="settings-dialog" onCancel={close} onClick={event => { if (event.target === event.currentTarget) close(); }} aria-labelledby="settings-title"><div className="settings-inner"><div className="flex items-start justify-between gap-4"><div><span className="eyebrow">{t('ОКРУЖЕНИЕ')}</span><h2 id="settings-title">{t('Подключения')}</h2></div><button className="icon-button" aria-label={t('Закрыть подключения')} onClick={close}><X size={19} /></button></div><p className="settings-intro">{t('Используйте установленный CLI или API-подключение. Команда запускается на вашем компьютере.')}</p><div className="connection-list">{bootstrap?.connections.map(connection => <div className="connection-row" key={connection.id}><div className="flex items-center justify-between gap-3"><h3>{connection.name}</h3><span className={`connection-availability ${connection.available ? 'available' : ''}`}>{connection.available && <Check size={12} />}{connection.available ? t('Обнаружено') : t('Не настроено')}</span></div><p>{uiMessage(connection.detail)}</p>{connection.executable && <code>{connection.executable}</code>}</div>)}</div>{bootstrap && <TelegramSettings open={open} request={request} csrfToken={bootstrap.csrfToken} />}<div className="settings-note"><strong>{t('Перед первым запуском')}</strong><p>{t('Наличие CLI не подтверждает авторизацию: войдите в аккаунт через соответствующий CLI в терминале. Авторизация проверяется при первом обращении к модели. Для API задайте OPENAI_API_KEY или ANTHROPIC_API_KEY в окружении сервера и перезапустите приложение.')}</p><p>{t('API-запросы могут расходовать средства вашего провайдера. Пароли и ключи в этом интерфейсе не вводятся.')}</p></div><button className="secondary-button w-full" disabled={busy} onClick={async () => { setBusy(true); try { await refresh(); } finally { setBusy(false); } }}><ArrowClockwise size={16} />{busy ? t('Проверяем…') : t('Обновить статус')}</button></div></dialog>;
 }

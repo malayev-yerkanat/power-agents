@@ -4,6 +4,7 @@ import type { Member, Run, TeamTask } from '../shared/types';
 import { CombatEffects } from './CombatEffects';
 import { attackSample, memberMode, providerFor, useCombatClock } from './combat';
 import type { CombatMode, Point } from './combat';
+import { t } from './i18n';
 
 export const rangerAsset = (connectionId: string) => providerFor(connectionId) === 'neutral' ? undefined : `/art/${providerFor(connectionId)}.png`;
 const taskLabels: Record<TeamTask['status'], string> = { pending: 'В очереди', running: 'В работе', waiting: 'Ожидает ответа', completed: 'Готово', failed: 'Ошибка' };
@@ -23,9 +24,9 @@ function visibleTasks(run: Run): TeamTask[] {
   return runTasks(run).filter(task => task.status !== 'completed').sort((a, b) => Number(b.status === 'running') - Number(a.status === 'running')).slice(0, 3);
 }
 function label(run: Run, member: Member): string {
-  if (run.status === 'cancelled') return 'Остановлено';
-  if (run.status === 'awaiting_approval') return 'Ждёт согласования';
-  return modeLabels[memberMode(run, member)];
+  if (run.status === 'cancelled') return t('Остановлено');
+  if (run.status === 'awaiting_approval') return t('Ждёт согласования');
+  return t(modeLabels[memberMode(run, member)]);
 }
 
 type Moment = { id: string; kind: 'defeat' | 'message' | 'victory'; from: Point; to?: Point; asset?: string; started: number };
@@ -97,8 +98,8 @@ export function Encounter({ run }: { run: Run }) {
     const bob = animate && active && !attacking && mode !== 'waiting' && mode !== 'failed' ? Math.floor(clock.frame / 6 + index) % 2 : 0;
     return { member, mode, provider, target, sample, contact, counterHit, attacking, point: { ...point, y: point.y - bob }, base, index };
   });
-  return <section className="encounter" aria-label="Визуальное рабочее пространство команды">
-    <div className="encounter-scroll" tabIndex={0} role="region" aria-label="Городская сцена. На узком экране прокрутите по горизонтали.">
+  return <section className="encounter" aria-label={t('Визуальное рабочее пространство команды')}>
+    <div className="encounter-scroll" tabIndex={0} role="region" aria-label={t('Городская сцена. На узком экране прокрутите по горизонтали.')}>
       <div className="encounter-stage">
         {fighters.map(({ member, index, mode, point, attacking, sample, provider, counterHit }) => {
           const asset = rangerAsset(member.connectionId);
@@ -116,7 +117,7 @@ export function Encounter({ run }: { run: Run }) {
           const hit = fighters.some(fighter => fighter.attacking && fighter.target === base && fighter.contact);
           const point = { x: base.x + (hit ? (clock.frame % 2 ? 4 : 2) : 0), y: base.y };
           const taskIndex = tasks.findIndex(item => item.id === task.id);
-          return <div key={task.id} className={`encounter-actor encounter-monster ${task.status === 'failed' ? 'encounter-failed' : ''} ${hit ? 'combat-hit' : ''}`} style={actorStyle(point)}><span className="combat-ground" aria-hidden="true" /><img src={`/art/${monsterAssets[taskIndex % 3]}.png`} alt={`Задача ${taskIndex + 1}: ${task.title}. ${taskLabels[task.status]}`} width="160" height="160" draggable={false} /><span className="encounter-marker" aria-hidden="true">T{taskIndex + 1}</span></div>;
+          return <div key={task.id} className={`encounter-actor encounter-monster ${task.status === 'failed' ? 'encounter-failed' : ''} ${hit ? 'combat-hit' : ''}`} style={actorStyle(point)}><span className="combat-ground" aria-hidden="true" /><img src={`/art/${monsterAssets[taskIndex % 3]}.png`} alt={t('Задача {n}: {title}. {status}', { n: taskIndex + 1, title: task.title, status: t(taskLabels[task.status]) })} width="160" height="160" draggable={false} /><span className="encounter-marker" aria-hidden="true">T{taskIndex + 1}</span></div>;
         })}
         {animate && fighters.map(fighter => {
           const { member, target, provider, sample, point, index, mode } = fighter;
@@ -135,9 +136,9 @@ export function Encounter({ run }: { run: Run }) {
         })}
       </div>
     </div>
-    <p className="encounter-scroll-hint">← Прокрутите сцену →</p>
+    <p className="encounter-scroll-hint">{t('← Прокрутите сцену →')}</p>
     <ul className="encounter-roster">{members.map((member, index) => <li key={member.id}><span className="encounter-roster-number">{index + 1}</span><div><strong>{member.name}</strong><span>{label(run, member)}</span></div></li>)}</ul>
-    <div className="combat-controls"><span>Бой показывает активность, а не процент готовности.</span><button type="button" aria-pressed={clock.motionEnabled} disabled={clock.reducedMotion} onClick={() => clock.setMotionEnabled(!clock.motionEnabled)}>{clock.reducedMotion ? 'Движение уменьшено' : clock.motionEnabled ? 'Анимация: вкл.' : 'Анимация: выкл.'}</button></div>
-    {visible.length > 0 && <details className="encounter-mapping"><summary>Монстры — задачи команды{outstanding > 3 ? ` · ещё ${outstanding - 3} вне сцены` : ''}</summary><ul>{visible.map(task => <li key={task.id}><span>T{tasks.findIndex(item => item.id === task.id) + 1}</span><span>{task.title}</span><small>{run.tasks.length ? taskLabels[task.status] : 'В плане'}</small></li>)}</ul></details>}
+    <div className="combat-controls"><span>{t('Бой показывает активность, а не процент готовности.')}</span><button type="button" aria-pressed={clock.motionEnabled} disabled={clock.reducedMotion} onClick={() => clock.setMotionEnabled(!clock.motionEnabled)}>{clock.reducedMotion ? t('Движение уменьшено') : clock.motionEnabled ? t('Анимация: вкл.') : t('Анимация: выкл.')}</button></div>
+    {visible.length > 0 && <details className="encounter-mapping"><summary>{t('Монстры — задачи команды')}{outstanding > 3 ? ` · ${t('ещё {count} вне сцены', { count: outstanding - 3 })}` : ''}</summary><ul>{visible.map(task => <li key={task.id}><span>T{tasks.findIndex(item => item.id === task.id) + 1}</span><span>{task.title}</span><small>{run.tasks.length ? t(taskLabels[task.status]) : t('В плане')}</small></li>)}</ul></details>}
   </section>;
 }

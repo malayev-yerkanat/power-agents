@@ -1,8 +1,10 @@
 import type { Node, Edge } from '@xyflow/react';
 import type { Flow, FlowNode, FlowPatch, FlowRegistryNode, PortType } from '../../shared/flow-types';
+import { t } from '../i18n';
 
 export type FlowCardData = {
   node: FlowNode; definition?: FlowRegistryNode; runnable: boolean;
+  flowId: string; upload?: (id: string, file: File) => void;
   pending?: boolean; action?: (id: string, action: 'run' | 'approve' | 'reject') => void;
 };
 export type CanvasNode = Node<FlowCardData, 'flowCard'>;
@@ -33,7 +35,7 @@ export function toCanvas(flow: Flow, types: FlowRegistryNode[]): { nodes: Canvas
     nodes: flow.nodes.map(node => {
       const definition = types.find(t => t.type === node.type);
       return { id: node.id, type: 'flowCard', position: { ...node.position },
-        data: { node, definition, runnable: isRunnable(flow, node, definition) } };
+        data: { node, definition, flowId: flow.id, runnable: isRunnable(flow, node, definition) } };
     }),
     edges: flow.edges.map(edge => ({ id: edge.id, source: edge.from.node, target: edge.to.node,
       sourceHandle: edge.from.port, targetHandle: edge.to.port, type: 'default' })),
@@ -43,7 +45,7 @@ export function patchNodes(flow: Flow): NonNullable<FlowPatch['nodes']> {
   return flow.nodes.map(({ id, type, title, position, config, gate }) => ({ id, type, title, position: { ...position }, config, gate }));
 }
 export function outputExcerpt(value: unknown, nodeType?: string): string {
-  if (value === undefined) return 'Результат появится после запуска';
+  if (value === undefined) return t('Результат появится после запуска');
   if (value && typeof value === 'object') {
     const result = value as Record<string, unknown>;
     if (nodeType === 'idea' && Array.isArray(result.candidates) && Number.isInteger(result.chosen)) {
@@ -52,12 +54,12 @@ export function outputExcerpt(value: unknown, nodeType?: string): string {
         return `${chosen.topic}\n${chosen.hook}`;
     }
     if (nodeType === 'script' && typeof result.hook === 'string' && typeof result.wordCount === 'number')
-      return `${result.hook}\n${result.wordCount} слов`;
+      return `${result.hook}\n${t('{n} слов', { n: result.wordCount })}`;
   }
   const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
   return text.length > 260 ? `${text.slice(0, 260)}…` : text;
 }
 
 export function nodeTitle(node: FlowNode, definition?: FlowRegistryNode): string {
-  return node.title === definition?.title ? nodeLabels[node.type] || node.title : node.title;
+  return node.title === definition?.title ? t(nodeLabels[node.type] ?? '') || node.title : node.title;
 }

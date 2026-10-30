@@ -165,6 +165,35 @@ test('the complete demo reel reaches Final from the canvas without model calls',
   expect(flows.store.nodeRuns(id)).toHaveLength(10);
 });
 
+test('Capture offers an upload on the card and inspector and displays versioned media', async ({ page, flows }) => {
+  const id = await createDemoFlow(page, flows);
+  flows.store.updateFlow(id, flow => ({ ...flow, nodes: flow.nodes.map(node => node.id === 'capture'
+    ? { ...node, status: 'failed', needsHuman: true, error: 'Record the take in Roblox Studio' } : node) }),
+  { type: 'flow.node', nodeId: 'capture', message: 'Needs take' });
+  await expect(card(page, 'capture')).toContainText('Нужно действие');
+  await expect(card(page, 'capture').getByLabel('Загрузить съёмку', { exact: true })).toBeEnabled();
+  await card(page, 'capture').getByRole('heading').click();
+  const inspector = page.getByRole('complementary', { name: 'Инспектор узла' });
+  await expect(inspector.getByLabel('Загрузить съёмку', { exact: true })).toBeEnabled();
+  await page.route(`**/api/flows/${id}/files/**`, route => route.fulfill({ status: 200, body: '', contentType: 'video/mp4' }));
+  await page.route(`**/api/flows/${id}/nodes/capture/upload`, async route => {
+    expect(route.request().headers()['content-type']).toBe('application/octet-stream');
+    expect(route.request().headers()['x-csrf-token']).toBe('flow-fixture');
+    expect(decodeURIComponent(route.request().headers()['x-file-name'])).toBe('take.mp4');
+    expect(route.request().postDataBuffer()?.length).toBe(4);
+    const flow = flows.store.updateFlow(id, current => ({ ...current, nodes: current.nodes.map(node => node.id === 'capture'
+      ? { ...node, status: 'stale', needsHuman: undefined, error: undefined, version: 1,
+        upload: { name: 'take.mp4', bytes: 4, at: new Date().toISOString() }, output: { video: { files: ['footage.mp4'] } } } : node) }),
+    { type: 'flow.node', nodeId: 'capture', message: 'Uploaded' });
+    await route.fulfill({ json: { flow } });
+  });
+  await inspector.getByLabel('Загрузить съёмку', { exact: true }).setInputFiles({ name: 'take.mp4', mimeType: 'video/mp4', buffer: Buffer.from('take') });
+  await expect(card(page, 'capture')).toContainText('take.mp4');
+  await expect(card(page, 'capture').locator('video')).toHaveAttribute('controls', '');
+  await expect(inspector.getByRole('link', { name: 'footage.mp4', exact: true }))
+    .toHaveAttribute('href', `/api/flows/${id}/files/capture/v1/footage.mp4`);
+});
+
 test('inspector refreshes persisted fields from events and recovers server values after a version conflict', async ({ page, flows }) => {
   const id = await createDemoFlow(page, flows);
   await card(page, 'brand').getByRole('heading').click();

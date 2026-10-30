@@ -33,6 +33,17 @@
 .flow-preview pre { font: 11px/1.55 monospace; color: #c5cedb; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
 .flow-text-preview { font: 13px/1.6 var(--font-sans, sans-serif); color: #dfe5ef; white-space: pre-line; overflow-wrap: anywhere; margin: 0; }
 .flow-file { font-size: 10px; color: #b5bfd0; overflow-wrap: anywhere; }
+.flow-preview:has(.flow-media) { max-height: none; }
+.flow-media { display: grid; gap: 10px; font-size: 11px; }
+.flow-media video { display: block; width: 100%; max-height: 240px; background: #0c0e12; }
+.flow-media audio { display: block; width: 100%; min-width: 0; }
+.flow-media a { color: #a8ceff; overflow-wrap: anywhere; }
+.flow-upload { padding: 8px 12px; font-size: 11px; }
+.flow-upload label { display: grid; gap: 7px; }
+.flow-upload input { width: 100%; min-width: 0; font-size: 11px; }
+.flow-upload p { color: #bac7d8; margin-bottom: 0; overflow-wrap: anywhere; }
+.flow-needs-human { border-color: #e4b953; }
+.flow-needs-human .flow-status-chip, .flow-human-status { color: #ffe0a0; }
 .flow-card footer { padding: 9px 12px 12px; display: flex; gap: 8px; }
 .flow-card footer button { font-size: 11px; }
 .flow-card .react-flow__handle { width: 9px; height: 9px; border: 2px solid #171a20; }

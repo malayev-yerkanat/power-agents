@@ -21,9 +21,9 @@ export const registry: Readonly<Record<string, NodeDefinition>> = Object.freeze(
   define('scenes', 'Scenes', ['script', 'timings', 'brand'], ['scenes'], llm),
   define('capture', 'Capture', ['scenes'], ['video'], { instructions: text }),
   define('edit', 'Edit plan', ['timings', 'video', 'brand'], ['edit'], llm),
-  define('preview', 'Preview', ['edit', 'video', 'audio'], ['video'], { height: z.number().int().min(240).max(2160).default(540) }, true, 'render'),
+  define('preview', 'Preview', ['edit', 'video', 'audio'], ['video'], { height: z.union([z.literal(540), z.literal(1080)]).default(540) }, true, 'render'),
   define('qa', 'QA', ['video', 'edit'], ['report'], { instructions: text }, false),
-  define('final', 'Final', ['edit', 'video', 'audio', 'report'], ['video'], { height: z.number().int().min(240).max(2160).default(1080) }, true, 'render'),
+  define('final', 'Final', ['edit', 'video', 'audio', 'report'], ['video'], { height: z.union([z.literal(540), z.literal(1080)]).default(1080) }, true, 'render'),
   define('prompt', 'Prompt / Note', [], ['text'], { text }, false),
 ].map(definition => [definition.type, { ...definition, inputs: definition.inputs.map(port => (['idea', 'script', 'scenes'].includes(definition.type) && port.type === 'brand') || (definition.type === 'scenes' && port.type === 'timings') ? { ...port, optional: true } : port) }])));
 export const demoExecutor: Executor = async ({ node, notes }) => Object.fromEntries(registry[node.type].outputs.map(port =>
@@ -34,10 +34,9 @@ export function robloxReel(): Pick<Flow, 'nodes' | 'edges'> {
     // Reel 001 (Inflation) was made before flows existed, so the template starts with it on Idea's avoid list.
     position: { x: index * 320, y: 160 }, config: registry[type].config.parse(type === 'idea' ? { avoid: ['Inflation'] } : {}), gate: registry[type].gate,
     status: 'idle', version: 0, notes: [] }));
-  // No voice → scenes timings edge until Voice has a live executor (F4); Scenes falls back to the script's beat times.
   const connections = [
     ['brand', 'idea', 'brand'], ['idea', 'script', 'idea'], ['brand', 'script', 'brand'], ['script', 'voice', 'script'],
-    ['script', 'scenes', 'script'], ['brand', 'scenes', 'brand'], ['scenes', 'capture', 'scenes'],
+    ['script', 'scenes', 'script'], ['voice', 'scenes', 'timings'], ['brand', 'scenes', 'brand'], ['scenes', 'capture', 'scenes'],
     ['voice', 'edit', 'timings'], ['capture', 'edit', 'video'], ['brand', 'edit', 'brand'],
     ['edit', 'preview', 'edit'], ['capture', 'preview', 'video'], ['voice', 'preview', 'audio'],
     ['preview', 'qa', 'video'], ['edit', 'qa', 'edit'], ['edit', 'final', 'edit'],

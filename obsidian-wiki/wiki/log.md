@@ -13,6 +13,36 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-30 06:53 UTC - Review EN RU language toggle
+
+Fixed missing platform translations, feedback that stayed in the previous language, and localized flow defaults being persisted as titles. Expanded translation regression coverage while preserving custom content and protected F4 files.
+
+Note: [[changes/20261030-065316-review-en-ru-language-toggle|Review EN RU language toggle]]
+
+### 2026-10-30 06:49 UTC - F4 media pipeline: stages, uploads, playback
+
+Live flows now run Voice (ElevenLabs), Capture (Studio take upload), Edit plan, Preview, QA and Final through JSON-contract Python stages in the content project, with streamed uploads, Range media playback in cards and a needs-human state.
+
+Note: [[changes/20261030-064930-f4-media-pipeline-stages-uploads-playback|F4 media pipeline: stages, uploads, playback]]
+
+### 2026-10-30 06:48 UTC - F4 localization compatibility and final checks
+
+Preserved the landed localization and used the existing translated file-size placeholder in Capture uploads. Corrected writable stream typing in the upload regression and updated translated template help to reflect implemented media stages.
+
+Note: [[changes/20261030-064800-f4-localization-compatibility-and-final-checks|F4 localization compatibility and final checks]]
+
+### 2026-10-30 06:46 UTC - EN/RU language switch
+
+Added an EN/RU button to the top bar that switches the client UI between Russian and English without reload; choice persists in localStorage.
+
+Note: [[changes/20261030-064602-en-ru-language-switch|EN/RU language switch]]
+
+### 2026-10-30 06:45 UTC - F4 flow media pipeline
+
+Implemented isolated content pipeline execution, streamed Capture uploads, contained Range media and native playback with distinct human-action failures. Restored Voice timings in the reel template and documented F4 setup and remaining live acceptance.
+
+Note: [[changes/20261030-064542-f4-flow-media-pipeline|F4 flow media pipeline]]
+
 ### 2026-10-30 06:30 UTC - Idea avoids made topics; Scenes runs before F4
 
 Idea now gets an avoid list (its config plus approved ideas from other flows) and retries if it repeats one; the Roblox template seeds Inflation (reel 001) and no longer wires Voice timings into Scenes until F4.

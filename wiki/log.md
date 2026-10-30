@@ -8,6 +8,22 @@ tags: [history]
 
 # Operation Log
 
+## 2026-10-30 — EN/RU language toggle review
+
+- Fixed untranslated encounter task alt text, known connection descriptions/model notes and interpolated platform errors; corrected English team wording. Feedback retains source keys and translates on display, including field validation, draft errors, clipboard/Telegram notices and screen-reader announcements.
+- Flow add-node stores the registry title; an untouched inspector title remains canonical on unrelated saves. Toggling updates default labels while retaining custom titles and unsaved config edits. Drafts, model output and unknown server text remain unchanged.
+- Expanded dictionary coverage to parse TypeScript/TSX strings, templates and JSX text, checked all dictionary placeholders, and fixed inherited-property fallback in `t()`. Added metadata/feedback/storage regressions and browser scenarios for reload persistence, existing validation/clipboard feedback, announcements, denied storage and flow edits.
+- Verification: **50/50 focused tests**; full `npm test` **248/265 pass**, **17 fail** solely with the baseline `listen EPERM` restriction (14 HTTP, one launchd, one MCP, one Telegram API). Typecheck/build pass; no lint script or configuration exists. `npm run test:e2e` cannot start Vite on `127.0.0.1:4318`; **44 scenarios discovered, zero executed**. Browser behavior remains unverified here. Protected F4 media/pipeline files were not edited. No commits or pushes.
+
+## 2026-10-30 — F4 live media pipeline
+
+- Implemented isolated content stages for ElevenLabs narration/alignment and -14 LUFS normalization, magenta-sync Capture, deterministic caption/punch/card editing, dynamic Remotion preview/final rendering and persisted QA reports. Reel 001 remains renderable. The template restores Voice → Scenes timings; Telegram gates remain planned for F5.
+- Power Agents resolves upstream version files, passes brand/notes, enforces timeouts and cancels process groups with render cleanup. Capture supports streamed MP4/MOV uploads up to 2 GiB; replacement uploads invalidate descendants. Versioned Range media has realpath containment, native card/inspector playback and retained `outputVersion`; exit 2 shows **Нужно действие**. Main HTTP/Telegram changes were preserved.
+- TDD RED tests preceded implementation; GREEN: **62/62 flow tests**. Full `npm test` and coverage: **242/259 pass**, **17 listener EPERM failures** (14 HTTP, one launchd, one MCP, one Telegram API), no skips/cancellations; **83.08% overall line coverage**. Typecheck/build pass; no lint script exists. Playwright discovers **40** scenarios but executes **0** because Vite cannot listen on 127.0.0.1:4318.
+- Content: **21 Python tests**, **20 pass**, **1 EPERM HTTP-stub skip**, zero failures; mocked HTTP still exercises real ffmpeg normalization. Stage line coverage **91.5%**; Remotion TypeScript and **7/7** composition/metadata assertions pass. No actual ElevenLabs requests or Remotion renders; live reel 002 acceptance remains unverified. No dependencies, `.env`, commits, pushes or reel 001 media changes. Concurrent localization edits were preserved; their dictionary arrived before successful final client checks.
+- Preserved landed localization; F4 Russian UI strings use `t()` with exact English dictionary keys. Fixed the upload-size unit translation and writable test-stream typing; **65/65 flow+i18n tests** pass. Updated the template help to describe live media.
+- Full file manifest, test evidence, dimensions and remaining acceptance: [F4 verification](../docs/f4-verification.md). Current behavior: [prototype guide](../docs/prototype.md), [[Flow Engine]], [[Flows UI]], [[Reel Flow Execution]].
+
 ## 2026-10-30 — F3 live Idea, Script and Scenes
 
 - Implemented live text executors using discovered connections and injectable `TurnRunner`, read-only version directories, no team tools or session reuse. English brief-derived prompts include brand/upstream values, extra instructions and every rejection note. Zod validates candidate scores/selection, measured script length and five beats, and ordered scene coverage. One invalid-output correction includes JSON shape and measured count. Static live Brand is available; media remains planned for F4.

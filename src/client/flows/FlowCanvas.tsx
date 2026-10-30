@@ -5,18 +5,20 @@ import { FlowCard } from './FlowCard';
 import { FlowInspector } from './FlowInspector';
 import { compatiblePorts, nodeLabels, patchNodes, toCanvas, type CanvasNode } from './helpers';
 import { useFlow, type Request } from './useFlow';
+import { t } from '../i18n';
+import { uiMessage } from '../uiMessages';
 
 const nodeTypes = { flowCard: FlowCard };
-const ariaLabels = { 'controls.ariaLabel': 'Управление канвасом', 'handle.ariaLabel': 'Порт узла',
-  'node.a11yDescription.keyboardDisabled': 'Выберите узел. Delete удаляет выбранное.',
-  'node.a11yDescription.ariaLiveMessage': ({ x, y }: { direction: string; x: number; y: number }) => `Узел перемещён: ${Math.round(x)}, ${Math.round(y)}`,
-  'controls.zoomIn.ariaLabel': 'Приблизить', 'controls.zoomOut.ariaLabel': 'Отдалить',
-  'controls.fitView.ariaLabel': 'Показать весь поток', 'controls.interactive.ariaLabel': 'Переключить взаимодействие',
-  'minimap.ariaLabel': 'Миникарта потока', 'node.a11yDescription.default': 'Выберите узел. Delete удаляет выбранное.',
-  'edge.a11yDescription.default': 'Выберите связь. Delete удаляет выбранное.' };
+const ariaLabels = () => ({ 'controls.ariaLabel': t('Управление канвасом'), 'handle.ariaLabel': t('Порт узла'),
+  'node.a11yDescription.keyboardDisabled': t('Выберите узел. Delete удаляет выбранное.'),
+  'node.a11yDescription.ariaLiveMessage': ({ x, y }: { direction: string; x: number; y: number }) => t('Узел перемещён: {x}, {y}', { x: Math.round(x), y: Math.round(y) }),
+  'controls.zoomIn.ariaLabel': t('Приблизить'), 'controls.zoomOut.ariaLabel': t('Отдалить'),
+  'controls.fitView.ariaLabel': t('Показать весь поток'), 'controls.interactive.ariaLabel': t('Переключить взаимодействие'),
+  'minimap.ariaLabel': t('Миникарта потока'), 'node.a11yDescription.default': t('Выберите узел. Delete удаляет выбранное.'),
+  'edge.a11yDescription.default': t('Выберите связь. Delete удаляет выбранное.') });
 
 export function FlowCanvas({ id, request, csrfToken, back }: { id: string; request: Request; csrfToken: string; back: () => void }) {
-  const { flow, types, connections, error, setError, pending, patch, action, refetch } = useFlow(id, request, csrfToken);
+  const { flow, types, connections, error, setError, pending, patch, action, upload, refetch } = useFlow(id, request, csrfToken);
   const [nodes, setNodes] = useState<CanvasNode[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -39,10 +41,10 @@ export function FlowCanvas({ id, request, csrfToken, back }: { id: string; reque
       const previous = current.find(n => n.id === node.id);
       // Keep React Flow's measured size: without it the node is hidden until its size changes again.
       return { ...node, position: positions.current[node.id] || node.position, selected: previous?.selected,
-        ...(previous?.measured ? { measured: previous.measured } : {}), data: { ...node.data, pending, action: act } };
+        ...(previous?.measured ? { measured: previous.measured } : {}), data: { ...node.data, pending, action: act, upload } };
     }));
     setEdges(current => mapped.edges.map(edge => ({ ...edge, selected: current.find(e => e.id === edge.id)?.selected })));
-  }, [mapped, pending, act]);
+  }, [mapped, pending, act, upload]);
   useEffect(() => { if (rejectId) rejectDialog.current?.showModal(); else rejectDialog.current?.close(); }, [rejectId]);
   const savePositions = useCallback(() => {
     const batch = positions.current;
@@ -80,25 +82,25 @@ export function FlowCanvas({ id, request, csrfToken, back }: { id: string; reque
     const viewport = instance.current?.getViewport();
     const position = viewport ? { x: (80 - viewport.x) / viewport.zoom, y: (80 - viewport.y) / viewport.zoom } : { x: 0, y: 0 };
     void patch(latest => ({ nodes: [...patchNodes(latest), { id: crypto.randomUUID(), type,
-      title: nodeLabels[type] || definition.title, position, config: structuredClone(definition.configDefaults), gate: definition.gate }] }));
+      title: definition.title, position, config: structuredClone(definition.configDefaults), gate: definition.gate }] }));
   }
   const selectedNode = flow?.nodes.find(n => n.id === selected);
   const definition = types.find(t => t.type === selectedNode?.type);
   return <main className="flow-workspace">
-    {error && <div className="flow-toast" role="alert"><span>{error}</span><button onClick={() => setError('')} aria-label="Закрыть сообщение">×</button></div>}
-    {!flow ? <div className="flows-list"><h1 id="workspace-heading" tabIndex={-1}>Поток</h1><p>{error ? 'Поток не загружен.' : 'Загружаем поток…'}</p>
-      <button onClick={() => void refetch().catch(cause => setError(String(cause)))}>Повторить</button><button onClick={back}>К потокам</button></div>
-      : <><div className="flow-toolbar"><button onClick={back}>← Потоки</button><h1 id="workspace-heading" tabIndex={-1}>{flow.title}</h1>
-          <span className={`flow-mode flow-mode-${flow.mode}`}>{flow.mode === 'demo' ? 'Демо' : 'Живой'}</span>
+    {error && <div className="flow-toast" role="alert"><span>{uiMessage(error)}</span><button onClick={() => setError('')} aria-label={t('Закрыть сообщение')}>×</button></div>}
+    {!flow ? <div className="flows-list"><h1 id="workspace-heading" tabIndex={-1}>{t('Поток')}</h1><p>{error ? t('Поток не загружен.') : t('Загружаем поток…')}</p>
+      <button onClick={() => void refetch().catch(cause => setError(String(cause)))}>{t('Повторить')}</button><button onClick={back}>{t('К потокам')}</button></div>
+      : <><div className="flow-toolbar"><button onClick={back}>{t('← Потоки')}</button><h1 id="workspace-heading" tabIndex={-1}>{flow.title}</h1>
+          <span className={`flow-mode flow-mode-${flow.mode}`}>{flow.mode === 'demo' ? t('Демо') : t('Живой')}</span>
           <label className="flow-checkbox"><input type="checkbox" checked={flow.autoRun} disabled={pending}
-            onChange={e => { const autoRun = e.target.checked; void patch(() => ({ autoRun })); }} />Автозапуск</label>
-          <div className="flow-add"><button onClick={() => setMenu(value => !value)} aria-expanded={menu} disabled={!types.length || pending}>+ Узел</button>
-            {menu && <div className="flow-add-menu">{types.map(type => <button key={type.type} onClick={() => addNode(type.type)}>{nodeLabels[type.type] || type.title}</button>)}</div>}
+            onChange={e => { const autoRun = e.target.checked; void patch(() => ({ autoRun })); }} />{t('Автозапуск')}</label>
+          <div className="flow-add"><button onClick={() => setMenu(value => !value)} aria-expanded={menu} disabled={!types.length || pending}>{t('+ Узел')}</button>
+            {menu && <div className="flow-add-menu">{types.map(type => <button key={type.type} onClick={() => addNode(type.type)}>{t(nodeLabels[type.type] ?? '') || type.title}</button>)}</div>}
           </div></div>
-        <div className="flow-body"><div className="flow-graph" aria-label="Канвас потока">
+        <div className="flow-body"><div className="flow-graph" aria-label={t('Канвас потока')}>
           {types.length > 0 && <ReactFlow<CanvasNode, Edge> nodes={nodes} edges={edges} nodeTypes={nodeTypes}
             onInit={value => { instance.current = value; }} fitView fitViewOptions={{ padding: 0.15 }} minZoom={0.15} maxZoom={2}
-            colorMode="dark" ariaLabelConfig={ariaLabels} deleteKeyCode={['Delete', 'Backspace']}
+            colorMode="dark" ariaLabelConfig={ariaLabels()} deleteKeyCode={['Delete', 'Backspace']}
             onNodesChange={changes => {
               for (const change of changes) if (change.type === 'position' && change.position)
                 positions.current = { ...positions.current, [change.id]: change.position };
@@ -122,13 +124,13 @@ export function FlowCanvas({ id, request, csrfToken, back }: { id: string; reque
           </ReactFlow>}
         </div>
         {selectedNode && definition && <FlowInspector key={JSON.stringify([selectedNode.id, selectedNode.title, selectedNode.gate, selectedNode.config])} node={selectedNode} definition={definition}
-          connections={connections} pending={pending} close={() => setSelected(null)} save={value => patch(latest => ({ nodes: patchNodes(latest).map(n => n.id === selectedNode.id ? { ...n, ...value } : n) }))} />}
+          flowId={id} upload={upload} connections={connections} pending={pending} close={() => setSelected(null)} save={value => patch(latest => ({ nodes: patchNodes(latest).map(n => n.id === selectedNode.id ? { ...n, ...value } : n) }))} />}
         </div></>}
     <dialog ref={rejectDialog} className="flow-reject" onCancel={() => setRejectId(null)} aria-labelledby="flow-reject-title">
       <form onSubmit={async e => { e.preventDefault(); if (rejectId && await action(rejectId, 'reject', note)) setRejectId(null); }}>
-        <h2 id="flow-reject-title">Отклонить результат</h2><label>Замечание<textarea autoFocus required maxLength={12000} rows={4} value={note} onChange={e => setNote(e.target.value)} /></label>
-        <p>Узел запустится повторно с вашим замечанием.</p><button disabled={pending || !note.trim()} type="submit">Отклонить и повторить</button>
-        <button type="button" onClick={() => setRejectId(null)}>Отмена</button>
+        <h2 id="flow-reject-title">{t('Отклонить результат')}</h2><label>{t('Замечание')}<textarea autoFocus required maxLength={12000} rows={4} value={note} onChange={e => setNote(e.target.value)} /></label>
+        <p>{t('Узел запустится повторно с вашим замечанием.')}</p><button disabled={pending || !note.trim()} type="submit">{t('Отклонить и повторить')}</button>
+        <button type="button" onClick={() => setRejectId(null)}>{t('Отмена')}</button>
       </form>
     </dialog>
   </main>;

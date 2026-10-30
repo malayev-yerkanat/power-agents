@@ -21,9 +21,13 @@ export interface FlowNode {
   /** Hash of the config and upstream outputs the latest output was made from. */
   inputHash?: string;
   output?: Record<string, PortValue>;
+  /** Version folder holding the visible output, retained when a later run fails. */
+  outputVersion?: number;
   /** Rejection notes, passed to every later run of this node. */
   notes: string[];
   error?: string;
+  needsHuman?: boolean;
+  upload?: { name: string; bytes: number; at: string };
 }
 export interface FlowEdge { id: string; from: { node: string; port: string }; to: { node: string; port: string } }
 export interface Flow {

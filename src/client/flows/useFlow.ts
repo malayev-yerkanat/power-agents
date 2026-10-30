@@ -70,5 +70,24 @@ export function useFlow(id: string, request: Request, csrfToken: string) {
   const action = useCallback((nodeId: string, action: 'run' | 'approve' | 'reject', note?: string) =>
     mutate(() => ({ url: `${path}/nodes/${encodeURIComponent(nodeId)}/${action}`, method: 'POST',
       body: action === 'reject' ? { note } : {} })), [mutate, path]);
-  return { flow, types, connections, error, setError, pending, patch, action, refetch };
+  const upload = useCallback((nodeId: string, file: File) => {
+    const job = queue.current.then(async () => {
+      if (!current.current) return false;
+      if (mounted.current) { setPending(true); setError(''); }
+      try {
+        if (!/\.(mp4|mov)$/i.test(file.name)) throw new Error('Выберите файл MP4 или MOV.');
+        if (file.size > 2 * 1024 ** 3) throw new Error('Размер файла превышает 2 ГБ.');
+        const result = await request<{ flow: Flow }>(`${path}/nodes/${encodeURIComponent(nodeId)}/upload`, {
+          method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'X-CSRF-Token': csrfToken,
+            'X-File-Name': encodeURIComponent(file.name) }, body: file,
+        });
+        apply(result.flow);
+        return true;
+      } catch (cause) { report(cause); return false; }
+      finally { if (mounted.current) setPending(false); }
+    });
+    queue.current = job;
+    return job;
+  }, [path, request, csrfToken, apply, report]);
+  return { flow, types, connections, error, setError, pending, patch, action, upload, refetch };
 }

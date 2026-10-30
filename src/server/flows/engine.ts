@@ -1,5 +1,9 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
+import { unlink } from 'node:fs/promises';
+import type { IncomingMessage } from 'node:http';
+import { receiveUpload } from './media.ts';
+import { PipelineError } from './pipeline.ts';
 import { join } from 'node:path';
 import { z } from 'zod';
 import type { CreateFlowInput, Flow, FlowNode, FlowPatch, PortValue } from '../../shared/flow-types.ts';
@@ -28,7 +32,7 @@ function canonical(value: unknown): string {
 function hash(flow: Flow, node: FlowNode): string {
   const sources = flow.edges.filter(e => e.to.node === node.id).map(e => ({ port: e.to.port, source: e.from.node, output: e.from.port,
     version: flow.nodes.find(n => n.id === e.from.node)!.version })).sort((a, b) => a.port.localeCompare(b.port));
-  return createHash('sha256').update(canonical({ config: node.config, sources })).digest('hex');
+  return createHash('sha256').update(canonical({ config: node.config, upload: node.upload, sources })).digest('hex');
 }
 function descendants(flow: Flow, roots: string[]): Set<string> {
   const found = new Set(roots);
@@ -39,7 +43,7 @@ function stale(flow: Flow, roots: string[], includeRoots = false): Flow {
   const affected = descendants(flow, roots);
   if (!includeRoots) for (const id of roots) affected.delete(id);
   return { ...flow, nodes: flow.nodes.map(n => !affected.has(n.id) ? n : { ...n,
-    status: n.output ? 'stale' : busy(n) ? 'idle' : n.status, error: undefined }) };
+    status: n.output ? 'stale' : busy(n) ? 'idle' : n.status, error: undefined, needsHuman: undefined }) };
 }
 function validate(nodes: FlowNode[], edges: Flow['edges']): void {
   if (new Set(nodes.map(n => n.id)).size !== nodes.length) invalid('Duplicate node ID');
@@ -146,7 +150,7 @@ export class FlowEngine {
     const flow = this.get(id), node = this.node(flow, nodeId);
     if (busy(node) || node.status === 'awaiting_approval') refuse(`Node is ${node.status}; cannot run until approval is resolved`);
     if (!ready(flow, node)) refuse('Node is not ready: all required sources must be approved');
-    const next = this.change(id, f => ({ ...f, nodes: f.nodes.map(n => n.id === nodeId ? { ...n, status: 'queued', error: undefined } : n) }), 'Queued', nodeId);
+    const next = this.change(id, f => ({ ...f, nodes: f.nodes.map(n => n.id === nodeId ? { ...n, status: 'queued', needsHuman: undefined, error: undefined } : n) }), 'Queued', nodeId);
     this.queuedFlows.add(id); this.schedule(); return next;
   }
   approve(id: string, nodeId: string): Flow {
@@ -165,6 +169,25 @@ export class FlowEngine {
     const next = this.change(id, f => stale({ ...f, nodes: f.nodes.map(n => n.id === nodeId ? { ...n, status: 'queued', notes: [...n.notes, note], error: undefined } : n) }, [nodeId]), 'Rejected; queued with note', nodeId);
     this.abortInvalidated(id); this.queuedFlows.add(id); this.schedule(); return next;
   }
+  fileRoot(): string { return this.options.root; }
+  async upload(id: string, nodeId: string, req: IncomingMessage): Promise<Flow> {
+    this.ensureOpen();
+    const node = this.node(this.get(id), nodeId);
+    if (node.type !== 'capture') throw new FlowError(400, 'Only Capture accepts an uploaded take');
+    if (busy(node)) refuse('Cannot upload to a queued/running Capture node');
+    const dir = join(this.options.root, id, nodeId, 'uploads');
+    const upload = await receiveUpload(req, dir);
+    try {
+      this.ensureOpen();
+      const next = this.change(id, flow => {
+        if (busy(this.node(flow, nodeId))) refuse('Cannot upload to a queued/running Capture node');
+        const affected = descendants(flow, [nodeId]);
+        return { ...flow, nodes: flow.nodes.map(n => affected.has(n.id) ? { ...n, status: 'stale', error: undefined, needsHuman: undefined,
+          ...(n.id === nodeId ? { upload } : {}) } : n) };
+      }, 'Take uploaded; dependent output is stale', nodeId);
+      this.abortInvalidated(id); this.autoQueue(id); return next;
+    } catch (error) { await unlink(join(dir, upload.name)).catch(() => {}); throw error; }
+  }
   private abortInvalidated(id: string): void {
     const flow = this.get(id);
     for (const active of this.active.values()) if (active.flowId === id) {
@@ -178,7 +201,7 @@ export class FlowEngine {
     if (!flow.autoRun) return;
     const readyIds = flow.nodes.filter(n => ['idle', 'stale'].includes(n.status) && ready(flow, n)).map(n => n.id);
     if (!readyIds.length) return;
-    this.change(id, f => ({ ...f, nodes: f.nodes.map(n => readyIds.includes(n.id) ? { ...n, status: 'queued', error: undefined } : n) }), 'Auto-run queued ready nodes');
+    this.change(id, f => ({ ...f, nodes: f.nodes.map(n => readyIds.includes(n.id) ? { ...n, status: 'queued', needsHuman: undefined, error: undefined } : n) }), 'Auto-run queued ready nodes');
     this.queuedFlows.add(id); this.schedule();
   }
   private schedule(): void {
@@ -198,7 +221,7 @@ export class FlowEngine {
       if ([...this.active.values()].some(a => (lane && a.lane === lane) || (a.flowId === flow.id && a.nodeId === node.id))) continue;
       const current = this.get(flow.id), latest = this.node(current, node.id);
       if (latest.status !== 'queued' || !ready(current, latest)) continue;
-      const started = this.change(flow.id, f => stale({ ...f, nodes: f.nodes.map(n => n.id === node.id ? { ...n, status: 'running', version: n.version + 1, inputHash: hash(f, n), error: undefined } : n) }, [node.id]), 'Running', node.id);
+      const started = this.change(flow.id, f => stale({ ...f, nodes: f.nodes.map(n => n.id === node.id ? { ...n, status: 'running', outputVersion: n.output ? n.outputVersion ?? n.version : undefined, version: n.version + 1, inputHash: hash(f, n), error: undefined } : n) }, [node.id]), 'Running', node.id);
       const running = this.node(started, node.id), controller = new AbortController();
       const runId = this.options.store.startNodeRun(flow.id, node.id, running.version, running.inputHash!);
       this.active.set(runId, { flowId: flow.id, nodeId: node.id, version: running.version, lane, controller });
@@ -212,7 +235,7 @@ export class FlowEngine {
       const dir = join(this.options.root, flow.id, node.id, `v${node.version}`);
       mkdirSync(dir, { recursive: true });
       const executor = this.options.executors?.[node.type] ?? (flow.mode === 'demo' ? demoExecutor : this.liveExecutors[node.type]);
-      if (!executor) throw new Error(`${node.type} executor is not available until F4`);
+      if (!executor) throw new Error(`${node.type} executor is not available`);
       const inputs: Record<string, PortValue> = Object.fromEntries(flow.edges.filter(e => e.to.node === node.id).map(e => [e.to.port, structuredClone(this.node(flow, e.from.node).output?.[e.from.port] ?? {})]));
       const result = await executor({ flow: structuredClone(flow), node: structuredClone(node), inputs, notes: [...node.notes], dir, signal });
       const output = z.record(z.string(), z.object({ value: z.unknown().optional(), files: z.array(z.string()).optional() }).strict()).parse(result);
@@ -220,13 +243,13 @@ export class FlowEngine {
       if (this.stopped) return;
       const current = this.get(flow.id).nodes.find(n => n.id === node.id);
       if (current?.status !== 'running' || current.version !== node.version) { error = 'Execution superseded'; return; }
-      this.change(flow.id, f => ({ ...f, nodes: f.nodes.map(n => n.id === node.id ? { ...n, output, status: n.gate ? 'awaiting_approval' : 'approved' } : n) }), node.gate ? 'Awaiting approval' : 'Approved', node.id);
+      this.change(flow.id, f => ({ ...f, nodes: f.nodes.map(n => n.id === node.id ? { ...n, output, outputVersion: node.version, needsHuman: undefined, status: n.gate ? 'awaiting_approval' : 'approved' } : n) }), node.gate ? 'Awaiting approval' : 'Approved', node.id);
       this.autoQueue(flow.id);
     } catch (cause) {
       if (this.stopped) return;
       error = cause instanceof Error ? cause.message : 'Execution failed';
       const current = this.get(flow.id).nodes.find(n => n.id === node.id);
-      if (current?.status === 'running' && current.version === node.version) this.change(flow.id, f => ({ ...f, nodes: f.nodes.map(n => n.id === node.id ? { ...n, status: 'failed', error } : n) }), error, node.id);
+      if (current?.status === 'running' && current.version === node.version) this.change(flow.id, f => ({ ...f, nodes: f.nodes.map(n => n.id === node.id ? { ...n, status: 'failed', error, needsHuman: cause instanceof PipelineError && cause.needsHuman, ...(cause instanceof PipelineError && cause.output ? { output: cause.output, outputVersion: node.version } : {}) } : n) }), error, node.id);
     } finally {
       this.active.delete(runId);
       if (!this.stopped) { this.options.store.finishNodeRun(runId, error); this.schedule(); }

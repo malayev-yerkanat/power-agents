@@ -242,3 +242,9 @@ button:active:focus-visible { transform: none; }
 .repo-panel { margin: 12px 0; padding: 14px 18px; border: 1px solid var(--control-border); background: #fffef9; }
 .repo-panel p { margin-top: 6px; overflow-wrap: anywhere; }
 .repo-diffstat { margin-top: 8px; padding: 8px 10px; overflow-x: auto; font-size: 12px; background: rgba(0,0,0,.04); }
+
+/* EN/RU language switch in the top bar */
+.language-toggle { display: inline-flex; align-items: center; gap: 4px; min-height: 38px; margin-left: auto; padding: 8px 10px; border: 1px solid var(--pixel-rule, #d8d6cc); color: #516c91; font-size: 10px; line-height: 1.7; white-space: nowrap; }
+.language-toggle:hover { color: #164aaa; background: #f1f4fa; }
+.language-toggle .is-active { color: #143c85; text-decoration: underline; text-underline-offset: 3px; }
+.language-toggle:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }

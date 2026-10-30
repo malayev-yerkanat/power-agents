@@ -31,6 +31,11 @@ This catalog is updated by completed knowledge operations.
 
 ## Changes
 
+- 2026-10-30: [[changes/20261030-065316-review-en-ru-language-toggle|Review EN RU language toggle]]
+- 2026-10-30: [[changes/20261030-064930-f4-media-pipeline-stages-uploads-playback|F4 media pipeline: stages, uploads, playback]]
+- 2026-10-30: [[changes/20261030-064800-f4-localization-compatibility-and-final-checks|F4 localization compatibility and final checks]]
+- 2026-10-30: [[changes/20261030-064602-en-ru-language-switch|EN/RU language switch]]
+- 2026-10-30: [[changes/20261030-064542-f4-flow-media-pipeline|F4 flow media pipeline]]
 - 2026-10-30: [[changes/20261030-063043-idea-avoids-made-topics-scenes-runs-before-f4|Idea avoids made topics; Scenes runs before F4]]
 - 2026-10-30: [[changes/20261030-062805-f3-live-llm-executors-for-idea-script-scenes|F3 live LLM executors for Idea, Script, Scenes]]
 - 2026-10-30: [[changes/20261030-061122-flows-canvas-fixes-hidden-nodes-and-inspector-labels|Flows canvas fixes: hidden nodes and inspector labels]]

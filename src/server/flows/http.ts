@@ -1,11 +1,15 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { z } from 'zod';
+import { join } from 'node:path';
+import { serveMedia } from './media.ts';
 import type { CreateFlowInput, Flow, FlowPatch, FlowRegistryNode } from '../../shared/flow-types.ts';
 import type { Connection } from '../../shared/types.ts';
 import type { Store } from '../store.ts';
 import { registry } from './registry.ts';
 
 export interface FlowApi {
+  fileRoot?(): string;
+  upload?(id: string, nodeId: string, req: IncomingMessage): Promise<Flow>;
   connections?(): Connection[];
   create(input: CreateFlowInput): Flow | Promise<Flow>;
   update(id: string, patch: FlowPatch): Flow | Promise<Flow>;
@@ -42,6 +46,17 @@ export async function handleFlows(req: IncomingMessage, res: ServerResponse, pat
       type, title, inputs, outputs, gate, ...(lane ? { lane } : {}), configDefaults: config.parse({}),
     }));
     json(res, 200, { types }); return;
+  }
+  if (req.method === 'GET' && path.length >= 7 && path[3] === 'files') {
+    const flow = store.getFlow(path[2]), node = flow?.nodes.find(n => n.id === path[4]);
+    const match = /^v([1-9]\d*)$/.exec(path[5]), version = match ? Number(match[1]) : 0;
+    const root = flows.fileRoot?.();
+    if (!node || !root || !Number.isSafeInteger(version) || version < 1 || version > node.version) throw new HttpError(404, 'File not found');
+    await serveMedia(req, res, join(root, flow!.id, node.id, `v${version}`), path.slice(6).join('/')); return;
+  }
+  if (req.method === 'POST' && path.length === 6 && path[3] === 'nodes' && path[5] === 'upload') {
+    if (!flows.upload) throw new HttpError(404, 'Uploads are unavailable');
+    json(res, 200, { flow: await flows.upload(path[2], path[4], req) }); return;
   }
   if (req.method === 'GET' && path.length === 3) {
     const flow = store.getFlow(path[2]);
