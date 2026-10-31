@@ -2,7 +2,7 @@
 type: overview
 status: active
 created: 2026-10-07
-updated: 2026-10-22
+updated: 2026-10-30
 tags: [product, architecture]
 ---
 
@@ -12,6 +12,8 @@ Power Agents is a local prototype where a user gives a goal to a team of 2–5 A
 
 The implementation runs on one computer with Node.js 24+, a React/Vite client, a local HTTP API, and SQLite. It discovers Codex CLI, Claude Code, Antigravity CLI (`agy`), and OpenAI/Anthropic API connections at server startup. The composer loads a model list for each selected connection; CLI participants may keep the provider default, while API participants must select a model. A demo mode exercises the orchestration without model calls. See [[Tech Stack]], [[Provider Adapters]], and [[Model Selection Flow]].
 
+The [[Client Interface]] supports an EN/RU switch without reloading, with a persisted browser preference and localized platform hints and feedback. Switching preserves drafts and user/model content; default flow node labels translate without changing their stored titles.
+
 On macOS, a per-user LaunchAgent can start the built server at login and restart it after a process exit. It uses the same loopback address and local storage; see [[macOS Autostart Flow]].
 
 Recent run summaries and journal entries load in bounded pages, with older history available on request. [[Backup and Restore Flow]] captures the SQLite state and workspaces while the server is stopped. Repository CI checks tests, coverage, type safety, build output, and dependency advisories.
@@ -19,6 +21,8 @@ Recent run summaries and journal entries load in bounded pages, with older histo
 Optional [[Telegram Notifications]] pair one private chat and send brief alerts when a plan needs approval or a reviewed run completes. Pairing and alert preferences live in Settings. Approval remains in the local browser; Telegram does not give a phone access to the loopback-only app.
 
 ## Current boundaries
+
+A separate [[Flow Engine]] provides typed DAGs and demo runs via the protected local API, including approval gates, rejection notes, stale outputs, global scheduling and restart recovery. F2 [[Flows UI]] adds `#/flows` and `#/flows/<id>`, template creation, the dark React Flow canvas, typed connectors, node actions, a config inspector and SSE invalidation/refetch. [[Reel Flow Execution]] documents demo and live text paths. F3 implements Idea, Script and Scenes through read-only provider turns, validated JSON, one repair attempt, connection selection and readable card excerpts. F4 implements isolated content pipeline stages, ElevenLabs narration, Capture uploads, edit planning, preview/final rendering, QA and Range media playback. Flow Telegram actions remain planned for F5. Automated verification uses fake providers/renders; the live script-to-final reel acceptance run remains unverified.
 
 - One active team at a time; up to three concurrent turns and one turn per participant.
 - Text and Markdown results; providers do not edit external repositories.
@@ -43,3 +47,5 @@ Ambient city, cars and aircraft now use detailed generated raster artwork matche
 The ambient monsters now breathe, roar, stomp and perform three attack gestures each using aligned key poses. Shared ground anchors, fixed scale and padded logical canvases preserve pixel consistency. Minor generated art variation remains; see [[Client Interface]].
 
 Editor drafts survive navigation and reload within the current browser tab through validated `sessionStorage`; creation and run-specific steering remain separate. Fragment links preserve run/tab context and browser back/forward. History filtering covers loaded pages only, with older pages available on request. These client changes leave the API, SSE, provider execution and SQLite contracts intact; server-wide history search and reusable named teams remain planned work.
+
+Codex Desktop can use its own Telegram bot for supported approvals and structured questions, with desktop controls retained. Token, pairing, and polling state are independent of Claude. The private IPC adapter is version-checked and leaves unsupported prompts on desktop; see [[Telegram Notifications]] and [Codex setup](../docs/codex-telegram.md).

@@ -1,0 +1,47 @@
+{
+  "origin": [
+    442,
+    646
+  ],
+  "cell_px": 12,
+  "size_cells": 21,
+  "shape": "7 stepped cloud lobes; 20 by 18 cells; 1\u20132-cell junction notches",
+  "palette": {
+    "highlight": [
+      81,
+      106,
+      253
+    ],
+    "mid": [
+      19,
+      62,
+      252
+    ],
+    "shadow": [
+      7,
+      45,
+      216
+    ],
+    "white": [
+      255,
+      255,
+      255
+    ]
+  },
+  "suit_sample_coordinates": {
+    "highlight": [
+      282,
+      612
+    ],
+    "mid": [
+      144,
+      605
+    ],
+    "shadow": [
+      314,
+      657
+    ]
+  },
+  "glyph": "2-cell white sharp chevron; underscore baseline rows 12\u201313",
+  "light": "upper left; contour and lower-right shadow share darkest suit blue"
+}

@@ -453,3 +453,29 @@ test('question buttons show each option and resolve the tapped index', async () 
     assert.equal(edited, 'Which fix?\n\nAnswered: Fix 2');
   } finally { await service.stop(); store.close(); }
 });
+
+test('cancelling a session drops only its open questions', async () => {
+  const store = new Store(':memory:');
+  pair(store);
+  const edited: string[] = [];
+  let sent = 0;
+  const fetcher: typeof fetch = async (input, init) => {
+    const method = String(input).split('/').at(-1)!;
+    const body = JSON.parse(String(init?.body ?? '{}')) as { text?: string };
+    if (method === 'sendMessage') { sent += 1; return new Response(JSON.stringify({ ok: true, result: { message_id: sent } })); }
+    if (method === 'editMessageText') edited.push(body.text!);
+    return new Response(JSON.stringify({ ok: true, result: true }));
+  };
+  const service = new TelegramService(store, 'token', { fetcher });
+  const options = [{ label: 'Yes', status: 'Answered: Yes' }];
+  try {
+    const mine = service.requestChoice('Mine?', options, 60_000, undefined, 'a');
+    const other = service.requestChoice('Other?', options, 60_000, undefined, 'b');
+    while (sent < 2) await new Promise(resolve => setImmediate(resolve));
+    service.cancelChoices('a');
+    assert.equal(await mine, undefined);
+    assert.deepEqual(edited, ['Mine?\n\nAnswered on the Mac or expired.']);
+    service.cancelChoices('b');
+    assert.equal(await other, undefined);
+  } finally { await service.stop(); store.close(); }
+});

@@ -2,7 +2,7 @@
 type: flow
 status: active
 created: 2026-10-07
-updated: 2026-10-10
+updated: 2026-10-30
 tags: [flow, api, security]
 ---
 
@@ -13,7 +13,9 @@ tags: [flow, api, security]
 3. The server validates loopback Host, Origin, fetch metadata, session cookie, CSRF token, body schema, and rate limit as applicable.
 4. State changes emit SSE notifications. `App.tsx` then refetches bootstrap and the selected run. Older runs and events are loaded through explicit pages.
 
-SSE replays at most 100 missed events. A larger backlog emits `resync`; the browser fetches a fresh bootstrap snapshot and selected-run detail, then reconnects from the snapshot cursor. This bounds replay work while retaining paged access to historical events.
+F2 adds `flow` events on the global `/api/events` stream, driven by `store.subscribeFlows`. These events carry a flow invalidation rather than a graph patch. [[Flows UI]] refetches the selected flow after each matching event and refreshes flow state on stream open/reconnect to recover missed changes; the list also refreshes. Flow notifications do not participate in the persisted team-run event cursor or replay history.
+
+For team-run events, SSE replays at most 100 missed events. A larger backlog emits `resync`; the browser fetches a fresh bootstrap snapshot and selected-run detail, then reconnects from the snapshot cursor. This bounds replay work while retaining paged access to historical events.
 
 The server creates session values at startup. A stale or absent cookie makes protected requests return HTTP 401 with `Open the application to start a session`. The message describes missing session state, even if the page is visible. The client now fetches `/api/bootstrap` and retries a rejected request once, replacing the CSRF token for mutations. Concurrent rejected requests share one recovery fetch. The client only sends same-origin `/api` paths. The event stream closes after an error, retries bootstrap with a bounded delay while the server is unavailable, then opens a new stream after backoff. Its failure count resets only after 30 seconds of stable connection; after repeated short-lived failures, the UI asks the user to check cookies and reload.
 

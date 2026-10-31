@@ -1,0 +1,34 @@
+{
+  "chest": {
+    "origin": [
+      433,
+      709
+    ],
+    "grid_px": 13,
+    "cells": 19,
+    "crop": [
+      420,
+      696,
+      693,
+      969
+    ],
+    "outline": "one cell darker local color; no black/navy"
+  },
+  "visor": {
+    "origin": [
+      494,
+      192
+    ],
+    "grid_px": 13,
+    "cells": 13,
+    "crop": [
+      481,
+      179,
+      676,
+      374
+    ],
+    "outline": "one cell darker local color; no black/navy"
+  },
+  "shape": "official non-near-white mask; BOX coverage >= 0.5; four equal tips",
+  "color_field": "approved interior RGB BOX averages; foreground-only edge averages with same-family darker shades"
+}

@@ -6,13 +6,17 @@ status: active
 language: typescript
 purpose: "Compose teams and operate runs from the browser"
 created: 2026-10-07
-updated: 2026-10-20
+updated: 2026-10-30
 tags: [module, ui]
 ---
 
 # Client Interface
 
-`App.tsx` owns bootstrap/session/SSE synchronization and uses [useWorkspaceLocation](../../src/client/useWorkspaceLocation.ts) for creation, history, and run fragment routes. [navigation](../../src/client/navigation.ts) validates route IDs and tabs. [HistoryView](../../src/client/HistoryView.tsx) filters loaded summaries and retains older-page pagination; it is not a server-wide search. [session](../../src/client/session.ts) handles HTTP errors and recovers a stale session with one bootstrap and retry. [Composer](../../src/client/Composer.tsx) collects goal, 2–5 participants, leader, connections, roles, models, and live/demo mode. [ModelPicker](../../src/client/ModelPicker.tsx) presents models returned for the chosen connection instead of accepting an arbitrary ID. [RunWorkspace](../../src/client/RunWorkspace.tsx) shows the plan, approval actions, progress, messages, and artifacts. [TelegramSettings](../../src/client/TelegramSettings.tsx) shows pairing, connection health, a test alert, preferences, and disconnect controls for [[Telegram Notifications]].
+[i18n](../../src/client/i18n.ts) supplies the EN/RU top-bar switch, Russian source keys, English dictionary and date/time locale. The preference persists in `localStorage` as `power-agents.language`; unavailable storage keeps the selection only until reload. [uiMessages](../../src/client/uiMessages.ts) translates known platform connection/model hints and feedback, including interpolated HTTP/provider errors, while retaining unknown provider text. Validation, storage/clipboard/Telegram feedback and screen-reader announcements translate at render time. Language changes preserve editor drafts and custom content. Flow node defaults are localized for display; add-node and unrelated inspector saves retain canonical stored titles. Tests: [i18n](../../tests/i18n.test.ts), [workspace browser scenarios](../../tests/e2e/workspace.spec.ts), [flow language scenario](../../tests/e2e/i18n-flows.spec.ts). Browser execution remains subject to the sandbox limits recorded in [[log|Operation Log]].
+
+F2 adds a separate **Потоки** list/canvas at `#/flows` and `#/flows/<id>`; see [[Flows UI]] for cards, typed ports, inspector, queued versioned writes and flow event refresh.
+
+`App.tsx` owns bootstrap/session/SSE synchronization and uses [useWorkspaceLocation](../../src/client/useWorkspaceLocation.ts) for creation, history, run and flow fragment routes. [navigation](../../src/client/navigation.ts) validates route IDs and tabs. [HistoryView](../../src/client/HistoryView.tsx) filters loaded summaries and retains older-page pagination; it is not a server-wide search. [session](../../src/client/session.ts) handles HTTP errors and recovers a stale session with one bootstrap and retry. [Composer](../../src/client/Composer.tsx) collects goal, 2–5 participants, leader, connections, roles, models, and live/demo mode. [ModelPicker](../../src/client/ModelPicker.tsx) presents models returned for the chosen connection instead of accepting an arbitrary ID. [RunWorkspace](../../src/client/RunWorkspace.tsx) shows the plan, approval actions, progress, messages, and artifacts. [TelegramSettings](../../src/client/TelegramSettings.tsx) shows pairing, connection health, a test alert, preferences, and disconnect controls for [[Telegram Notifications]].
 
 [draftStorage](../../src/client/draftStorage.ts) validates editor-only versioned envelopes, and [useBrowserDraft](../../src/client/useBrowserDraft.ts) saves edits to `sessionStorage`. Composer and per-run steering drafts survive navigation and reload in the current tab. Storage failures are visible. Unknown provider selections are preserved for correction rather than silently reassigned.
 

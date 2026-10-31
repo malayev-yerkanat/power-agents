@@ -208,3 +208,19 @@ test('monster timelines keep authored gestures and effects bounded', () => {
   assert.ok(boss.some(beat => beat.action === 'attack2' && beat.effect === 'dust'));
   assert.ok(mantis.every(beat => beat.duration > 0));
 });
+test('agent avatars show the approved Ranger portrait for known providers and initials otherwise', async () => {
+  const { Avatar, avatarAsset } = await import('../src/client/ui.tsx');
+  assert.equal(avatarAsset('codex-cli'), '/art/avatars/codex.png');
+  assert.equal(avatarAsset('anthropic-api'), '/art/avatars/claude.png');
+  assert.equal(avatarAsset('gemini'), '/art/avatars/gemini.png');
+  assert.equal(avatarAsset('ollama'), undefined);
+  const portrait = renderToStaticMarkup(createElement(Avatar, { member: { name: 'Alice', connectionId: 'claude' } }));
+  assert.match(portrait, /avatar-portrait/);
+  assert.match(portrait, /<img src="\/art\/avatars\/claude.png" alt=""/);
+  assert.doesNotMatch(portrait, />AL</);
+  const initials = renderToStaticMarkup(createElement(Avatar, { member: { name: 'Zed', connectionId: 'local' } }));
+  assert.doesNotMatch(initials, /<img/);
+  assert.match(initials, />ZE</);
+  const { existsSync } = await import('node:fs');
+  for (const provider of ['codex', 'claude', 'gemini']) assert.ok(existsSync(`public/art/avatars/${provider}.png`), provider);
+});

@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-30",
+  "status": "concept assets awaiting user approval",
+  "strict_brief_compliance": "needs revision: sprite-detail drift, continuous colour variation, non-uniform ring fills and unverified logical pixel grid remain",
+  "output_directory": "output/art-direction/v10-agent-pfps",
+  "generation": {
+    "tool": "built-in image_gen.imagegen",
+    "matching_sprite_reference_passed": true,
+    "layout_reference": "Composition inspected visually only; not passed to generator.",
+    "calls": 6,
+    "exact_prompts": "PROMPTS.md",
+    "native_output_dimensions": [
+      1254,
+      1254
+    ],
+    "export_dimensions": [
+      1024,
+      1024
+    ],
+    "export": "Nearest-neighbour size normalization only; no repainting, palette quantization, added smoothing or synthetic pixel-grid cleanup.",
+    "initial_source_files": {
+      "codex": "exec-c65633c1-60c3-4d4d-a604-8e5a09aa08a7.png",
+      "claude": "exec-83fd38d4-fb6a-441d-8ac2-f322f5cb8cf9.png",
+      "gemini": "exec-707a093b-b131-4765-98a2-4fa156647097.png"
+    },
+    "selected_source_files": {
+      "codex": "exec-6af0d043-67be-4f4d-ae2b-e4643050a547.png",
+      "claude": "exec-bdcf5c3b-82e1-4c54-b549-114154672a0d.png",
+      "gemini": "exec-c9f6fbdc-8849-4533-b4cb-208c01d9375b.png"
+    }
+  },
+  "files": {
+    "pfp-claude.png": {
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "unique_rgb_colors": 98489,
+      "sha256": "c492ba9db3643dd14fad30e0f9f4b8995bde22e5dced27eef6a88f68ff9fa884",
+      "agent": "claude",
+      "character_reference": "public/art/claude.png",
+      "selected_pass": "rendering correction",
+      "sprite_drift": [
+        "The ivory radiating chest motif is enlarged into broad rays and extends below the frame; exact ray geometry differs from the sprite.",
+        "The helmet is reconstructed as a strongly symmetrical V-visor shell with broad central forehead panel; its silhouette, visor trim and chin detailing are approximate interpretations.",
+        "Fine uneven highlight clusters and soft transitions remain particularly on the helmet, collar and shoulder plates."
+      ],
+      "composition": {
+        "front_facing": true,
+        "head_and_shoulders": true,
+        "diagonal_speed_stripes": true,
+        "thick_ring_behind_shoulders": true,
+        "shoulders_overlap_lower_ring": true,
+        "helmet_survives_64px_and_128px_circle": true,
+        "notes": "Helmet top is around 14–16% of frame height; the bust extends to the lower edge. Helmet itself occupies roughly half the frame height, below a literal 70% helmet-height reading of the layout brief."
+      },
+      "visible_defects": [
+        "Residual continuous colour variation and blended highlight transitions remain inside otherwise stepped pixel shapes.",
+        "Generated clusters have uneven scale and do not establish the requested coherent 256×256 logical grid.",
+        "The ring has slight colour variation rather than a single exact accent-colour fill.",
+        "High-frequency stripes compete with ring and helmet detail at 64px."
+      ],
+      "grid_verified": false,
+      "no_visible_text_or_numbers": true,
+      "no_visible_weapon": true,
+      "no_detected_new_logo": true,
+      "readability": {
+        "at_128px": "Helmet, visor, accent ring and provider palette remain legible; fine costume markings simplify.",
+        "at_64px": "Helmet and colour identity remain legible, but small chest/trim details and stripe spacing become crowded."
+      }
+    },
+    "pfp-codex.png": {
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "unique_rgb_colors": 73804,
+      "sha256": "038be6d9e26d1ee1cccb9253f72acb39b4e5795f166c8f8eef4f56725d5f5d74",
+      "agent": "codex",
+      "character_reference": "public/art/codex.png",
+      "selected_pass": "rendering correction",
+      "sprite_drift": [
+        "The original sprite's compact interwoven/circular ivory chest detail is replaced by a broad open angular ivory border; this is recognizable by palette but not an exact costume-marking match.",
+        "The front-facing helmet has a large symmetrical V-shaped visor and pronounced ivory brow/chin framing; the source's small three-quarter helmet geometry is only approximated.",
+        "Costume blue is more saturated cobalt than the pale lavender accent; background is predominantly dark navy despite bright stripe bands."
+      ],
+      "composition": {
+        "front_facing": true,
+        "head_and_shoulders": true,
+        "diagonal_speed_stripes": true,
+        "thick_ring_behind_shoulders": true,
+        "shoulders_overlap_lower_ring": true,
+        "helmet_survives_64px_and_128px_circle": true,
+        "notes": "Helmet top is around 14–16% of frame height; the bust extends to the lower edge. Helmet itself occupies roughly half the frame height, below a literal 70% helmet-height reading of the layout brief."
+      },
+      "visible_defects": [
+        "Residual continuous colour variation and blended highlight transitions remain inside otherwise stepped pixel shapes.",
+        "Generated clusters have uneven scale and do not establish the requested coherent 256×256 logical grid.",
+        "The ring has slight colour variation rather than a single exact accent-colour fill.",
+        "High-frequency stripes compete with ring and helmet detail at 64px."
+      ],
+      "grid_verified": false,
+      "no_visible_text_or_numbers": true,
+      "no_visible_weapon": true,
+      "no_detected_new_logo": true,
+      "readability": {
+        "at_128px": "Helmet, visor, accent ring and provider palette remain legible; fine costume markings simplify.",
+        "at_64px": "Helmet and colour identity remain legible, but small chest/trim details and stripe spacing become crowded."
+      }
+    },
+    "pfp-gemini.png": {
+      "width": 1024,
+      "height": 1024,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "unique_rgb_colors": 116925,
+      "sha256": "edd4d4d74462e4a42a4f06e4dad151fd56f7b76416c41100be1165fd4d9283bc",
+      "agent": "gemini",
+      "character_reference": "public/art/gemini.png",
+      "selected_pass": "rendering correction",
+      "sprite_drift": [
+        "The cyan forehead panel is more prominent and upright than the small crown accent visible in the original three-quarter sprite.",
+        "The original ivory/cyan chest motif is interpreted as a broad ivory angular panel around a cobalt/cyan central triangle, rather than an exact reproduction.",
+        "The blue/cyan palette and red shoulder accents remain recognizable; shoulder and collar construction is simplified and enlarged."
+      ],
+      "composition": {
+        "front_facing": true,
+        "head_and_shoulders": true,
+        "diagonal_speed_stripes": true,
+        "thick_ring_behind_shoulders": true,
+        "shoulders_overlap_lower_ring": true,
+        "helmet_survives_64px_and_128px_circle": true,
+        "notes": "Helmet top is around 14–16% of frame height; the bust extends to the lower edge. Helmet itself occupies roughly half the frame height, below a literal 70% helmet-height reading of the layout brief."
+      },
+      "visible_defects": [
+        "Residual continuous colour variation and blended highlight transitions remain inside otherwise stepped pixel shapes.",
+        "Generated clusters have uneven scale and do not establish the requested coherent 256×256 logical grid.",
+        "The ring has slight colour variation rather than a single exact accent-colour fill.",
+        "High-frequency stripes compete with ring and helmet detail at 64px."
+      ],
+      "grid_verified": false,
+      "no_visible_text_or_numbers": true,
+      "no_visible_weapon": true,
+      "no_detected_new_logo": true,
+      "readability": {
+        "at_128px": "Helmet, visor, accent ring and provider palette remain legible; fine costume markings simplify.",
+        "at_64px": "Helmet and colour identity remain legible, but small chest/trim details and stripe spacing become crowded."
+      }
+    },
+    "review-board.png": {
+      "width": 1664,
+      "height": 1056,
+      "format": "PNG",
+      "mode": "RGB",
+      "opaque": true,
+      "unique_rgb_colors": 124161,
+      "sha256": "2427babe621eea6503066ab00945d73a7ed1e30464191dbb96ac5351b5a4fc74",
+      "notes": [
+        "Three 512×512 square previews side by side.",
+        "Six circular previews at actual 64px and 128px diameters, using nearest-neighbour resampling and binary masks.",
+        "Read-only original sprites included at their native 160×160 canvas dimensions.",
+        "Labels are PIL board annotations, not part of the portrait PNGs."
+      ]
+    }
+  },
+  "references": [
+    {
+      "file": "public/art/codex.png",
+      "width": 160,
+      "height": 160,
+      "mode": "RGBA",
+      "sha256": "23295aa7e205b9593e80ff1abac05cabf5f00a817483eaf545a3a74a62425c15"
+    },
+    {
+      "file": "public/art/claude.png",
+      "width": 160,
+      "height": 160,
+      "mode": "RGBA",
+      "sha256": "eb27b2ab68c23336f28b3fa6fdb0757612f86a4ff68be0601f675708e437f1f3"
+    },
+    {
+      "file": "public/art/gemini.png",
+      "width": 160,
+      "height": 160,
+      "mode": "RGBA",
+      "sha256": "cae5f7acd8bf85187a08739ec6d9129e61f7e72724b79881032abc31574cc2a8"
+    },
+    {
+      "file": "reference-layout.webp",
+      "width": 900,
+      "height": 900,
+      "mode": "RGB",
+      "sha256": "98f512fcac588de66cc1d06c21b5cdccb2bc94d46e995fcf5cd7b45caa86d18d"
+    }
+  ],
+  "verification": {
+    "visual_inspection": [
+      "All four requested inputs inspected before generation.",
+      "Initial portraits and correction outputs inspected.",
+      "Saved 1024×1024 portraits and complete review board inspected at output resolution and as circular previews."
+    ],
+    "automated_checks_passed": [
+      "All portrait files are PNG, exactly 1024×1024, fully opaque RGB.",
+      "Review board is RGB PNG at 1664×1056.",
+      "All six native-size circular preview rectangles match nearest-neighbour downsamples and binary masks pixel for pixel.",
+      "Circular mask values are exactly 0 or 255.",
+      "Board script syntax compiles and execution succeeds.",
+      "SHA-256 hashes of all four supplied reference images are unchanged.",
+      "Independent read-only review found no board or script defects."
+    ],
+    "pixel_grid": "Not verified; visible steps coexist with continuous colour variation. Unique-colour counts are recorded as evidence and do not certify palette discipline.",
+    "automated_franchise_or_logo_detection": "Not performed. No show-specific animal helmet features or text were noticed visually; generic helmet resemblance is not an identity-clearance claim.",
+    "application_tests": "Not run: task is isolated concept artwork with a PIL board script, no application code changes."
+  },
+  "scope": {
+    "authored_files": [
+      "pfp-codex.png",
+      "pfp-claude.png",
+      "pfp-gemini.png",
+      "review-board.png",
+      "build_review_board.py",
+      "PROMPTS.md",
+      "inspection.json"
+    ],
+    "reference_files_modified": false,
+    "application_code_modified": false,
+    "wiki_modified": false,
+    "notes": "Only task deliverables authored inside the requested output directory. Built-in generation also retains its automatic source outputs under its standard tool-managed location."
+  }
+}

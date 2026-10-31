@@ -1,5 +1,6 @@
 import type { Member } from '../shared/types';
 import { rangerAsset } from './Encounter';
+import { t } from './i18n';
 
 type Position = { left: number; top: number };
 
@@ -15,7 +16,7 @@ const formations: Record<number, Position[]> = {
 export function SquadPreview({ members }: { members: Member[] }) {
   const visible = members.slice(0, 5);
   const positions = formations[visible.length] || [];
-  const countLabel = members.length === 1 ? 'участник' : members.length < 5 ? 'участника' : 'участников';
+  const countLabel = members.length === 1 ? t('участник') : members.length < 5 ? t('участника') : t('участников');
 
   return <figure className="squad-preview">
     <div className="squad-preview-stage" aria-hidden="true">
@@ -29,6 +30,6 @@ export function SquadPreview({ members }: { members: Member[] }) {
         </div>;
       })}
     </div>
-    <figcaption><span>Состав команды</span><span>{members.length} {countLabel}</span></figcaption>
+    <figcaption><span>{t('Состав команды')}</span><span>{members.length} {countLabel}</span></figcaption>
   </figure>;
 }

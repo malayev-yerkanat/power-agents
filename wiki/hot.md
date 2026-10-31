@@ -3,40 +3,16 @@ type: meta
 title: "Hot Cache"
 status: active
 created: 2026-10-07
-updated: 2026-10-22
+updated: 2026-10-30
 tags: [context]
 ---
 
 # Hot Cache
 
-## Last Updated
+Codex Desktop now has a dedicated Telegram bot bridge, separate from Claude. Configure `CODEX_TELEGRAM_BOT_TOKEN`, enable `CODEX_TELEGRAM_ENABLED`, restart and pair with `npm run codex:telegram:pair`. Its store is `.power-agents/codex-telegram.sqlite`. Missing/duplicate credentials never fall back to Claude. See [[Telegram Notifications]], [[Telegram Notification Flow]] and [setup/limitations](../docs/codex-telegram.md).
 
-2026-10-23. M1 accepted live 2026-10-26: review rework, facts board (changed facts reopen tasks that used them), safe resume. Combine/review calls get 15 minutes. M2 accepted live 2026-10-26 (task files, git worktree code runs). M3 accepted live 2026-10-26: MCP team tools with per-turn tokens (Claude, Codex). Connection failures show their reason; unreadable answers get one retry.
+Supported prompts: complete command/network approval previews, exact current-turn permission grants, empty-form MCP tool confirmations (including Browser use downloads), blocking questions, and structured async questions in an active turn. Explicit Telegram replies are bound to the paired user and message. Desktop answers, stale requests, disconnects and expiry invalidate controls. Unknown, secret, oversized, file-change, plan/option-picker, authentication and other MCP elicitation prompts remain desktop-only. The adapter uses undocumented desktop IPC with version checks; async replies are ordinary steering with a fresh-state check, not an atomic expected-turn operation.
 
-## Direction
+Verification: 314/314 unit/integration tests, 86.79% overall line coverage, build/typecheck pass; all 44 browser tests passed during initial integration. Tests cover protocol framing, discovery, owner isolation, canonical history, stale answers, token isolation and pairing authorization. No linter is configured. Dedicated bot pairing and a live Telegram-to-Codex question reply are verified; coverage is all local desktop chats within the bounded discovery window. No commits or pushes. Existing Claude and artwork edits were preserved.
 
-[Roadmap](../docs/roadmap.md): M1 finishes the core loop (review rework, shared facts, safe resume), then M2 file/code output, M3 MCP team tools.
-
-## Repository State
-
-All work through the review fixes is pushed to `main` (CI green). M1 follow-ups are being committed on 2026-10-26. Local checks: 158/158 Node tests, 81.45% line coverage, 35/35 Chromium tests, typecheck.
-
-## Current System
-
-- Power Agents is a local TypeScript/React/SQLite prototype. The Node server binds to `127.0.0.1:4317`; one team runs at a time with up to three parallel provider turns.
-- A leader plans, the user approves, participants work and ask questions, then the leader synthesizes and another participant reviews. Universal MCP tools and external repository edits remain planned.
-- `/api/bootstrap` returns 30 recent run summaries and an event cursor. Older runs and journal events load in pages; SSE replay requests a snapshot resync for gaps over 100 events.
-- SQLite stores runs, events, Telegram settings and a durable alert outbox. [[Backup and Restore Flow]] captures SQLite and workspaces only while the server is stopped. Backups contain private task content; `.env` and logs are excluded.
-- Telegram pairs one private chat with a one-use `/start` link for brief plan-ready and completion alerts. Approval stays in the local app; polling failure disables pairing and test controls until recovery.
-- Codex, Claude and Antigravity CLI plus OpenAI/Anthropic APIs are available when configured. CLIs use their own sign-in and never receive `OPENAI_API_KEY`/`ANTHROPIC_API_KEY`. Each turn receives only the documents it needs. Gemini receives prompts through CLI stdin. CLI plan/read-only controls are not an OS isolation boundary. Automated provider tests use mocks; a small Codex/Gemini live run passed on 2026-10-07.
-- A user LaunchAgent can start the built server at macOS login while the Mac is awake. CI checks tests with an 80% line-coverage gate, synthetic Chromium flows, type checking, build and dependency audit.
-
-## Current UI
-
-Task entry comes before a compact team summary and optional preview. Ambient city art loads on first expansion; the approved expanded pixel scale is unchanged. Completed runs show the accepted result above the optional encounter. Documents support safe Markdown, source view, copying and downloads. Paused/failed runs expose latest-review context when present and a clarification focus action; sending feedback and resuming remain separate.
-
-Drafts survive reload within one tab (`sessionStorage`). Fragment routes keep run/tab context. History search covers loaded pages; older pages load on request. [[Pixel Art Consistency]] remains authoritative for visuals.
-
-## Scope Boundaries
-
-See the roadmap backlog. Archive/rename, Telegram checks, dark mode, sprites and screen-reader checks also remain open.
+Previous major work: EN/RU interface fixes and F4 reel media pipeline. Start with [[Client Interface]], [[Flow Engine]], [[Flows UI]] and [[Reel Flow Execution]]. Canonical behavior is in [prototype guide](../docs/prototype.md); media verification limitations remain in [F4 verification](../docs/f4-verification.md). F5 Telegram approvals for Power Agents reel flows remain planned and are distinct from this Codex Desktop bridge.

@@ -4,10 +4,12 @@ import { resolve, join, extname, sep } from 'node:path';
 import { createServer as createViteServer } from 'vite';
 import { Store } from './store.ts';
 import { Engine } from './engine.ts';
-import { discoverConnections } from './adapters/index.ts';
+import { FlowEngine } from './flows/engine.ts';
+import { discoverConnections, runTurn } from './adapters/index.ts';
 import { createApiHandler } from './http.ts';
 import { createMcpHandler } from './mcp.ts';
 import { TelegramService, isTelegramToken } from './telegram.ts';
+import { createCodexTelegramService } from './codex/service.ts';
 
 const root = process.cwd();
 const port = Number(process.env.PORT ?? 4317);
@@ -17,11 +19,14 @@ const store = new Store(join(dataRoot, 'state.sqlite'));
 const connections = await discoverConnections();
 const workspaceRoot = join(dataRoot, 'workspaces');
 const engine = new Engine({ store, connections, workspaceRoot, teamUrl: `http://127.0.0.1:${port}/mcp` });
+const flows = new FlowEngine({ store, root: join(dataRoot, 'flows'), connections, runner: runTurn });
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
 const telegramError = telegramToken && !isTelegramToken(telegramToken)
   ? 'TELEGRAM_BOT_TOKEN has an invalid BotFather token format.' : undefined;
 const telegram = telegramToken && !telegramError ? new TelegramService(store, telegramToken) : undefined;
-const api = createApiHandler({ store, engine, connections, workspaceRoot, telegram, telegramError });
+const codexTelegram = createCodexTelegramService({ dataRoot, token: process.env.CODEX_TELEGRAM_BOT_TOKEN,
+  existingToken: telegramToken, enabled: process.env.CODEX_TELEGRAM_ENABLED === 'true' });
+const api = createApiHandler({ store, engine, flows, connections, workspaceRoot, telegram, telegramError, codexTelegram });
 const mcp = createMcpHandler({ grant: token => engine.grant(token), tools: grant => engine.tools(grant), call: (token, name, args) => engine.call(token, name, args) });
 const production = process.env.NODE_ENV === 'production';
 const server = createServer();
@@ -46,14 +51,17 @@ server.on('request', (req, res) => {
     res.end(readFileSync(file));
   })().catch(error => { console.error('Request failed:', error); if (!res.headersSent) res.writeHead(500); res.end('Request failed'); });
 });
-server.requestTimeout = 30_000;
+// requestTimeout covers the whole body, so it must outlast a 2 GB Capture upload; JSON bodies stay capped at 64 KB.
+server.requestTimeout = 30 * 60_000;
 server.headersTimeout = 15_000;
 server.listen(port, '127.0.0.1', () => console.log(`Power Agents: http://127.0.0.1:${port}`));
 telegram?.start();
+codexTelegram.start();
 server.on('error', error => {
   console.error(error.message);
   engine.shutdown();
-  void (async () => { await telegram?.stop(); store.close(); })();
+  flows.shutdown();
+  void (async () => { await codexTelegram.stop(); await telegram?.stop(); store.close(); })();
   process.exitCode = 1;
   void vite?.close();
 });
@@ -61,6 +69,8 @@ let stopping = false;
 async function stop(): Promise<void> {
   if (stopping) return; stopping = true;
   engine.shutdown();
+  flows.shutdown();
+  await codexTelegram.stop();
   await telegram?.stop();
   void vite?.close();
   server.close();

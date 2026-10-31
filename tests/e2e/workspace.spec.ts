@@ -485,3 +485,61 @@ test('loaded-only search keeps older-page loading available', async ({ page }) =
   await expect(page.getByRole('button', { name: /Старый документ/ })).toBeVisible();
   await expect(page.getByText('Загружено 2 из 2 запусков.')).toBeVisible();
 });
+
+test('EN/RU switch translates the interface and is remembered after reload', async ({ page }) => {
+  await mockWorkspace(page);
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+  const goal = page.locator('#goal');
+  await goal.fill('short');
+  await page.getByRole('button', { name: 'Составить план', exact: true }).click();
+  await expect(page.locator('#goal-error')).toContainText('минимум 10');
+  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('heading', { name: /Assemble a team/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'New task', exact: true })).toBeVisible();
+  await expect(goal).toHaveValue('short');
+  await expect(goal).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.locator('#goal-error')).toHaveText('Describe the goal in more detail: at least 10 characters.');
+  await page.getByRole('button', { name: 'Переключить на русский' }).click();
+  await expect(page.locator('#goal-error')).toContainText('минимум 10');
+  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(goal).toHaveValue('short');
+  await expect(page.getByRole('button', { name: 'Flows', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Draft plan', exact: true }).click();
+  await expect(page.locator('#goal-error')).toHaveText('Describe the goal in more detail: at least 10 characters.');
+  await page.getByRole('button', { name: 'Переключить на русский' }).click();
+  await expect(page.getByRole('button', { name: 'Новая задача', exact: true })).toBeVisible();
+  await expect(page.locator('#goal-error')).toContainText('минимум 10');
+});
+
+test('language changes translate existing clipboard feedback and run announcements without altering documents', async ({ page }) => {
+  await mockWorkspace(page);
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => {} }, configurable: true });
+  });
+  await page.goto('/#/runs/review-fixture?tab=artifacts');
+  await page.getByRole('button', { name: 'Копировать Markdown', exact: true }).click();
+  await expect(page.locator('.artifact-action-notice')).toHaveText('Markdown скопирован.');
+  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await expect(page.locator('.artifact-action-notice')).toHaveText('Markdown copied.');
+  await expect(page.locator('.run-content > .sr-only[role="status"]')).toContainText('Task complete. Results are available');
+  await expect(page.getByRole('heading', { name: 'План проверки', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Переключить на русский' }).click();
+  await expect(page.locator('.artifact-action-notice')).toHaveText('Markdown скопирован.');
+});
+
+test('the language toggle works when browser storage is denied', async ({ page }) => {
+  await mockWorkspace(page);
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Storage denied', 'SecurityError'); } });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('button', { name: 'New task', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Переключить на русский' }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+});
