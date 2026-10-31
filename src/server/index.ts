@@ -51,7 +51,8 @@ server.on('request', (req, res) => {
     res.end(readFileSync(file));
   })().catch(error => { console.error('Request failed:', error); if (!res.headersSent) res.writeHead(500); res.end('Request failed'); });
 });
-server.requestTimeout = 30_000;
+// requestTimeout covers the whole body, so it must outlast a 2 GB Capture upload; JSON bodies stay capped at 64 KB.
+server.requestTimeout = 30 * 60_000;
 server.headersTimeout = 15_000;
 server.listen(port, '127.0.0.1', () => console.log(`Power Agents: http://127.0.0.1:${port}`));
 telegram?.start();

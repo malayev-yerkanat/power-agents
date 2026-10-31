@@ -226,7 +226,8 @@ export class FlowEngine {
       const runId = this.options.store.startNodeRun(flow.id, node.id, running.version, running.inputHash!);
       this.active.set(runId, { flowId: flow.id, nodeId: node.id, version: running.version, lane, controller });
       this.abortInvalidated(flow.id);
-      void this.execute(runId, started, running, controller.signal);
+      // A failed state write must not become an unhandled rejection, which would stop the server.
+      void this.execute(runId, started, running, controller.signal).catch(cause => console.error('Flow node result could not be saved:', cause));
     }
   }
   private async execute(runId: number, flow: Flow, node: FlowNode, signal: AbortSignal): Promise<void> {
@@ -252,7 +253,7 @@ export class FlowEngine {
       if (current?.status === 'running' && current.version === node.version) this.change(flow.id, f => ({ ...f, nodes: f.nodes.map(n => n.id === node.id ? { ...n, status: 'failed', error, needsHuman: cause instanceof PipelineError && cause.needsHuman, ...(cause instanceof PipelineError && cause.output ? { output: cause.output, outputVersion: node.version } : {}) } : n) }), error, node.id);
     } finally {
       this.active.delete(runId);
-      if (!this.stopped) { this.options.store.finishNodeRun(runId, error); this.schedule(); }
+      if (!this.stopped) try { this.options.store.finishNodeRun(runId, error); } finally { this.schedule(); }
     }
   }
   shutdown(): void {

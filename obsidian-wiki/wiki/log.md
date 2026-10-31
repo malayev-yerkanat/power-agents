@@ -13,6 +13,12 @@ tags:
 
 Newest completed operations appear first.
 
+### 2026-10-31 10:35 UTC - Fix upload timeout, flow crash and dropped Telegram approvals
+
+Raised the server request timeout so 2 GB Capture uploads can finish, stopped failed flow result writes from crashing the server, and made Codex approval prompts in Telegram buttons-only so typed replies are no longer silently dropped.
+
+Note: [[changes/20261031-103542-fix-upload-timeout-flow-crash-and-dropped-telegram-approvals|Fix upload timeout, flow crash and dropped Telegram approvals]]
+
 ### 2026-10-30 15:05 UTC - Flow UI P3 polish
 
 Flow toolbar and mobile inspector respect safe-area insets; the running pulse and button hover use duration tokens; media links tell screen readers they open in a new tab.

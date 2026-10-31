@@ -138,10 +138,10 @@ export class TelegramService {
     return typeof choice === 'number' ? choice : undefined;
   }
 
-  /** Accepts a button or an explicit private reply to this message, never unrelated chat text. */
-  async requestInput(text: string, options: { label: string; description?: string }[], timeoutMs: number, signal?: AbortSignal): Promise<string | undefined> {
+  /** Accepts a button or, with acceptText, an explicit private reply to this message; never unrelated chat text. */
+  async requestInput(text: string, options: { label: string; description?: string }[], timeoutMs: number, signal?: AbortSignal, acceptText = true): Promise<string | undefined> {
     const choices = z.array(z.object({ label: z.string().min(1).max(1000).refine(label => label.trim().length > 0), description: z.string().optional() })).max(10).parse(options);
-    const choice = await this.requestPrompt(text, choices.map(option => ({ label: option.label, status: 'Answer received.' })), timeoutMs, signal, undefined, true);
+    const choice = await this.requestPrompt(text, choices.map(option => ({ label: option.label, status: 'Answer received.' })), timeoutMs, signal, undefined, acceptText);
     return typeof choice === 'number' ? choices[choice].label : choice;
   }
 

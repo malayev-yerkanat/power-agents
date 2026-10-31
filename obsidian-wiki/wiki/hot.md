@@ -21,6 +21,7 @@ Vault initialized. No knowledge operations have completed yet.
 
 ## Recent Changes
 
+- 2026-10-31: Fix upload timeout, flow crash and dropped Telegram approvals (wiki/changes/20261031-103542-fix-upload-timeout-flow-crash-and-dropped-telegram-approvals.md)
 - 2026-10-30: Flow UI P3 polish (wiki/changes/20261030-150507-flow-ui-p3-polish.md)
 - 2026-10-30: Flow UI P2 design fixes (wiki/changes/20261030-145708-flow-ui-p2-design-fixes.md)
 - 2026-10-30: Flow UI P1 design fixes (wiki/changes/20261030-145407-flow-ui-p1-design-fixes.md)

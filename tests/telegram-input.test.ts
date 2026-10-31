@@ -61,6 +61,23 @@ test('Codex input accepts only an explicit reply from the paired private user an
   } finally { await f.close(); }
 });
 
+test('buttons-only input ignores typed replies and does not invite them', async () => {
+  const f = fixture();
+  try {
+    const answer = f.service.requestInput('Approve?', [{ label: 'Approve once' }, { label: 'Decline' }], 60_000, undefined, false);
+    await f.sent();
+    const sent = f.calls.find(call => call.method === 'sendMessage')!.body;
+    assert.equal(sent.text, 'Approve?');
+    f.updates([reply(1, 'yes')]);
+    await f.service.pollOnce(0);
+    assert.equal(f.calls.filter(call => call.method === 'editMessageText').length, 0);
+    f.updates([{ update_id: 2, callback_query: { id: '2', data: sent.reply_markup.inline_keyboard[0][1].callback_data,
+      from: { id: 123 }, message: { message_id: 1, chat: { id: 123 } } } }]);
+    await f.service.pollOnce(0);
+    assert.equal(await answer, 'Decline');
+  } finally { await f.close(); }
+});
+
 test('buttons return the full option label and duplicate callbacks cannot answer twice', async () => {
   const f = fixture();
   try {

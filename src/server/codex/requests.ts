@@ -189,8 +189,9 @@ export class CodexRequests {
     let decision: string | undefined;
     for (const prompt of prepared.prompts) {
       if (!this.current(key, pending) || Date.now() >= deadline) return;
+      // Decisions are buttons only: a typed reply could not map to a decision and would be dropped.
       const answer = await this.options.telegram.requestInput(prompt.text, prompt.options,
-        Math.max(1, deadline - Date.now()), pending.controller.signal);
+        Math.max(1, deadline - Date.now()), pending.controller.signal, !prepared.decision);
       if (!this.current(key, pending) || !answer || Date.now() >= deadline) return;
       if (prepared.decision) {
         decision = Object.hasOwn(prepared.decision, answer) ? prepared.decision[answer] : undefined;

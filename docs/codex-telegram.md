@@ -6,7 +6,7 @@ Set `CODEX_TELEGRAM_BOT_TOKEN` to the new BotFather token and `CODEX_TELEGRAM_EN
 
 ## Using it
 
-- Command and network approval messages show the complete available command, working directory, reason, and requested permissions. Choose **Approve once** or **Decline**. Broader session or policy approvals are never offered.
+- Command and network approval messages show the complete available command, working directory, reason, and requested permissions. Choose **Approve once** or **Decline**; approval messages accept buttons only, so a typed reply is ignored. Broader session or policy approvals are never offered.
 - Browser use download approvals and other MCP tool confirmations with an empty form and `codex_approval_kind: mcp_tool_call` also offer **Approve once / Decline**. The complete action parameters appear in the message; session/always grants are never forwarded. Authentication, OTP, user verification, URL flows, and forms requiring input remain desktop-only.
 - Native permission requests show their complete requested grant. Approval applies only to the current turn; declining grants nothing.
 - Structured questions appear with buttons. You can also use Telegram's **Reply** action on that exact message to type an answer. Ordinary messages to the bot are not forwarded.

@@ -31,6 +31,7 @@ This catalog is updated by completed knowledge operations.
 
 ## Changes
 
+- 2026-10-31: [[changes/20261031-103542-fix-upload-timeout-flow-crash-and-dropped-telegram-approvals|Fix upload timeout, flow crash and dropped Telegram approvals]]
 - 2026-10-30: [[changes/20261030-150507-flow-ui-p3-polish|Flow UI P3 polish]]
 - 2026-10-30: [[changes/20261030-145708-flow-ui-p2-design-fixes|Flow UI P2 design fixes]]
 - 2026-10-30: [[changes/20261030-145407-flow-ui-p1-design-fixes|Flow UI P1 design fixes]]

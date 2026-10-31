@@ -9,10 +9,10 @@ const question = (overrides = {}) => ({ id: 2, method: 'item/tool/requestUserInp
   threadId: 't', turnId: 'turn', itemId: 'item', questions: [{ id: 'q', header: 'Choice', question: 'Which?',
     isSecret: false, isOther: true, options: [{ label: 'One', description: 'First option' }] }], ...overrides } });
 function harness() {
-  const inputs: { text: string; options: { label: string }[]; signal?: AbortSignal; resolve: (answer: string | undefined) => void }[] = [];
+  const inputs: { text: string; options: { label: string }[]; signal?: AbortSignal; acceptText?: boolean; resolve: (answer: string | undefined) => void }[] = [];
   const responses: unknown[][] = [];
-  const bridge = new CodexRequests({ telegram: { requestInput: (text, options, _timeout, signal) => new Promise(resolve => {
-    inputs.push({ text, options, signal, resolve });
+  const bridge = new CodexRequests({ telegram: { requestInput: (text, options, _timeout, signal, acceptText) => new Promise(resolve => {
+    inputs.push({ text, options, signal, acceptText, resolve });
   }) }, respond: async (...args) => { responses.push(args); } });
   return { bridge, inputs, responses };
 }
@@ -213,4 +213,10 @@ test('unknown permission shapes, added fields and grants too large to display st
   ]) h.bridge.sync('t', '/project', [permissionRequest(permissions)]);
   h.bridge.sync('t', '/project', [permissionRequest({ network: null, fileSystem: null }, { futureScope: 'session' })]);
   assert.equal(h.inputs.length, 0);
+});
+
+test('decisions accept buttons only; questions also accept a typed reply', () => {
+  const h = harness();
+  h.bridge.sync('t', '/project', [approval(1), browserPermission(), question()]);
+  assert.deepEqual(h.inputs.map(input => input.acceptText), [false, false, true]);
 });

@@ -227,3 +227,32 @@ test('pipeline human errors are distinct and a failed QA report remains visible'
     assert.deepEqual(failed.nodes[1].output?.report.value, report); assert.equal(failed.nodes[1].outputVersion, 1);
   } finally { app.clean(); }
 });
+
+test('a failed result write is logged, not an unhandled rejection, and the queue keeps moving', async () => {
+  const { engine, store, create, clean } = setup();
+  const rejections: unknown[] = [], errors: unknown[][] = [];
+  const onRejection = (reason: unknown) => { rejections.push(reason); };
+  const log = console.error;
+  process.on('unhandledRejection', onRejection);
+  console.error = (...args: unknown[]) => { errors.push(args); };
+  const update = store.updateFlow.bind(store);
+  try {
+    const f = create([node('a', 'prompt'), node('b', 'prompt')]);
+    const get = () => store.getFlow(f.id)!;
+    let broken = true;
+    store.updateFlow = (id, fn, event) => {
+      if (broken && event.nodeId === 'a' && event.message !== 'Running' && event.message !== 'Queued') throw new Error('database is locked');
+      return update(id, fn, event);
+    };
+    engine.run(f.id, 'a');
+    await until(get, () => store.nodeRuns(f.id).some(r => r.nodeId === 'a' && r.status !== 'running'));
+    broken = false;
+    engine.run(f.id, 'b');
+    await until(get, flow => status(flow, 'b') === 'approved');
+    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(rejections, []);
+    assert.ok(errors.some(args => /could not be saved/.test(String(args[0]))));
+  } finally {
+    process.off('unhandledRejection', onRejection); console.error = log; store.updateFlow = update; clean();
+  }
+});
