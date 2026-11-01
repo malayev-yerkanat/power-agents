@@ -8,12 +8,15 @@ import { CityBackdrop } from './CityBackdrop';
 import { HistoryView } from './HistoryView';
 import type { WorkspaceLocation } from './navigation';
 import { RunWorkspace } from './RunWorkspace';
-import { api, createSessionRequest } from './session';
+import { api, createSessionRequest, takeLaunchToken } from './session';
 import { TelegramSettings } from './TelegramSettings';
 import { useWorkspaceLocation } from './useWorkspaceLocation';
 import { dateLabel, ErrorNote, statusLabels } from './ui';
 import { uiMessage } from './uiMessages';
 import { LanguageToggle, t, useLanguage } from './i18n';
+
+// Read once at load: the address is cleaned immediately, and StrictMode's double render must not lose the token.
+const initialLaunchToken = typeof window === 'undefined' ? undefined : takeLaunchToken();
 
 const FlowCanvas = lazy(() => import('./flows/FlowCanvas').then(module => ({ default: module.FlowCanvas })));
 
@@ -72,7 +75,20 @@ export function App() {
   const streamRecoveryCount = useRef(0);
   const selectedRef = useRef(selectedId);
   selectedRef.current = selectedId;
-  const fetchBootstrap = useCallback(() => api<Bootstrap>('/api/bootstrap'), []);
+  // A launch link signs this browser in once; concurrent first calls (StrictMode, stream recovery) share that request.
+  const launchToken = useRef(initialLaunchToken);
+  const launching = useRef<Promise<Bootstrap> | undefined>(undefined);
+  const fetchBootstrap = useCallback(() => {
+    if (launching.current) return launching.current;
+    const token = launchToken.current;
+    if (!token) return api<Bootstrap>('/api/bootstrap');
+    launchToken.current = undefined;
+    const pending = api<Bootstrap>(`/api/bootstrap?launch=${encodeURIComponent(token)}`);
+    launching.current = pending;
+    const clear = () => { if (launching.current === pending) launching.current = undefined; };
+    void pending.then(clear, clear);
+    return pending;
+  }, []);
   const applyBootstrap = useCallback((data: Bootstrap) => {
     setBootstrap(current => mergeBootstrap(data, current));
     setError('');

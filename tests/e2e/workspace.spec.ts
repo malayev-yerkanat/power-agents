@@ -583,3 +583,14 @@ test('the development server refuses local run data', async ({ request }) => {
     expect(await response.text()).not.toContain('private run text');
   } finally { rmSync('.power-agents/e2e-probe.txt', { force: true }); }
 });
+
+test('a launch link signs in once and leaves no token in the address', async ({ page }) => {
+  await mockWorkspace(page);
+  const bootstraps: string[] = [];
+  page.on('request', request => { if (new URL(request.url()).pathname === '/api/bootstrap') bootstraps.push(new URL(request.url()).search); });
+  await page.goto('/?launch=one-time#/runs/review-fixture');
+  await expect(page.getByRole('tab', { name: /^Результаты/ })).toBeVisible();
+  expect(page.url()).not.toContain('launch');
+  expect(page.url()).toMatch(/#\/runs\/review-fixture$/);
+  expect(bootstraps.filter(search => search.includes('launch=one-time'))).toHaveLength(1);
+});

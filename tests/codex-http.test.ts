@@ -8,7 +8,7 @@ test('dedicated Codex bot status and pairing require local session and CSRF', as
   const store = new Store(':memory:');
   let ready = false, pairs = 0;
   const handler = createApiHandler({ store, connections: [], engine: {} as never,
-    codexTelegram: { status: () => ({ enabled: true, configured: true, ready, connected: false, status: 'Waiting' }),
+    codexTelegram: { status: () => ({ enabled: true, configured: true, ready, connected: false, approvals: false, status: 'Waiting' }),
       beginPairing: () => { pairs++; return { url: 'https://t.me/codex_test_bot?start=test', expiresAt: 'later' }; } } });
   const server = createServer((req, res) => { void handler(req, res); });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));

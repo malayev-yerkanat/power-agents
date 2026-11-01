@@ -157,6 +157,20 @@ test('a sandboxed check writes only in its worktree and cannot reach other hosts
   } finally { f.cleanup(); }
 });
 
+test('a sandboxed check cannot read the app sign-in key or databases', { skip: process.platform !== 'darwin' }, async () => {
+  const f = fixture();
+  try {
+    const data = join(f.root, '.power-agents');
+    mkdirSync(data);
+    writeFileSync(join(data, 'access.key'), 'secret-key\n');
+    writeFileSync(join(data, 'state.sqlite'), 'run history');
+    writeFileSync(join(data, 'notes.txt'), 'readable');
+    const result = await runCheck(f.repo, `cat '${data}/access.key' || echo key-denied; cat '${data}/state.sqlite' || echo db-denied; cat '${data}/notes.txt'`);
+    assert.doesNotMatch(result.output, /secret-key|run history/);
+    assert.match(result.output, /key-denied[\s\S]*db-denied[\s\S]*readable/);
+  } finally { f.cleanup(); }
+});
+
 test('removeWorktrees removes the run worktrees and keeps their branches', async () => {
   const f = fixture();
   try {

@@ -51,6 +51,8 @@ const mcpPermissionSchema = z.object({ threadId: text, turnId: text, serverName:
 
 interface Options {
   telegram: Pick<TelegramService, 'requestInput'>;
+  /** Command, permission and MCP action approvals reach Telegram only when enabled; questions always do. */
+  approvals?: boolean;
   respond: (threadId: string, requestId: string | number, method: string, params: Record<string, unknown>) => Promise<unknown>;
 }
 interface Prompt { text: string; options: { label: string }[]; id?: string }
@@ -148,10 +150,12 @@ export class CodexRequests {
       const fingerprint = JSON.stringify(r);
       if (fingerprint.length > 32_000 || !r.params || typeof r.params !== 'object'
         || !('threadId' in r.params) || r.params.threadId !== threadId) continue;
-      const prepared = r.method === 'item/commandExecution/requestApproval' ? prepareApproval(cwd, r.params)
+      const candidate = r.method === 'item/commandExecution/requestApproval' ? prepareApproval(cwd, r.params)
         : r.method === 'item/tool/requestUserInput' ? prepareQuestions(cwd, r.params)
         : r.method === 'item/permissions/requestApproval' ? preparePermissions(cwd, r.params)
         : r.method === 'mcpServer/elicitation/request' ? prepareMcpPermission(cwd, r.params) : undefined;
+      // A taken-over Telegram account must not be able to approve commands unless the owner opted in.
+      const prepared = candidate?.decision && !this.options.approvals ? undefined : candidate;
       next.set(key, { threadId, id: r.id, fingerprint, controller: new AbortController(), prepared });
     }
     for (const key of duplicates) next.delete(key);

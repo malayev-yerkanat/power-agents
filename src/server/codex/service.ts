@@ -7,10 +7,12 @@ interface Bridge { start(): void; stop(): void; status(): string }
 interface Factories {
   createStore(path: string): Store;
   createTelegram(store: Store, token: string): TelegramService;
-  createBridge(telegram: TelegramService): Bridge;
+  createBridge(telegram: TelegramService, options: { approvals: boolean }): Bridge;
 }
 export interface CodexTelegramStatus {
   enabled: boolean; configured: boolean; ready: boolean; connected: boolean; status: string;
+  /** Whether command, permission and MCP action approvals are forwarded (CODEX_TELEGRAM_APPROVALS=true). */
+  approvals: boolean;
   error?: string; username?: string; pending?: { expiresAt: string };
 }
 export interface CodexTelegramService {
@@ -20,7 +22,7 @@ export interface CodexTelegramService {
   beginPairing(): { url: string; expiresAt: string };
 }
 interface Options {
-  dataRoot: string; token?: string; existingToken?: string; enabled: boolean; factories?: Factories;
+  dataRoot: string; token?: string; existingToken?: string; enabled: boolean; approvals?: boolean; factories?: Factories;
 }
 
 /** Isolated bot identity, pairing, polling offset, and database; never borrows Claude's token. */
@@ -42,7 +44,7 @@ export function createCodexTelegramService(options: Options): CodexTelegramServi
     try {
       store = factories.createStore(join(options.dataRoot, 'codex-telegram.sqlite'));
       telegram = factories.createTelegram(store, token!);
-      bridge = factories.createBridge(telegram);
+      bridge = factories.createBridge(telegram, { approvals: options.approvals ?? false });
     } catch {
       store?.close(); store = undefined; telegram = undefined; bridge = undefined;
       initializationError = 'Codex Telegram storage or bridge could not initialize.';
@@ -53,7 +55,7 @@ export function createCodexTelegramService(options: Options): CodexTelegramServi
     const current = stopped ? undefined : telegram?.status();
     const ready = Boolean(started && !stopped && current?.ready);
     const problem = error ?? initializationError ?? current?.error;
-    return { enabled: options.enabled, configured, ready, connected: Boolean(current?.connected),
+    return { enabled: options.enabled, configured, ready, connected: Boolean(current?.connected), approvals: options.approvals ?? false,
       status: !options.enabled ? 'Disabled' : stopped ? 'Stopped' : problem ? 'Unavailable'
         : !configured ? 'Set CODEX_TELEGRAM_BOT_TOKEN' : !ready ? 'Connecting to dedicated Codex bot'
           : !current?.connected ? 'Pair the dedicated Codex bot' : bridge!.status(),

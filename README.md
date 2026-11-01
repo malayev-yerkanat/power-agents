@@ -22,7 +22,7 @@ npm ci
 npm run dev
 ```
 
-Open **http://127.0.0.1:4317**. To try the workflow without provider credentials, create a team and enable **Демо без запросов к моделям** before selecting **Составить план**.
+Run `npm run open` (or use the link the server prints at startup). It opens the app with a one-time sign-in link that works for 5 minutes; afterwards this browser stays signed in, also across server restarts. A plain `http://127.0.0.1:4317` tab without that sign-in shows a 401 prompting `npm run open`. To try the workflow without provider credentials, create a team and enable **Демо без запросов к моделям** before selecting **Составить план**.
 
 The server uses port `4317` by default. Set `PORT` in `.env` to use another port. Only one server should run from a project directory at a time because SQLite holds an exclusive lock.
 
@@ -48,7 +48,7 @@ cp .env.example .env
 
 ### Telegram alerts
 
-Codex Desktop completion alerts, approvals, and structured questions can use a separate bot while keeping desktop controls available. Set `CODEX_TELEGRAM_BOT_TOKEN`, enable `CODEX_TELEGRAM_ENABLED=true`, restart the service, then run `npm run codex:telegram:pair`. See [Codex–Telegram setup and supported prompts](docs/codex-telegram.md).
+Codex Desktop completion alerts, structured questions and, if you opt in, approvals can use a separate bot while keeping desktop controls available. Set `CODEX_TELEGRAM_BOT_TOKEN`, enable `CODEX_TELEGRAM_ENABLED=true`, add `CODEX_TELEGRAM_APPROVALS=true` to forward command, permission and MCP action approvals, restart the service, then run `npm run codex:telegram:pair`. See [Codex–Telegram setup and supported prompts](docs/codex-telegram.md).
 
 Create a bot with BotFather, set `TELEGRAM_BOT_TOKEN` in `.env`, and restart the server. In the app's connection settings, generate a one-use pairing link and send the bot **Start** from a private chat. The bot can notify that a plan is ready for approval or that a run has completed review. Messages omit task text and artifacts. Pending alerts are saved in SQLite and retried when the app runs again; Telegram cannot approve a plan or open this loopback-only app on your phone.
 
@@ -101,6 +101,7 @@ To restore, stop the server and move any existing `.power-agents/` directory asi
 - One team runs at a time, with up to three concurrent provider calls. After a restart, interrupted runs pause for manual continuation; an unfinished provider call may be repeated.
 - Provider API calls or CLI subscriptions may incur costs. Demo mode does not call models.
 - The prototype produces text and Markdown. General MCP tools, attachments, editing external repositories, and a monetary budget are not implemented.
+- Sign-in uses a per-install key in `.power-agents/access.key` (owner-only). Any program running as your user can read it; it keeps out other macOS users, browser pages and sandboxed check commands.
 - The local bootstrap session and CSRF protection are designed for loopback use. Do not expose this server directly to the internet.
 
 ## Development and documentation

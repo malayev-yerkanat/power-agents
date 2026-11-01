@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ApiError, api, createSessionRequest } from '../src/client/session.ts';
+import { ApiError, api, createSessionRequest, takeLaunchToken } from '../src/client/session.ts';
 
 test('API helper only sends same-origin local API requests', async context => {
   const requests: Array<{ path: unknown; credentials: RequestCredentials | undefined }> = [];
@@ -74,4 +74,13 @@ test('does not retry other errors or loop when the browser still cannot keep a s
   await assert.rejects(denied('/api/runs'), /локальную сессию/);
   assert.equal(bootstrapCalls, 1);
   assert.equal(requests, 3);
+});
+
+test('a launch token is taken from the address once and removed, keeping the route', () => {
+  const replaced: string[] = [];
+  const history = { state: { keep: true }, replaceState: (_state: unknown, _title: string, url?: string | URL | null) => { replaced.push(String(url)); } };
+  assert.equal(takeLaunchToken({ pathname: '/', search: '?launch=abc&x=1', hash: '#/runs/r1' }, history), 'abc');
+  assert.deepEqual(replaced, ['/?x=1#/runs/r1']);
+  assert.equal(takeLaunchToken({ pathname: '/', search: '', hash: '' }, history), undefined);
+  assert.equal(replaced.length, 1);
 });

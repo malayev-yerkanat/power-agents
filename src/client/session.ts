@@ -47,3 +47,15 @@ export function createSessionRequest(bootstrap: () => Promise<Session>, send: Re
     }
   };
 }
+
+/** Takes a one-time ?launch= token from the address and removes it, so it never stays in history or a bookmark. */
+export function takeLaunchToken(location: Pick<Location, 'search' | 'pathname' | 'hash'> = window.location,
+  history: Pick<History, 'replaceState' | 'state'> = window.history): string | undefined {
+  const params = new URLSearchParams(location.search);
+  const token = params.get('launch') ?? undefined;
+  if (token === undefined) return undefined;
+  params.delete('launch');
+  const search = params.toString();
+  history.replaceState(history.state, '', `${location.pathname}${search ? `?${search}` : ''}${location.hash}`);
+  return token;
+}

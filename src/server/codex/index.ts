@@ -7,9 +7,9 @@ import { CodexCompletions } from './completions.ts';
 import { CodexAsyncQuestions, canSendAsyncAnswer } from './async-questions.ts';
 import { desktopThreadIds } from './threads.ts';
 
-export function createCodexTelegramBridge(telegram: TelegramService): CodexBridge {
+export function createCodexTelegramBridge(telegram: TelegramService, { approvals = false }: { approvals?: boolean } = {}): CodexBridge {
   const codexHome = process.env.CODEX_HOME || join(homedir(), '.codex');
-  const requests: CodexRequests = new CodexRequests({ telegram, respond: (...args): Promise<unknown> => bridge.respond(...args) });
+  const requests: CodexRequests = new CodexRequests({ telegram, approvals, respond: (...args): Promise<unknown> => bridge.respond(...args) });
   const asyncQuestions: CodexAsyncQuestions = new CodexAsyncQuestions({ telegram, send: async (threadId, method, params, expectedTurnId): Promise<unknown> => {
     const state = await bridge.freshSnapshot(threadId);
     if (!state || !canSendAsyncAnswer(threadId, state.cwd, state, expectedTurnId, params)) {

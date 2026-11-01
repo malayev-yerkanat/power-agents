@@ -8,6 +8,12 @@ tags: [history]
 
 # Operation Log
 
+## 2026-11-01 — Phase 1 complete: launch-link sign-in; Codex approvals opt-in
+
+- `/api/bootstrap` now needs a signed session cookie or a one-time launch link from `npm run open` (audit S3). Session and CSRF derive from `.power-agents/access.key` (0600), so restarts keep browsers signed in. The check sandbox cannot read the key or the SQLite files.
+- Codex Telegram forwards command, permission and MCP approvals only with `CODEX_TELEGRAM_APPROVALS=true` (audit S4); questions and completion alerts unchanged.
+- Verified: typecheck, 340/340 unit tests, 49/49 e2e, build. Not run against the live service: the running LaunchAgent still serves the previous build.
+
 ## 2026-11-01 — Phase 1: sandboxed repo check; dev server hides run data
 
 - The repo check command now runs under macOS `sandbox-exec`: writes only in the result worktree and a private temp folder, network only on this machine, no proxy variables (audit S1). A control run proved the denials come from the profile.

@@ -12,6 +12,7 @@ import { resolveFile, taskFolder } from './files.ts';
 import { repoInfo } from './workspace.ts';
 import { handleFlows, type FlowApi } from './flows/http.ts';
 import type { CodexTelegramService } from './codex/service.ts';
+import { createLaunchVerifier, csrfValue, sessionValue } from './access.ts';
 
 interface EngineApi {
   create(input: CreateRunInput, repo?: { root: string; baseCommit: string }): Run | Promise<Run>;
@@ -19,7 +20,9 @@ interface EngineApi {
   control(id: string, action: 'pause' | 'resume' | 'cancel', confirmRepeat?: boolean): Run | Promise<Run>;
   message(id: string, body: string): Run | Promise<Run>;
 }
-interface Options { store: Store; engine: EngineApi; connections: Connection[]; workspaceRoot?: string; models?: (connection: Connection) => Promise<ModelCatalog>; telegram?: TelegramService; telegramError?: string; flows?: FlowApi; codexTelegram?: Pick<CodexTelegramService, 'status' | 'beginPairing'> }
+interface Options { store: Store; engine: EngineApi; connections: Connection[]; workspaceRoot?: string; models?: (connection: Connection) => Promise<ModelCatalog>; telegram?: TelegramService; telegramError?: string; flows?: FlowApi; codexTelegram?: Pick<CodexTelegramService, 'status' | 'beginPairing'>;
+  /** Install secret: bootstrap then needs its session cookie or a one-time launch link. Without it any local caller may bootstrap. */
+  accessKey?: Buffer }
 class HttpError extends Error {
   statusCode: number;
   constructor(statusCode: number, message: string) { super(message); this.statusCode = statusCode; }
@@ -185,8 +188,12 @@ function handleError(res: ServerResponse, error: unknown): void {
 }
 
 export function createApiHandler(options: Options): (req: IncomingMessage, res: ServerResponse) => Promise<boolean> {
-  const session = randomBytes(32).toString('hex');
-  const csrfToken = randomBytes(32).toString('hex');
+  // With an install secret both values survive restarts, so open tabs stay signed in; without one they last a process.
+  const session = options.accessKey ? sessionValue(options.accessKey) : randomBytes(32).toString('hex');
+  const csrfToken = options.accessKey ? csrfValue(options.accessKey) : randomBytes(32).toString('hex');
+  const launch = options.accessKey ? createLaunchVerifier(options.accessKey) : undefined;
+  const sessionCookie = (req: IncomingMessage) => req.headers.cookie?.split(';').map(value => value.trim())
+    .find(value => value.startsWith(`${cookieName}=`))?.slice(cookieName.length + 1);
   const models = options.models ?? createModelCatalogLoader();
   let windowStart = Date.now();
   let requestCount = 0;
@@ -204,14 +211,15 @@ export function createApiHandler(options: Options): (req: IncomingMessage, res: 
       catch { throw new HttpError(400, 'Invalid URL encoding'); }
       if (req.method === 'GET' && url.pathname === '/api/health') { json(res, 200, { ok: true }); return true; }
       if (req.method === 'GET' && url.pathname === '/api/bootstrap') {
-        res.setHeader('Set-Cookie', `${cookieName}=${session}; Path=/api; HttpOnly; SameSite=Strict`);
+        if (launch && !secureEqual(sessionCookie(req), session) && !launch(url.searchParams.get('launch') ?? '')) {
+          throw new HttpError(401, 'Open Power Agents with npm run open to sign in this browser; launch links work once for 5 minutes.');
+        }
+        res.setHeader('Set-Cookie', `${cookieName}=${session}; Path=/api; HttpOnly; SameSite=Strict${launch ? '; Max-Age=34560000' : ''}`);
         json(res, 200, { connections: options.connections, ...options.store.runSummaries(),
           eventCursor: options.store.latestEventId(), csrfToken, maxConcurrent: 3 });
         return true;
       }
-      const cookie = req.headers.cookie?.split(';').map(value => value.trim())
-        .find(value => value.startsWith(`${cookieName}=`))?.slice(cookieName.length + 1);
-      if (!secureEqual(cookie, session)) throw new HttpError(401, 'Open the application to start a session');
+      if (!secureEqual(sessionCookie(req), session)) throw new HttpError(401, 'Open the application to start a session');
       if (path[1] === 'flows') {
         if (req.method !== 'GET') {
           const token = req.headers['x-csrf-token'];
@@ -222,7 +230,7 @@ export function createApiHandler(options: Options): (req: IncomingMessage, res: 
       }
       if (req.method === 'GET') {
         if (url.pathname === '/api/events') eventStream(req, res, options.store);
-        else if (url.pathname === '/api/telegram/codex') json(res, 200, options.codexTelegram?.status() ?? { enabled: false, configured: false, ready: false, connected: false, status: 'Disabled' });
+        else if (url.pathname === '/api/telegram/codex') json(res, 200, options.codexTelegram?.status() ?? { enabled: false, configured: false, ready: false, connected: false, approvals: false, status: 'Disabled' });
         else if (url.pathname === '/api/runs') {
           const before = url.searchParams.get('before');
           if (before !== null && (!before || before.length > 128 || !options.store.hasRun(before))) throw new HttpError(400, 'Invalid run cursor');

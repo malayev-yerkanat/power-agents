@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "node --env-file-if-exists=.env --import tsx src/server/index.ts",
+    "open": "node --env-file-if-exists=.env --import tsx scripts/open.ts",
     "build": "tsc --noEmit && vite build",
     "start": "NODE_ENV=production node --env-file-if-exists=.env --import tsx src/server/index.ts",
     "test": "node --import tsx --test tests/*.test.ts",

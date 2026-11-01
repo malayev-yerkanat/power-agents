@@ -6,6 +6,8 @@ Set `CODEX_TELEGRAM_BOT_TOKEN` to the new BotFather token and `CODEX_TELEGRAM_EN
 
 ## Using it
 
+- **Approvals are opt-in.** Command, network, permission and MCP action approvals reach Telegram only with `CODEX_TELEGRAM_APPROVALS=true` in `.env` (then `npm run service:restart`). Without it they stay in the desktop app, so a taken-over Telegram account cannot approve commands. Structured questions and completion alerts need no opt-in. `npm run codex:telegram:status` shows `approvals`.
+
 - A turn observed working and then successfully completed sends an alert headed **✅ Project · done**, followed by a brief excerpt of the final assistant response. Excerpts are capped at 200 characters with common Markdown formatting removed; when no final response is available, the alert asks you to open Codex Desktop. It does not include tool output, commentary, user prompts, or the conversation title. Failed or interrupted turns do not send success alerts.
 
 - Command and network approval messages show the complete available command, working directory, reason, and requested permissions. Choose **Approve once** or **Decline**; approval messages accept buttons only, so a typed reply is ignored. Broader session or policy approvals are never offered.

@@ -5,7 +5,7 @@ import type { Store } from '../src/server/store.ts';
 import type { TelegramService } from '../src/server/telegram.ts';
 
 const token = `123456:${'a'.repeat(25)}`;
-function fixture(options: { token?: string; existingToken?: string; enabled?: boolean } = {}) {
+function fixture(options: { token?: string; existingToken?: string; enabled?: boolean; approvals?: boolean } = {}) {
   const calls: string[] = [];
   let ready = false;
   const store = { close: () => calls.push('store.close') } as unknown as Store;
@@ -17,7 +17,7 @@ function fixture(options: { token?: string; existingToken?: string; enabled?: bo
   const service = createCodexTelegramService({ dataRoot: '/local/state', enabled: true, ...options, factories: {
     createStore: path => { calls.push(`store:${path}`); return store; },
     createTelegram: (actual, supplied) => { assert.equal(actual, store); assert.equal(supplied, token); calls.push('telegram.create'); return telegram; },
-    createBridge: actual => { assert.equal(actual, telegram); calls.push('bridge.create'); return bridge; },
+    createBridge: (actual, settings) => { assert.equal(actual, telegram); calls.push(`bridge.create:${settings.approvals}`); return bridge; },
   } });
   return { service, calls, setReady: (value: boolean) => { ready = value; } };
 }
@@ -49,11 +49,12 @@ test('initialization failures close the dedicated store and expose only a safe e
 
 test('dedicated bot uses separate store and starts/stops its poller and bridge exactly once', async () => {
   const f = fixture({ token });
-  assert.deepEqual(f.calls, ['store:/local/state/codex-telegram.sqlite', 'telegram.create', 'bridge.create']);
+  assert.deepEqual(f.calls, ['store:/local/state/codex-telegram.sqlite', 'telegram.create', 'bridge.create:false']);
   f.service.start(); f.service.start(); f.setReady(true);
   assert.deepEqual(f.calls.slice(3), ['telegram.start', 'bridge.start']);
-  assert.deepEqual(f.service.status(), { enabled: true, configured: true, ready: true, connected: true,
+  assert.deepEqual(f.service.status(), { enabled: true, configured: true, ready: true, connected: true, approvals: false,
     username: 'codex_bot', status: 'Connected to Codex desktop' });
+  assert.deepEqual(fixture({ token, approvals: true }).calls.at(-1), 'bridge.create:true');
   await Promise.all([f.service.stop(), f.service.stop()]);
   assert.deepEqual(f.calls.slice(5), ['bridge.stop', 'telegram.stop', 'store.close']);
   assert.equal(f.service.status().ready, false);

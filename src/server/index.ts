@@ -10,12 +10,14 @@ import { createApiHandler, setPageSecurityHeaders } from './http.ts';
 import { createMcpHandler } from './mcp.ts';
 import { TelegramService, isTelegramToken } from './telegram.ts';
 import { createCodexTelegramService } from './codex/service.ts';
+import { accessKeyPath, createLaunchToken, launchUrl, loadAccessKey } from './access.ts';
 
 const root = process.cwd();
 const port = Number(process.env.PORT ?? 4317);
 if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('PORT must be an integer between 1024 and 65535.');
 const dataRoot = resolve(root, '.power-agents');
 const store = new Store(join(dataRoot, 'state.sqlite'));
+const accessKey = loadAccessKey(accessKeyPath(dataRoot));
 const connections = await discoverConnections();
 const workspaceRoot = join(dataRoot, 'workspaces');
 const engine = new Engine({ store, connections, workspaceRoot, teamUrl: `http://127.0.0.1:${port}/mcp` });
@@ -25,8 +27,9 @@ const telegramError = telegramToken && !isTelegramToken(telegramToken)
   ? 'TELEGRAM_BOT_TOKEN has an invalid BotFather token format.' : undefined;
 const telegram = telegramToken && !telegramError ? new TelegramService(store, telegramToken) : undefined;
 const codexTelegram = createCodexTelegramService({ dataRoot, token: process.env.CODEX_TELEGRAM_BOT_TOKEN,
-  existingToken: telegramToken, enabled: process.env.CODEX_TELEGRAM_ENABLED === 'true' });
-const api = createApiHandler({ store, engine, flows, connections, workspaceRoot, telegram, telegramError, codexTelegram });
+  existingToken: telegramToken, enabled: process.env.CODEX_TELEGRAM_ENABLED === 'true',
+  approvals: process.env.CODEX_TELEGRAM_APPROVALS === 'true' });
+const api = createApiHandler({ store, engine, flows, connections, workspaceRoot, telegram, telegramError, codexTelegram, accessKey });
 const mcp = createMcpHandler({ grant: token => engine.grant(token), tools: grant => engine.tools(grant), call: (token, name, args) => engine.call(token, name, args) });
 const production = process.env.NODE_ENV === 'production';
 const server = createServer();
@@ -55,7 +58,8 @@ server.on('request', (req, res) => {
 // requestTimeout covers the whole body, so it must outlast a 2 GB Capture upload; JSON bodies stay capped at 64 KB.
 server.requestTimeout = 30 * 60_000;
 server.headersTimeout = 15_000;
-server.listen(port, '127.0.0.1', () => console.log(`Power Agents: http://127.0.0.1:${port}`));
+// The printed link signs in one browser once within 5 minutes; later, `npm run open` makes a new one.
+server.listen(port, '127.0.0.1', () => console.log(`Power Agents: ${launchUrl(port, createLaunchToken(accessKey))}`));
 telegram?.start();
 codexTelegram.start();
 server.on('error', error => {

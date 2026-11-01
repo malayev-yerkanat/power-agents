@@ -8,14 +8,26 @@ const approval = (id: string | number = 1, overrides = {}) => ({ id, method: 'it
 const question = (overrides = {}) => ({ id: 2, method: 'item/tool/requestUserInput', params: {
   threadId: 't', turnId: 'turn', itemId: 'item', questions: [{ id: 'q', header: 'Choice', question: 'Which?',
     isSecret: false, isOther: true, options: [{ label: 'One', description: 'First option' }] }], ...overrides } });
-function harness() {
+function harness(approvals = true) {
   const inputs: { text: string; options: { label: string }[]; signal?: AbortSignal; acceptText?: boolean; resolve: (answer: string | undefined) => void }[] = [];
   const responses: unknown[][] = [];
   const bridge = new CodexRequests({ telegram: { requestInput: (text, options, _timeout, signal, acceptText) => new Promise(resolve => {
     inputs.push({ text, options, signal, acceptText, resolve });
-  }) }, respond: async (...args) => { responses.push(args); } });
+  }) }, approvals, respond: async (...args) => { responses.push(args); } });
   return { bridge, inputs, responses };
 }
+
+test('without the approvals opt-in only questions reach Telegram', async () => {
+  const h = harness(false);
+  h.bridge.sync('t', '/project', [approval(), browserPermission()]);
+  assert.equal(h.inputs.length, 0);
+  h.bridge.sync('t', '/project', [approval(), browserPermission(), question()]);
+  assert.equal(h.inputs.length, 1);
+  assert.match(h.inputs[0].text, /Which\?/);
+  h.inputs[0].resolve('One'); await tick();
+  assert.equal(h.responses.length, 1);
+  assert.equal(h.responses[0][2], 'thread-follower-submit-user-input');
+});
 
 // Shape observed in Desktop's Browser use download permission, not a native permission grant.
 const browserPermission = (overrides = {}) => ({ id: 'browser-request', method: 'mcpServer/elicitation/request', params: {
@@ -140,11 +152,11 @@ test('typed request IDs are distinct and cancellation can target one thread', as
 
 test('Telegram and desktop errors remain deduplicated without unhandled rejection', async () => {
   let prompts = 0; let replies = 0;
-  const unavailable = new CodexRequests({ telegram: { requestInput: async () => { prompts++; throw new Error('offline'); } },
+  const unavailable = new CodexRequests({ approvals: true, telegram: { requestInput: async () => { prompts++; throw new Error('offline'); } },
     respond: async () => { replies++; } });
   unavailable.sync('t', '/project', [approval()]); await tick(); unavailable.sync('t', '/project', [approval()]);
   assert.equal(prompts, 1); assert.equal(replies, 0);
-  const disconnected = new CodexRequests({ telegram: { requestInput: async () => 'Approve once' },
+  const disconnected = new CodexRequests({ approvals: true, telegram: { requestInput: async () => 'Approve once' },
     respond: async () => { replies++; throw new Error('gone'); } });
   disconnected.sync('t', '/project', [approval()]); await tick(); disconnected.sync('t', '/project', [approval()]);
   await tick(); assert.equal(replies, 1);

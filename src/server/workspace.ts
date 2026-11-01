@@ -91,12 +91,14 @@ export async function diffStat(resultDir: string, baseCommit: string): Promise<s
 export const SANDBOX_EXEC = '/usr/bin/sandbox-exec';
 /**
  * Agents wrote the code the check runs, so on macOS it may write only in the worktree and its own temp folder and
- * reach the network only on this machine; reads stay open so toolchains work. Unix sockets cannot leave the machine.
+ * reach the network only on this machine; reads stay open so toolchains work, except the app's sign-in key and databases,
+ * which would let check code drive the app over localhost. Unix sockets cannot leave the machine.
  */
 export const CHECK_SANDBOX_PROFILE = `(version 1)(allow default)
 (deny network*)
 (allow network-bind network-inbound (local ip "localhost:*") (local unix-socket))
 (allow network-outbound (remote ip "localhost:*") (remote unix-socket))
+(deny file-read* (regex #"/\\.power-agents/access\\.key$" #"/\\.power-agents/[^/]+\\.sqlite(-wal|-shm|-journal)?$"))
 (deny file-write*)
 (allow file-write* (subpath (param "WORK")) (subpath (param "TMP"))
   (literal "/dev/null") (literal "/dev/zero") (literal "/dev/tty") (literal "/dev/dtracehelper") (regex #"^/dev/fd/"))`;

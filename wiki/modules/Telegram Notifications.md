@@ -6,7 +6,7 @@ status: active
 language: typescript
 purpose: "Pair one private Telegram chat and deliver run alerts"
 created: 2026-10-08
-updated: 2026-10-31
+updated: 2026-11-01
 tags: [module, telegram, notifications]
 ---
 
@@ -29,3 +29,5 @@ Evidence: [Telegram service](../../src/server/telegram.ts), [store](../../src/se
 Browser use download prompts arrive as `mcpServer/elicitation/request`, not native permission grants. Empty-object forms explicitly classified `mcp_tool_call` use the desktop follower elicitation response with empty content and null response metadata. Offered session/always persistence is never copied. Unknown/auth/OTP/user-verification forms remain desktop-only.
 
 Codex completion alerts detect observed in-progress turns that successfully finish. The dedicated durable outbox retains chat/turn identity and a message headed “✅ Project · done” with a brief final-response excerpt, retries delivery, and deduplicates repeat observations across restart. Historical, failed, and interrupted turns do not generate success alerts. Turns completed while disconnected or between snapshots may be missed. See [Codex completion behavior](../../docs/codex-telegram.md).
+
+Codex approvals opt-in (2026-11-01): `CodexRequests` forwards command, permission and MCP action approvals only with `approvals: true`, set from `CODEX_TELEGRAM_APPROVALS=true`; otherwise they stay desktop-only. Questions and completion alerts are unaffected. The status API reports `approvals`.
