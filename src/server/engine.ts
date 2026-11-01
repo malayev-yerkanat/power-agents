@@ -339,7 +339,7 @@ export class Engine {
     const title = result.passed ? 'Проверка пройдена' : 'Проверка не пройдена';
     this.change(id, r => ({ ...r, repo: { ...r.repo!, check: { passed: result.passed, exitCode: result.exitCode, merges: run.repo!.merges } },
       artifacts: [...r.artifacts, { id: randomUUID(), kind: 'check', title, authorId: 'platform', createdAt: new Date().toISOString(),
-        body: `Команда: \`${command}\`\nКод выхода: ${result.exitCode ?? 'остановлена'}\n\n\`\`\`\n${result.output.replace(/```/g, "'''")}\n\`\`\`` }] }), 'check', `${title}: ${command}`.slice(0, 600));
+        body: `Команда: \`${command}\`\nКод выхода: ${result.exitCode ?? 'остановлена'}\nПесочница: ${result.sandboxed ? 'запись только в рабочей копии, сеть только на этом компьютере' : 'нет: sandbox-exec недоступен, команда работала без ограничений'}\n\n\`\`\`\n${result.output.replace(/```/g, "'''")}\n\`\`\`` }] }), 'check', `${title}: ${command}`.slice(0, 600));
   }
   private cleanupRepo(run: Run): void {
     if (run.repo) void removeWorktrees(run.repo.root, join(this.options.workspaceRoot, run.id)).catch(() => {});

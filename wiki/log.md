@@ -8,6 +8,12 @@ tags: [history]
 
 # Operation Log
 
+## 2026-11-01 — Phase 1: sandboxed repo check; dev server hides run data
+
+- The repo check command now runs under macOS `sandbox-exec`: writes only in the result worktree and a private temp folder, network only on this machine, no proxy variables (audit S1). A control run proved the denials come from the profile.
+- `vite.config.ts` denies `.power-agents/**`; the dev server had served the run database and server log (audit S5, confirmed then fixed).
+- Verified: typecheck, 334/334 unit tests, 48/48 e2e (one unrelated flows test flaked once under parallel load, passed 3/3 alone), build. S3 launch token and S4 Telegram approval opt-in await a decision.
+
 ## 2026-11-01 — Platform audit; Phase 0 frame headers and navigation state
 
 - Added [platform audit and improvement plan](../docs/audits/2026-11-01-platform-audit.md): security, agent architecture, code quality and UX findings with a phased plan.

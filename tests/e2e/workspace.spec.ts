@@ -572,3 +572,14 @@ test('a linked hash opens the page at the top', async ({ page }) => {
   await expect(page.getByRole('tab', { name: /^Результаты/ })).toBeVisible();
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 });
+
+test('the development server refuses local run data', async ({ request }) => {
+  const { mkdirSync, rmSync, writeFileSync } = await import('node:fs');
+  mkdirSync('.power-agents', { recursive: true });
+  writeFileSync('.power-agents/e2e-probe.txt', 'private run text');
+  try {
+    const response = await request.get('/.power-agents/e2e-probe.txt');
+    expect(response.status()).toBe(403);
+    expect(await response.text()).not.toContain('private run text');
+  } finally { rmSync('.power-agents/e2e-probe.txt', { force: true }); }
+});

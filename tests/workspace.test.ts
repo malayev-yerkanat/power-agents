@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { abortMerge, commitTask, conflictsResolved, createResultWorktree, createTaskWorktree, diffStat, finishMerge, mergeTask, removeWorktrees, repoInfo, runCheck } from '../src/server/workspace.ts';
+import { abortMerge, commitTask, conflictsResolved, createResultWorktree, createTaskWorktree, diffStat, finishMerge, mergeTask, removeWorktrees, repoInfo, runCheck, checkInvocation, SANDBOX_EXEC } from '../src/server/workspace.ts';
 
 const RUN_ID = 'abcdef12-3456-7890-abcd-ef1234567890';
 
@@ -122,8 +122,8 @@ test('mergeTask rethrows failures that are not conflicts', async () => {
 test('runCheck reports pass, failure, timeout and keeps the output tail', async () => {
   const f = fixture();
   try {
-    assert.deepEqual(await runCheck(f.repo, 'echo ok; echo warn >&2'), { passed: true, exitCode: 0, output: 'ok\nwarn\n' });
-    assert.deepEqual(await runCheck(f.repo, 'echo broken; exit 3'), { passed: false, exitCode: 3, output: 'broken\n' });
+    assert.deepEqual(await runCheck(f.repo, 'echo ok; echo warn >&2', { sandbox: false }), { passed: true, exitCode: 0, output: 'ok\nwarn\n', sandboxed: false });
+    assert.deepEqual(await runCheck(f.repo, 'echo broken; exit 3', { sandbox: false }), { passed: false, exitCode: 3, output: 'broken\n', sandboxed: false });
     const long = await runCheck(f.repo, "head -c 300000 /dev/zero | tr '\\0' x; echo END");
     assert.equal(Buffer.byteLength(long.output), 200 * 1024);
     assert.ok(long.output.endsWith('xEND\n'));
@@ -131,6 +131,29 @@ test('runCheck reports pass, failure, timeout and keeps the output tail', async 
     assert.equal(slow.passed, false);
     assert.equal(slow.exitCode, null);
     assert.match(slow.output, /started[\s\S]*время/);
+  } finally { f.cleanup(); }
+});
+
+test('checkInvocation wraps the command in sandbox-exec only when asked', () => {
+  const on = checkInvocation('/w', '/t', 'npm test', true);
+  assert.equal(on.file, SANDBOX_EXEC);
+  assert.equal(on.sandboxed, true);
+  assert.deepEqual(on.args.slice(0, 4), ['-D', 'WORK=/w', '-D', 'TMP=/t']);
+  assert.deepEqual(on.args.slice(-3), ['/bin/sh', '-c', 'npm test']);
+  assert.deepEqual(checkInvocation('/w', '/t', 'npm test', false), { file: '/bin/sh', args: ['-c', 'npm test'], sandboxed: false });
+});
+
+test('a sandboxed check writes only in its worktree and cannot reach other hosts', { skip: process.platform !== 'darwin' }, async () => {
+  const f = fixture();
+  const outside = join(f.root, 'outside.txt');
+  try {
+    const script = `echo in > inside.txt && echo wrote; echo out > '${outside}' || echo denied; echo tmp > "$TMPDIR/t" && echo tmp-ok; `
+      + `node -e "require('net').connect(443,'1.1.1.1').on('error',e=>console.log('net',e.code)).on('connect',()=>{console.log('net open');process.exit()})"`;
+    const result = await runCheck(f.repo, script);
+    assert.equal(result.sandboxed, true);
+    assert.match(result.output, /wrote[\s\S]*denied[\s\S]*tmp-ok[\s\S]*net EPERM/);
+    assert.equal(readFileSync(join(f.repo, 'inside.txt'), 'utf8'), 'in\n');
+    assert.equal(existsSync(outside), false);
   } finally { f.cleanup(); }
 });
 

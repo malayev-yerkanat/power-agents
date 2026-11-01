@@ -105,6 +105,12 @@ Step 1 (commit and merge) is waiting for the user. The running LaunchAgent serve
 
 ### Phase 1 — Trust and safety (about 1 day)
 
+Status 2026-11-01: S1 and S5 done and verified. S1: the check runs under `sandbox-exec`; a control run showed
+the same script writes outside the worktree and opens an internet connection without the sandbox, and gets
+`Operation not permitted` / `EPERM` with it. S5 was a real exposure: the dev server returned 200 for
+`/.power-agents/state.sqlite` and the server log; both now return 403. S3 and S4 change how you open the app and
+how Telegram approvals behave, so they wait for your decision.
+
 1. Sandbox the repo check command, or require approval when agents changed scripts or configs (S1).
 2. Require a launch token for `/api/bootstrap` (S3).
 3. Make Telegram command approvals a separate opt-in (S4); add `server.fs.deny` for dev mode (S5).
