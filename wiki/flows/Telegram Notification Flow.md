@@ -3,11 +3,13 @@ type: flow
 title: "Telegram Notification Flow"
 status: active
 created: 2026-10-08
-updated: 2026-10-30
+updated: 2026-10-31
 tags: [flow, telegram, notifications]
 ---
 
 # Telegram Notification Flow
+
+Planned phone flow: [[Codex Telegram Mobile]] adds project/chat browsing, task submission, and explicit target selection through a hosted relay. While the Mac is asleep, the existing local bot cannot reply; the planned Mini App shows offline and the planned bot router rejects accumulated task messages after reconnecting. This is not current implemented task-routing behavior.
 
 ## Pairing
 
@@ -30,3 +32,5 @@ Evidence: [store](../../src/server/store.ts), [service](../../src/server/telegra
 Configure `CODEX_TELEGRAM_BOT_TOKEN` and enable `CODEX_TELEGRAM_ENABLED`, restart, then use `npm run codex:telegram:pair` and press Start. This bot has its own `codex-telegram.sqlite`, recipient and poller. `npm run codex:telegram:status` reports readiness without exposing credentials. The bridge discovers up to 100 recent local top-level desktop chats, follows their owners, and mirrors supported pending requests. Buttons approve once or decline; questions also accept explicit Telegram replies. Desktop answers remove pending Telegram controls. Both services and an awake Mac are required. See [Codex–Telegram](../../docs/codex-telegram.md) for unsupported prompts and compatibility boundaries.
 
 Browser use download confirmation is an MCP empty-form tool approval. It is mirrored with the complete action parameters and approve-once/decline buttons. Desktop completion invalidates the Telegram wait; already accepted requests are not replayed. Authentication and nonempty forms stay on desktop.
+
+Codex completion alerts detect observed in-progress turns that successfully finish. The dedicated durable outbox retains chat/turn identity and a message headed “✅ Project · done” with a brief final-response excerpt, retries delivery, and deduplicates repeat observations across restart. Historical, failed, and interrupted turns do not generate success alerts. Turns completed while disconnected or between snapshots may be missed. See [Codex completion behavior](../../docs/codex-telegram.md).

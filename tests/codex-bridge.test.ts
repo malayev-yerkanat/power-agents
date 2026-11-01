@@ -15,6 +15,28 @@ const snapshot = (overrides = {}) => ({ type: 'broadcast', sourceClientId: 'desk
   method: 'thread-stream-state-changed', params: { hostId: 'local', conversationId: 'thread',
     change: { type: 'snapshot', revision: 1, conversationState: { id: 'thread', cwd: '/project', requests: [] } } }, ...overrides });
 
+test('completion storage failures do not disconnect IPC or cancel pending prompts', async () => {
+  let attempts = 0;
+  let follows = 0;
+  const cancelled: unknown[] = [];
+  const bridge = new CodexBridge({ socketPath: '/unused', threadIds: () => ['thread'], ready: () => true,
+    requests: { sync() {}, cancel: id => { cancelled.push(id); } },
+    completions: { sync() { if (++attempts === 1) throw new Error('storage unavailable'); }, cancel() {} },
+    createIpc: () => ({ connect: async () => {}, close() {}, follow() { follows++; }, request: async () => ({ owner: 'desktop' }) }) });
+  try {
+    await bridge.tick();
+    assert.doesNotThrow(() => bridge.receive(snapshot()));
+    assert.deepEqual(cancelled, []);
+    assert.equal(bridge.status(), 'Connected to Codex desktop');
+    await bridge.tick();
+    assert.equal(follows, 2);
+    bridge.receive(snapshot());
+    assert.equal(attempts, 2);
+    await bridge.tick();
+    assert.equal(follows, 2);
+  } finally { bridge.stop(); }
+});
+
 test('bridge follows known local owners and ignores foreign or incompatible snapshots', async () => {
   const f = fixture(); await f.bridge.tick();
   assert.deepEqual(f.follows, [['thread', 'desktop']]);
@@ -59,4 +81,26 @@ test('canonical question patches refresh snapshots while text deltas do not', as
   await new Promise(resolve => setTimeout(resolve, 130));
   assert.equal(f.follows.length, 2);
   assert.equal(f.cancelled.length, 0); f.bridge.stop();
+});
+
+test('completion observers receive validated snapshots and status patches refresh them', async () => {
+  const completions: unknown[][] = [], cancelled: (string | undefined)[] = [], follows: unknown[][] = [];
+  const bridge = new CodexBridge({ socketPath: '/unused', threadIds: () => ['thread'], ready: () => true,
+    requests: { sync() {}, cancel() {} },
+    completions: { sync: (...args) => { completions.push(args); }, cancel: id => { cancelled.push(id); } },
+    createIpc: () => ({ connect: async () => {}, close() {}, follow: (...args) => { follows.push(args); },
+      request: async () => ({ owner: 'desktop' }) }),
+  });
+  await bridge.tick();
+  bridge.receive(snapshot({ sourceClientId: 'stranger' })); assert.equal(completions.length, 0);
+  bridge.receive(snapshot()); assert.equal(completions.length, 1);
+  bridge.receive({ ...snapshot(), params: { hostId: 'local', conversationId: 'thread', change: {
+    type: 'patches', baseRevision: 1, revision: 2,
+    patches: [{ op: 'replace', path: ['turns', 0, 'status'], value: 'completed' }],
+  } } });
+  await new Promise(resolve => setTimeout(resolve, 130));
+  assert.equal(follows.length, 2);
+  assert.equal(cancelled.length, 0);
+  bridge.receive(snapshot({ version: 12 })); assert.deepEqual(cancelled, ['thread']);
+  bridge.stop(); assert.equal(cancelled.at(-1), undefined);
 });

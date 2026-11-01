@@ -26,6 +26,38 @@ function pair(store: Store): void {
   assert.equal(store.processTelegramUpdate(undefined, hash('nonce'), '123', '123'), true);
 }
 
+test('Codex completion alerts persist, deduplicate across restart and respect pairing and preferences', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'codex-completion-'));
+  const path = join(dir, 'state.sqlite');
+  let store = new Store(path);
+  try {
+    store.queueCodexCompletion('thread', 'turn', 'Codex finished.');
+    assert.equal(store.telegramDueMessages().length, 0);
+    pair(store);
+    const sent: unknown[] = [];
+    const service = new TelegramService(store, 'token', { fetcher: async (_input, init) => {
+      sent.push(JSON.parse(String(init?.body)));
+      return new Response(JSON.stringify({ ok: true }));
+    } });
+    service.queueCodexCompletion('thread', 'turn', 'Codex finished.');
+    service.queueCodexCompletion('thread', 'turn', 'Codex finished.');
+    assert.equal(store.telegramDueMessages().length, 1);
+    await service.deliverOnce();
+    assert.deepEqual(sent, [{ chat_id: '123', text: 'Codex finished.' }]);
+    store.close();
+    store = new Store(path);
+    store.queueCodexCompletion('thread', 'turn', 'Codex finished.');
+    assert.equal(store.telegramDueMessages().length, 0);
+    store.queueCodexCompletion('thread', 'next-turn', 'Codex finished.');
+    assert.equal(store.telegramDueMessages().length, 1);
+    store.setTelegramPreferences({ approval: true, completed: false });
+    store.queueCodexCompletion('thread', 'disabled-turn', 'Codex finished.');
+    assert.equal(store.telegramDueMessages().length, 0);
+    assert.throws(() => store.queueCodexCompletion('', 'turn', 'Codex finished.'));
+    assert.throws(() => store.queueCodexCompletion('thread', 'turn', 'x'.repeat(4001)));
+  } finally { store.close(); rmSync(dir, { recursive: true, force: true }); }
+});
+
 test('outbox is transactionally created only on relevant transitions and survives restart', () => {
   const dir = mkdtempSync(join(tmpdir(), 'power-agents-telegram-'));
   const path = join(dir, 'state.sqlite');

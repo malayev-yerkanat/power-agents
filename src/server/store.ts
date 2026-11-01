@@ -271,6 +271,20 @@ export class Store {
       VALUES ('test', ?, ?, ?)`).run(chatId, 'Power Agents: тестовое уведомление.', new Date().toISOString());
   }
 
+  queueCodexCompletion(threadId: string, turnId: string, text: string): void {
+    if (![threadId, turnId].every(id => typeof id === 'string' && id.length > 0 && id.length <= 300)
+      || typeof text !== 'string' || !text.trim() || text.length > 4000) {
+      throw new Error('Invalid Codex completion notification');
+    }
+    const settings = this.telegramSettings();
+    if (!settings.chat_id || !settings.completed_enabled) return;
+    // Reuse the durable outbox identity without colliding with Power Agents run IDs.
+    const identity = JSON.stringify(['codex-turn', threadId, turnId]);
+    this.db.prepare(`INSERT OR IGNORE INTO telegram_outbox
+      (kind, run_id, run_version, chat_id, text, next_attempt_at) VALUES ('completed', ?, 0, ?, ?, ?)`)
+      .run(identity, settings.chat_id, text, new Date().toISOString());
+  }
+
   telegramDueMessages(now = new Date().toISOString()): TelegramOutboxMessage[] {
     return this.db.prepare(`SELECT id, kind, run_id, run_version, chat_id, text, attempts, next_attempt_at
       FROM telegram_outbox WHERE state = 'pending' AND next_attempt_at <= ? ORDER BY id`).all(now)

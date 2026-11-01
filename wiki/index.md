@@ -2,7 +2,7 @@
 type: index
 status: active
 created: 2026-10-07
-updated: 2026-10-30
+updated: 2026-10-31
 tags: [navigation, repository]
 ---
 
@@ -11,6 +11,8 @@ tags: [navigation, repository]
 Start with [[hot|Hot Cache]] for recent changes or [[Architecture Overview]] for the system map. [[overview|Project Overview]] distinguishes current prototype behavior from the broader design.
 
 ## System
+
+- [[Codex Telegram Mobile]] — approved planned design and gated implementation plan; not implemented
 
 - [[Architecture Overview]] — components and boundaries
 - [[Data Flow]] — create, approve, execute, review

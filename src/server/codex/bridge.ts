@@ -8,6 +8,7 @@ type Ipc = Pick<DesktopIpc, 'connect' | 'close' | 'request' | 'follow'>;
 interface Options {
   socketPath: string; threadIds: () => string[]; ready: () => boolean; requests: RequestHandler;
   asyncQuestions?: AsyncHandler;
+  completions?: AsyncHandler;
   createIpc?: (receive: (message: Message) => void, close: () => void) => Ipc;
 }
 const stateEnvelope = z.object({ sourceClientId: z.string(), version: z.number(), params: z.object({
@@ -26,6 +27,7 @@ export class CodexBridge {
   private readonly owners = new Map<string, string>();
   private readonly revisions = new Map<string, number>();
   private readonly blocked = new Set<string>();
+  private readonly completionRetries = new Set<string>();
   private readonly snapshots = new Map<string, Set<(state?: Snapshot) => void>>();
   private readonly refreshes = new Map<string, ReturnType<typeof setTimeout>>();
   private state = 'Waiting for Codex desktop';
@@ -71,7 +73,10 @@ export class CodexBridge {
       const discover = async (id: string): Promise<void> => {
         if (this.stopped || this.ipc !== ipc) return;
         const owner = this.owners.get(id);
-        if (owner) { if (!this.wasReady && !this.blocked.has(id)) ipc.follow(id, owner); return; }
+        if (owner) {
+          if ((!this.wasReady || this.completionRetries.has(id)) && !this.blocked.has(id)) ipc.follow(id, owner);
+          return;
+        }
         try {
           const result = z.object({ owner: z.string().min(1) }).parse(await ipc.request('thread-owner-discovery', { hostId: 'local', conversationId: id }));
           if (this.stopped || this.ipc !== ipc) return;
@@ -142,6 +147,13 @@ export class CodexBridge {
     this.revisions.set(id, revision);
     this.options.requests.sync(id, state.cwd, state.requests);
     this.options.asyncQuestions?.sync(id, state.cwd, state);
+    try {
+      this.options.completions?.sync(id, state.cwd, state);
+      this.completionRetries.delete(id);
+    } catch {
+      // Storage errors are not IPC protocol failures. Retry on the next discovery tick.
+      this.completionRetries.add(id);
+    }
     for (const resolve of [...(this.snapshots.get(id) ?? [])]) resolve(state);
   }
 
@@ -169,5 +181,9 @@ export class CodexBridge {
     }, 100));
   }
 
-  private cancel(id?: string): void { this.options.requests.cancel(id); this.options.asyncQuestions?.cancel(id); }
+  private cancel(id?: string): void {
+    this.options.requests.cancel(id); this.options.asyncQuestions?.cancel(id); this.options.completions?.cancel(id);
+    if (id === undefined) this.completionRetries.clear();
+    else this.completionRetries.delete(id);
+  }
 }

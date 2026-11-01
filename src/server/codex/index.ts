@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import type { TelegramService } from '../telegram.ts';
 import { CodexBridge } from './bridge.ts';
 import { CodexRequests } from './requests.ts';
+import { CodexCompletions } from './completions.ts';
 import { CodexAsyncQuestions, canSendAsyncAnswer } from './async-questions.ts';
 import { desktopThreadIds } from './threads.ts';
 
@@ -18,6 +19,7 @@ export function createCodexTelegramBridge(telegram: TelegramService): CodexBridg
   } });
   const bridge: CodexBridge = new CodexBridge({ socketPath: join(codexHome, 'ipc', 'ipc.sock'),
     threadIds: () => desktopThreadIds(join(codexHome, 'state_5.sqlite')),
-    ready: () => { const status = telegram.status(); return status.ready && status.connected; }, requests, asyncQuestions });
+    ready: () => { const status = telegram.status(); return status.ready && status.connected; }, requests, asyncQuestions,
+    completions: new CodexCompletions(telegram) });
   return bridge;
 }

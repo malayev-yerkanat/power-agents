@@ -102,6 +102,10 @@ export class TelegramService {
   }
   queueTest(): void { this.store.queueTelegramTest(); }
 
+  queueCodexCompletion(threadId: string, turnId: string, text: string): void {
+    this.store.queueCodexCompletion(threadId, turnId, text);
+  }
+
   async pollOnce(timeoutSeconds: 0 | 25 = 25): Promise<void> {
     const response = await this.request('getUpdates', {
       offset: this.store.telegramOffset(), timeout: timeoutSeconds, allowed_updates: ['message', 'callback_query'], limit: 100,

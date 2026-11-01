@@ -2,7 +2,7 @@
 type: overview
 status: active
 created: 2026-10-07
-updated: 2026-10-30
+updated: 2026-10-31
 tags: [product, architecture]
 ---
 
@@ -21,6 +21,8 @@ Recent run summaries and journal entries load in bounded pages, with older histo
 Optional [[Telegram Notifications]] pair one private chat and send brief alerts when a plan needs approval or a reviewed run completes. Pairing and alert preferences live in Settings. Approval remains in the local browser; Telegram does not give a phone access to the loopback-only app.
 
 ## Current boundaries
+
+Planned: [[Codex Telegram Mobile]] adds a phone mirror of Desktop projects/chats, a hosted relay without transcript storage, and explicitly targeted bot task messages. Capability verification must precede implementation. The existing bridge supports completion alerts, approvals, and questions; mobile task routing remains planned.
 
 A separate [[Flow Engine]] provides typed DAGs and demo runs via the protected local API, including approval gates, rejection notes, stale outputs, global scheduling and restart recovery. F2 [[Flows UI]] adds `#/flows` and `#/flows/<id>`, template creation, the dark React Flow canvas, typed connectors, node actions, a config inspector and SSE invalidation/refetch. [[Reel Flow Execution]] documents demo and live text paths. F3 implements Idea, Script and Scenes through read-only provider turns, validated JSON, one repair attempt, connection selection and readable card excerpts. F4 implements isolated content pipeline stages, ElevenLabs narration, Capture uploads, edit planning, preview/final rendering, QA and Range media playback. Flow Telegram actions remain planned for F5. Automated verification uses fake providers/renders; the live script-to-final reel acceptance run remains unverified.
 
@@ -49,3 +51,5 @@ The ambient monsters now breathe, roar, stomp and perform three attack gestures 
 Editor drafts survive navigation and reload within the current browser tab through validated `sessionStorage`; creation and run-specific steering remain separate. Fragment links preserve run/tab context and browser back/forward. History filtering covers loaded pages only, with older pages available on request. These client changes leave the API, SSE, provider execution and SQLite contracts intact; server-wide history search and reusable named teams remain planned work.
 
 Codex Desktop can use its own Telegram bot for supported approvals and structured questions, with desktop controls retained. Token, pairing, and polling state are independent of Claude. The private IPC adapter is version-checked and leaves unsupported prompts on desktop; see [[Telegram Notifications]] and [Codex setup](../docs/codex-telegram.md).
+
+Codex completion alerts detect observed in-progress turns that successfully finish. The dedicated durable outbox retains chat/turn identity and a message headed “✅ Project · done” with a brief final-response excerpt, retries delivery, and deduplicates repeat observations across restart. Historical, failed, and interrupted turns do not generate success alerts. Turns completed while disconnected or between snapshots may be missed. See [Codex completion behavior](../docs/codex-telegram.md).
