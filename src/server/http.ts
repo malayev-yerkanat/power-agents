@@ -33,6 +33,13 @@ const telegramPreferencesSchema = z.object({ approval: z.boolean().optional(), c
 const bodyLimit = 64 * 1024;
 const cookieName = 'power_agents_session';
 
+/** Page responses refuse framing, so another site cannot overlay approve, resume or cancel controls. */
+export function setPageSecurityHeaders(res: ServerResponse): void {
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'none'; object-src 'none'; base-uri 'self'");
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+}
+
 function json(res: ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(body));

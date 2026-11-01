@@ -138,6 +138,10 @@ Gemini (agy) разрешает вызовы MCP-инструментов тол
 
 Ссылки вида `#/runs/<id>?tab=artifacts` открывают конкретный запуск и вкладку. Работают кнопки браузера «Назад» и «Вперёд». «Все задачи» открывает отдельную историю. Поиск и фильтр применяются только к загруженным запускам; более ранние страницы загружаются отдельной кнопкой.
 
+В шапке текущим (`aria-current="page"`) отмечен ровно один раздел: «Пространство» для новой задачи и запуска, «Запуски» при открытой истории, «Потоки» для потоков. «Пространство» со страницы потоков или истории открывает новую задачу. Введённая или открытая по ссылке адресная часть `#/…` показывает страницу с начала; «Назад» и «Вперёд» сохраняют позицию прокрутки браузера. Сброс использует Navigation API; в браузере без него позиция не меняется.
+
+Страницы приложения отправляют `Content-Security-Policy: frame-ancestors 'none'; object-src 'none'; base-uri 'self'` и `X-Frame-Options: DENY`: другой сайт не может встроить интерфейс во фрейм и подменить нажатие «Утвердить», «Продолжить» или «Остановить».
+
 ## Управление и хранение
 
 - Одновременно запускается один сервер на папку проекта: SQLite удерживает эксклюзивную блокировку до его остановки.
@@ -243,3 +247,7 @@ Edit deterministically groups captions into at most three words with punctuation
 `GET /api/flows/:id/files/:nodeId/v:version/<relative path>` streams media with MP4/MP3/JSON/PNG/JPEG content types and byte ranges (`206`, invalid range `416`). Missing files, traversal and symlink escapes return `404`. A retained output has its own `outputVersion`, so its playback URL stays on the correct version during reruns or failures. Capture's upload metadata and `needsHuman` are server-owned fields, alongside outputs and execution status.
 
 Pipeline tests use temporary Python stage scripts and generated tiny ffmpeg media. ElevenLabs tests use local HTTP stubs or mocked responses; Remotion invocation is mocked. No real provider call or real render is required by tests. Reel 002's full live script-to-final acceptance run remains unverified until a voice key, approved script, manual take and real renders are used. F5 Telegram gates remain planned.
+
+### Codex Desktop completion alerts
+
+The dedicated Codex Telegram bridge also queues a “✅ Project · done” notification with a brief final-response excerpt when a turn observed in progress completes successfully. The excerpt is retained in the notification outbox; full transcripts and tool output are not included. Historical completions, failed turns, and interrupted turns do not generate success alerts. The durable outbox retries delivery and deduplicates chat/turn identities. Turns completed while disconnected or entirely between snapshots may be missed. See [Codex Telegram setup](codex-telegram.md).

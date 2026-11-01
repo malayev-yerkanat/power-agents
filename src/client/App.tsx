@@ -221,6 +221,10 @@ export function App() {
   }
   async function create(input: CreateRunInput) { const run = await mutate('/api/runs', input); select(run.id); }
   const connectionsReady = bootstrap?.connections.filter(connection => connection.available).length || 0;
+  // Exactly one header section is current: the open history drawer wins over the page beneath it.
+  const inWorkspace = location.view === 'new' || location.view === 'run';
+  const section = sidebarOpen || location.view === 'history' ? 'runs'
+    : location.view === 'flows' || location.view === 'flow' ? 'flows' : inWorkspace ? 'workspace' : undefined;
   const workspace = !bootstrap
     ? <div className="bootstrap-state">{error
         ? <><ErrorNote>{error}</ErrorNote><button className="secondary-button mt-4" onClick={() => void refresh()}><ArrowClockwise size={16} />{t('Повторить подключение')}</button></>
@@ -267,9 +271,9 @@ export function App() {
     <div className="app-main"><header className="topbar">
       <button className="header-brand" onClick={() => select(null)} aria-label={t('Power Agents — новая задача')}><span className="brand-bolt" aria-hidden="true" /><span>POWER AGENTS</span></button>
       <nav className="header-nav" aria-label={t('Разделы пространства')}>
-        <button className={!sidebarOpen ? 'is-active' : ''} onClick={() => setSidebarOpen(false)}>{t('Пространство')}</button>
-        <button aria-expanded={sidebarOpen} aria-controls="run-navigation" onClick={() => setSidebarOpen(value => !value)}><List size={17} />{t('Запуски')}</button>
-        <button className={location.view === 'flows' || location.view === 'flow' ? 'is-active' : ''} onClick={() => goTo({ view: 'flows' })}>{t('Потоки')}</button>
+        <button className={section === 'workspace' ? 'is-active' : ''} aria-current={section === 'workspace' ? 'page' : undefined} onClick={() => inWorkspace ? setSidebarOpen(false) : select(null)}>{t('Пространство')}</button>
+        <button className={section === 'runs' ? 'is-active' : ''} aria-expanded={sidebarOpen} aria-controls="run-navigation" onClick={() => setSidebarOpen(value => !value)}><List size={17} />{t('Запуски')}</button>
+        <button className={section === 'flows' ? 'is-active' : ''} aria-current={section === 'flows' ? 'page' : undefined} onClick={() => goTo({ view: 'flows' })}>{t('Потоки')}</button>
         <button onClick={() => setSettings(true)}><PlugsConnected size={17} />{t('Подключения')}<span className={`connection-dot ${streamStatus === 'connected' ? 'is-connected' : ''}`} aria-label={streamStatus === 'connected' ? t('Сервер подключён') : t('Нет потока событий')} /></button>
       </nav>
       <LanguageToggle />

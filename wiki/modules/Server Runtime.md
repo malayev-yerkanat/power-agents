@@ -6,7 +6,7 @@ status: active
 language: typescript
 purpose: "Start the local server and connect storage, engine, adapters, and UI"
 created: 2026-10-07
-updated: 2026-10-30
+updated: 2026-11-01
 tags: [module, runtime]
 ---
 
@@ -14,7 +14,7 @@ tags: [module, runtime]
 
 Startup also constructs [[Flow Engine]] with `.power-agents/flows` as its file root and supplies it to the API handler. Shutdown and server-error handling abort both engines. Restart fails unfinished flow executions without rerunning them.
 
-`src/server/index.ts` starts one HTTP server bound to `127.0.0.1`, using port `4317` unless `PORT` is set. In development it mounts Vite middleware; in production it serves `dist/`. Startup opens [[Persistence Store]], discovers [[Provider Adapters]], constructs [[Orchestration Engine]], starts optional [[Telegram Notifications]] connection attempts in the background, and mounts [[Local HTTP API]]. A temporary Telegram outage does not block the local server from starting.
+`src/server/index.ts` starts one HTTP server bound to `127.0.0.1`, using port `4317` unless `PORT` is set. In development it mounts Vite middleware; in production it serves `dist/`. Every non-API page response first gets `setPageSecurityHeaders` from [[Local HTTP API]]: `frame-ancestors 'none'`, `X-Frame-Options: DENY` and `nosniff`, so other sites cannot frame the app (2026-11-01). Startup opens [[Persistence Store]], discovers [[Provider Adapters]], constructs [[Orchestration Engine]], starts optional [[Telegram Notifications]] connection attempts in the background, and mounts [[Local HTTP API]]. A temporary Telegram outage does not block the local server from starting.
 
 The data directory is `.power-agents/`; the SQLite database and per-run workspaces live there. The server handles SIGINT and SIGTERM by aborting active turns, closing connections, and closing the store.
 

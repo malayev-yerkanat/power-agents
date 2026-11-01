@@ -2,11 +2,47 @@
 type: log
 status: active
 created: 2026-10-07
-updated: 2026-10-30
+updated: 2026-11-01
 tags: [history]
 ---
 
 # Operation Log
+
+## 2026-11-01 — Platform audit; Phase 0 frame headers and navigation state
+
+- Added [platform audit and improvement plan](../docs/audits/2026-11-01-platform-audit.md): security, agent architecture, code quality and UX findings with a phased plan.
+- Page responses now send `frame-ancestors 'none'` and `X-Frame-Options: DENY` (audit S2). The header marks exactly one current section, and a typed or linked fragment opens at the top (U1 part 1, U7).
+- Verified: typecheck, 332/332 unit tests, 47/47 Playwright e2e, build. The running LaunchAgent still serves the previous build until rebuilt and restarted. Not committed.
+
+## 2026-10-31 — Shared App Server connection candidate
+
+- Researched official Telegram and Codex docs in Chrome. Verified existing project/chat reads through App Server and two clients sharing a private Unix socket; no transcripts or identities printed.
+- Recorded a supervised stdio launcher candidate that preserves Desktop startup settings. Corrected the earlier blocker scope: follower IPC is limited, but another backend transport is viable for further testing.
+- Actual Desktop relaunch, tools/approvals, and task mutations remain unverified. Temporary test processes were stopped; no public listener, production change, or deployment.
+
+## 2026-10-31 — Brief Codex completion summaries
+
+- Matched the requested Telegram format: “✅ Project · done” followed by a final-response excerpt of up to 600 characters. Removed the chat-ID footer and stripped common Markdown formatting.
+- Prefer explicit final answers; use legacy unphased assistant messages only as fallback. Exclude commentary, tool output and user messages. Completed canonical history takes precedence over stale active overlays. The excerpt is retained in the durable delivery outbox.
+- Verified the installed Desktop message shape. All 331 unit/integration tests pass with 87.03% overall line coverage; build/typecheck and code review pass. No linter is configured. Restarted the service; live phone receipt remains unverified.
+
+## 2026-10-31 — Codex mobile capability gate blocked
+
+- Inspected installed Desktop source and verified live read-only initialization/owner snapshot metadata. Focused existing bridge tests pass: 80/80.
+- Documented absent catalog/create handlers on follower IPC and missing caller expected-turn binding for steering. Scoped app-tools access is not a verified background connector route.
+- Saved capability report and updated plan status. No dependent implementation, live task mutation, deployment, commit, or push.
+
+## 2026-10-31 — Codex Telegram mobile design and implementation plan
+
+- Saved the user-approved architecture and a ten-task implementation plan for Desktop project/chat mirroring, phone task submission, explicit bot targeting, and a hosted relay without transcript storage.
+- Capability verification is the first gate. Recorded the existing 100-chat/owner discovery limit, uncertain-delivery handling, and the local bot's inability to reply while the Mac sleeps.
+- Updated wiki navigation and planned-behavior references. Documentation/link checks only; no application implementation, live capability verification, hosting changes, commits, or pushes.
+
+## 2026-10-31 — Codex completion notifications
+
+- Added the missing successful-turn observer to the dedicated Codex Telegram bridge. Alerts include project basename and chat ID only.
+- Added durable completion queueing with chat/turn deduplication, recipient/preference checks and existing delivery retries. Historical, failed and interrupted turns are excluded; disconnected or unobserved short turns can be missed.
+- Regression tests were demonstrated failing before implementation. All 327 unit/integration tests pass with 86.99% overall line coverage; build/typecheck pass. No linter is configured. Storage enqueue failures retry without disconnecting IPC or cancelling approvals. Restarted the idle background service to activate the fix. Live phone receipt remains unverified.
 
 ## 2026-10-30 — Browser use download approvals reach Telegram
 

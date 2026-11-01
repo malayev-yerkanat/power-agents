@@ -543,3 +543,32 @@ test('the language toggle works when browser storage is denied', async ({ page }
   await page.getByRole('button', { name: 'Переключить на русский' }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
 });
+
+test('header marks exactly one current section', async ({ page }) => {
+  await mockWorkspace(page);
+  await page.route('**/api/flows', route => route.fulfill({ json: { flows: [] } }));
+  await page.goto('/#/runs/review-fixture');
+  const nav = page.getByRole('navigation', { name: 'Разделы пространства' });
+  const active = () => nav.locator('button.is-active').allTextContents();
+  await expect(nav.locator('button.is-active')).toHaveCount(1);
+  expect(await active()).toEqual(['Пространство']);
+  await nav.getByRole('button', { name: 'Потоки' }).click();
+  await expect(nav.getByRole('button', { name: 'Потоки' })).toHaveAttribute('aria-current', 'page');
+  expect(await active()).toEqual(['Потоки']);
+  await nav.getByRole('button', { name: 'Пространство' }).click();
+  await expect(page).toHaveURL(/#\/new$/);
+  expect(await active()).toEqual(['Пространство']);
+  await nav.getByRole('button', { name: 'Запуски', exact: true }).click();
+  expect(await active()).toEqual(['Запуски']);
+});
+
+test('a linked hash opens the page at the top', async ({ page }) => {
+  await mockWorkspace(page);
+  await page.setViewportSize({ width: 390, height: 600 });
+  await page.goto('/');
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await page.evaluate(() => { window.location.hash = '#/runs/review-fixture'; });
+  await expect(page.getByRole('tab', { name: /^Результаты/ })).toBeVisible();
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+});

@@ -6,7 +6,7 @@ import { Store } from './store.ts';
 import { Engine } from './engine.ts';
 import { FlowEngine } from './flows/engine.ts';
 import { discoverConnections, runTurn } from './adapters/index.ts';
-import { createApiHandler } from './http.ts';
+import { createApiHandler, setPageSecurityHeaders } from './http.ts';
 import { createMcpHandler } from './mcp.ts';
 import { TelegramService, isTelegramToken } from './telegram.ts';
 import { createCodexTelegramService } from './codex/service.ts';
@@ -38,6 +38,7 @@ server.on('request', (req, res) => {
   void (async () => {
     if (await mcp(req, res)) return;
     if (await api(req, res)) return;
+    setPageSecurityHeaders(res);
     if (vite) { vite.middlewares(req, res); return; }
     const dist = join(root, 'dist');
     let pathname: string;

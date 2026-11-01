@@ -3,7 +3,7 @@ import { createServer, request as httpRequest } from 'node:http';
 import { once } from 'node:events';
 import { test } from 'node:test';
 import type { AddressInfo } from 'node:net';
-import { createApiHandler } from '../src/server/http.ts';
+import { createApiHandler, setPageSecurityHeaders } from '../src/server/http.ts';
 import { Store } from '../src/server/store.ts';
 import { Engine } from '../src/server/engine.ts';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -335,4 +335,19 @@ test('a code run must point at a git repository', async () => {
     const [, input] = app.calls.at(-1) as [string, CreateRunInput];
     assert.equal(input.checkCommand, 'npm test');
   } finally { await app.close(); }
+});
+
+test('page responses refuse framing by other sites', async () => {
+  const server = createServer((_req, res) => { setPageSecurityHeaders(res); res.writeHead(200, { 'Content-Type': 'text/html' }); res.end('<!doctype html>'); });
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  try {
+    const response = await fetch(`http://127.0.0.1:${(server.address() as AddressInfo).port}/`);
+    assert.equal(response.headers.get('x-frame-options'), 'DENY');
+    assert.match(response.headers.get('content-security-policy') ?? '', /frame-ancestors 'none'/);
+    assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
+  } finally {
+    server.closeAllConnections();
+    await new Promise<void>(resolve => server.close(() => resolve()));
+  }
 });
