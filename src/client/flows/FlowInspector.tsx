@@ -51,7 +51,7 @@ export function FlowInspector({ node, definition, connections, pending, save, cl
                 : <textarea aria-label={label} rows={4} value={String(value)} disabled={busy} onChange={e => set(e.target.value)} />}
         </label>;
       })}
-      <button type="submit" disabled={busy}>{t('Сохранить')}</button>{/* Always mounted: a live region inserted together with its text is often not announced. */}
+      <button className="primary-button" type="submit" disabled={busy}>{t('Сохранить')}</button>{/* Always mounted: a live region inserted together with its text is often not announced. */}
       <span role="status">{saved ? t('Сохранено') : ''}</span>
     </form>
     <p>{t('Версия результата:')} {node.version}</p>

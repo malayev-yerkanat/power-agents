@@ -24,9 +24,9 @@ export function FlowCard({ data, selected }: NodeProps<CanvasNode>) {
     {node.error && <p className="flow-node-error">{node.error}</p>}
     <footer className="nodrag nopan">
       {node.status === 'awaiting_approval'
-        ? <><button disabled={pending} onClick={() => action?.(node.id, 'approve')}>{t('Одобрить')}</button>
-            <button disabled={pending} onClick={() => action?.(node.id, 'reject')}>{t('Отклонить')}</button></>
-        : <button disabled={pending || !runnable} title={!runnable ? t('Нужны одобренные результаты всех входов') : undefined}
+        ? <><button className="primary-button" disabled={pending} onClick={() => action?.(node.id, 'approve')}>{t('Одобрить')}</button>
+            <button className="secondary-button" disabled={pending} onClick={() => action?.(node.id, 'reject')}>{t('Отклонить')}</button></>
+        : <button className="secondary-button" disabled={pending || !runnable} title={!runnable ? t('Нужны одобренные результаты всех входов') : undefined}
             onClick={() => action?.(node.id, 'run')}>{t('Запустить')}</button>}
     </footer>
     {definition?.outputs.map((port, index) => <Handle key={port.name} type="source" position={Position.Right}

@@ -35,7 +35,7 @@ export function FlowList({ request, csrfToken, open }: { request: Request; csrfT
     <p>{t('От идеи до ролика: запускайте шаги и одобряйте результаты на канвасе.')}</p>
     <div className="flow-list-actions"><label>{t('Режим нового потока')} <select value={mode} onChange={e => setMode(e.target.value as 'demo' | 'live')}>
       <option value="demo">{t('Демо')}</option><option value="live">{t('Живой')}</option></select></label>
-      <button onClick={() => void create()} disabled={pending}>{t('Новый поток')}</button></div>
+      <button className="primary-button" onClick={() => void create()} disabled={pending}>{t('Новый поток')}</button></div>
     <p className="flow-muted">{t('Шаблон: ролик ROBLOX. В демо запросы к моделям не выполняются. В живом режиме доступны текстовые шаги и медиапайплайн. Для медиа настройте ElevenLabs и папку этапов.')}</p>
     {error && <p role="alert">{uiMessage(error)}</p>}
     {flows === null ? <p>{t('Загружаем потоки…')}</p> : !flows.length ? <p>{t('Потоков пока нет. Создайте первый из шаблона.')}</p>

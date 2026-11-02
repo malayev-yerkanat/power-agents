@@ -101,19 +101,19 @@ export function FlowCanvas({ id, request, csrfToken, back }: { id: string; reque
   const toast = error && <div className="flow-toast" role="alert"><span>{uiMessage(error)}</span><button className="flow-icon-button" onClick={() => setError('')} aria-label={t('Закрыть сообщение')}>×</button></div>;
   return <main className="flow-workspace">
     {!flow ? <div className="flows-list">{toast}<h1 id="workspace-heading" tabIndex={-1}>{t('Поток')}</h1><p>{error ? t('Поток не загружен.') : t('Загружаем поток…')}</p>
-      <button onClick={() => void refetch().catch(cause => setError(String(cause)))}>{t('Повторить')}</button><button onClick={back}>{t('К потокам')}</button></div>
-      : <><div className="flow-toolbar"><button onClick={back}>{t('← Потоки')}</button><h1 id="workspace-heading" tabIndex={-1}>{flow.title}</h1>
+      <button className="primary-button" onClick={() => void refetch().catch(cause => setError(String(cause)))}>{t('Повторить')}</button><button className="secondary-button" onClick={back}>{t('К потокам')}</button></div>
+      : <><div className="flow-toolbar"><button className="secondary-button" onClick={back}>{t('← Потоки')}</button><h1 id="workspace-heading" tabIndex={-1}>{flow.title}</h1>
           <span className={`flow-mode flow-mode-${flow.mode}`}>{flow.mode === 'demo' ? t('Демо') : t('Живой')}</span>
           <label className="flow-checkbox"><input type="checkbox" checked={flow.autoRun} disabled={pending}
             onChange={e => { const autoRun = e.target.checked; void patch(() => ({ autoRun })); }} />{t('Автозапуск')}</label>
           <div className="flow-add" onKeyDown={e => { if (e.key === 'Escape' && menu) { e.stopPropagation(); setMenu(false); addToggle.current?.focus(); } }}>
-            <button ref={addToggle} onClick={() => setMenu(value => !value)} aria-expanded={menu} aria-controls="flow-add-menu" disabled={!types.length || pending}>{t('+ Узел')}</button>
+            <button className="primary-button" ref={addToggle} onClick={() => setMenu(value => !value)} aria-expanded={menu} aria-controls="flow-add-menu" disabled={!types.length || pending}>{t('+ Узел')}</button>
             {menu && <div className="flow-add-menu" id="flow-add-menu" ref={addMenu}>{types.map(type => <button key={type.type} onClick={() => addNode(type.type)}>{t(nodeLabels[type.type] ?? '') || type.title}</button>)}</div>}
           </div></div>
         <div className="flow-body">{toast}<div className="flow-graph" role="region" aria-label={t('Канвас потока')}>
           {types.length > 0 && <ReactFlow<CanvasNode, Edge> nodes={nodes} edges={edges} nodeTypes={nodeTypes}
             onInit={value => { instance.current = value; }} fitView fitViewOptions={{ padding: 0.15 }} minZoom={0.15} maxZoom={2}
-            colorMode="dark" ariaLabelConfig={labels} deleteKeyCode={['Delete', 'Backspace']}
+            colorMode="light" ariaLabelConfig={labels} deleteKeyCode={['Delete', 'Backspace']}
             onNodesChange={changes => {
               for (const change of changes) if (change.type === 'position' && change.position)
                 positions.current = { ...positions.current, [change.id]: change.position };
@@ -132,8 +132,8 @@ export function FlowCanvas({ id, request, csrfToken, back }: { id: string; reque
             isValidConnection={validConnection} onConnect={connect}
             onConnectEnd={(_, state) => { if (state.toHandle && !state.isValid) setError('Соединение недопустимо. Проверьте типы портов; текстовый вход принимает любой тип.'); }}
             defaultEdgeOptions={{ type: 'default', style: { stroke: 'var(--flow-edge)', strokeWidth: 1.2 }, interactionWidth: 18 }}>
-            <Background variant={BackgroundVariant.Dots} color="var(--flow-line)" bgColor="var(--flow-bg)" gap={20} size={1} />
-            <Controls /><MiniMap<CanvasNode> nodeColor={node => node.data.node.status === 'approved' ? 'var(--flow-ok)' : 'var(--flow-line-strong)'} pannable zoomable />
+            <Background variant={BackgroundVariant.Dots} color="var(--flow-dot)" bgColor="var(--flow-bg)" gap={16} size={2} />
+            <Controls /><MiniMap<CanvasNode> nodeColor={node => node.data.node.status === 'approved' ? 'var(--flow-ok)' : 'var(--flow-line-strong)'} nodeBorderRadius={0} maskColor="rgb(23 57 115 / .08)" pannable zoomable />
           </ReactFlow>}
         </div>
         {selectedNode && definition && <FlowInspector key={JSON.stringify([selectedNode.id, selectedNode.title, selectedNode.gate, selectedNode.config])} node={selectedNode} definition={definition}
@@ -142,8 +142,9 @@ export function FlowCanvas({ id, request, csrfToken, back }: { id: string; reque
     <dialog ref={rejectDialog} className="flow-reject" onCancel={() => setRejectId(null)} aria-labelledby="flow-reject-title">
       <form onSubmit={async e => { e.preventDefault(); if (rejectId && await action(rejectId, 'reject', note)) setRejectId(null); }}>
         <h2 id="flow-reject-title">{t('Отклонить результат')}</h2><label>{t('Замечание')}<textarea autoFocus required maxLength={12000} rows={4} value={note} onChange={e => setNote(e.target.value)} /></label>
-        <p>{t('Узел запустится повторно с вашим замечанием.')}</p><button disabled={pending || !note.trim()} type="submit">{t('Отклонить и повторить')}</button>
-        <button type="button" onClick={() => setRejectId(null)}>{t('Отмена')}</button>
+        <p>{t('Узел запустится повторно с вашим замечанием.')}</p>
+        <div className="flow-reject-actions"><button className="primary-button" disabled={pending || !note.trim()} type="submit">{t('Отклонить и повторить')}</button>
+        <button className="secondary-button" type="button" onClick={() => setRejectId(null)}>{t('Отмена')}</button></div>
       </form>
     </dialog>
   </main>;
