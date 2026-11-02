@@ -1,0 +1,322 @@
+{
+  "status": "concept assets awaiting user approval; not wired into app",
+  "method": "Manual visual comparison against supplied 8x sprite crops; automated dimensions, opacity and Claude export checks.",
+  "resampling": "Pillow Image.Resampling.NEAREST only",
+  "reference_crops": "Existing crops retained unchanged; alpha displayed over navy on board.",
+  "prior_draft_prompts": "Unavailable; no reconstructed prompt claimed for previous run.",
+  "agents": {
+    "codex": {
+      "file": "pfp-codex.png",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "opaque": true,
+      "new_generation_attempts": 2,
+      "selected_attempt": 2,
+      "required_elements": {
+        "blue_violet_helmet": {
+          "status": "present",
+          "observation": "Blue-violet helmet retained."
+        },
+        "white_top_and_side_swooshes": {
+          "status": "present",
+          "observation": "White swept helmet stripes retained."
+        },
+        "black_wraparound_visor": {
+          "status": "present",
+          "observation": "Black wraparound visor retained."
+        },
+        "small_cyan_eye_glints": {
+          "status": "present",
+          "observation": "Cyan visor glints retained."
+        },
+        "pale_silver_mouthplate": {
+          "status": "present",
+          "observation": "Silver mouthplate retained below visor."
+        },
+        "white_upper_chest_yoke": {
+          "status": "present",
+          "observation": "White chest yoke retained."
+        },
+        "central_blue_shield_badge": {
+          "status": "present",
+          "observation": "Central blue shield retained."
+        },
+        "white_terminal_prompt_glyph": {
+          "status": "present",
+          "observation": "White >_ glyph readable on badge."
+        },
+        "large_blue_shoulder_pads": {
+          "status": "present",
+          "observation": "Large blue shoulder pads retained."
+        },
+        "lavender_shoulder_highlights": {
+          "status": "present",
+          "observation": "Lavender shoulder highlights retained."
+        },
+        "silver_belt": {
+          "status": "present",
+          "observation": "Silver belt visible at lower frame edge."
+        },
+        "gold_buckle": {
+          "status": "present",
+          "observation": "Gold buckle visible, partly cropped at bottom as in accepted draft."
+        }
+      },
+      "shared_elements": {
+        "three_quarter_head_toward_viewers_right": "present",
+        "ring_behind_head": "present",
+        "shoulders_in_front_of_ring_bottom": "present",
+        "diagonal_speed_stripes": "present",
+        "pixel_art_dark_navy_outlines": "present",
+        "extra_text_or_invented_badge": "absent"
+      },
+      "remaining_drift": [
+        "Character visually matches accepted draft; regeneration does not guarantee identical character pixels.",
+        "Lavender ring has faint seams and merges with lavender stripes; flat exact #b8b9ff fill is not met.",
+        "Tight accepted bust occupies about 90% of frame height; belt buckle is clipped at bottom."
+      ],
+      "exact_sprite_match": false,
+      "assessment": "Required elements present; remaining drift listed explicitly.",
+      "reference_dimensions": [
+        560,
+        440
+      ],
+      "comparison_panel": {
+        "reference": {
+          "scale": 1.4285714285714286,
+          "displayed_head_height_px": 240,
+          "bounds": [
+            224,
+            8,
+            400,
+            176
+          ]
+        },
+        "portrait": {
+          "scale": 0.515625,
+          "displayed_head_height_px": 240,
+          "bounds": [
+            324.18500797448166,
+            105.33971291866028,
+            753.7097288676237,
+            570.7942583732057
+          ]
+        }
+      },
+      "circle_preview_diameters_px": [
+        64,
+        128
+      ]
+    },
+    "claude": {
+      "file": "pfp-claude.png",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "opaque": true,
+      "new_generation_attempts": 0,
+      "selected_attempt": "accepted existing draft",
+      "required_elements": {
+        "orange_helmet": {
+          "status": "present",
+          "observation": "Accepted orange helmet retained unchanged apart from export scaling."
+        },
+        "front_to_back_dome_grooves": {
+          "status": "present",
+          "observation": "Stepped front-to-back grooves visible; coarser than sprite ridges."
+        },
+        "black_visor": {
+          "status": "present",
+          "observation": "Black visor present."
+        },
+        "cyan_glints": {
+          "status": "present",
+          "observation": "Cyan visor glints present."
+        },
+        "pale_silver_mouthplate": {
+          "status": "present",
+          "observation": "Pale silver mouthplate below visor."
+        },
+        "ivory_chest_panel": {
+          "status": "present",
+          "observation": "Ivory chest panel present."
+        },
+        "orange_radiating_sunburst": {
+          "status": "present",
+          "observation": "Orange radiating emblem present; detailed contour differs from sprite."
+        },
+        "large_rounded_orange_shoulder_pads": {
+          "status": "present",
+          "observation": "Rounded orange shoulder pads present."
+        },
+        "dark_collar_under_chin": {
+          "status": "present",
+          "observation": "Dark collar visible under chin."
+        }
+      },
+      "shared_elements": {
+        "three_quarter_head_toward_viewers_right": "present",
+        "ring_behind_head": "present",
+        "shoulders_in_front_of_ring_bottom": "present",
+        "diagonal_speed_stripes": "present",
+        "pixel_art_dark_navy_outlines": "present",
+        "extra_text_or_invented_badge": "absent"
+      },
+      "remaining_drift": [
+        "Accepted draft kept as instructed; coarse grooves and expanded sunburst contour differ from the tiny sprite.",
+        "Tight accepted bust occupies about 90% of frame height rather than approximately 70%."
+      ],
+      "exact_sprite_match": false,
+      "assessment": "Required elements present; remaining drift listed explicitly.",
+      "reference_dimensions": [
+        432,
+        440
+      ],
+      "comparison_panel": {
+        "reference": {
+          "scale": 1.3636363636363635,
+          "displayed_head_height_px": 240,
+          "bounds": [
+            136,
+            8,
+            320,
+            184
+          ]
+        },
+        "portrait": {
+          "scale": 0.47945554649265903,
+          "displayed_head_height_px": 240,
+          "bounds": [
+            293.9712918660287,
+            87.37480063795853,
+            771.6746411483253,
+            587.9425837320574
+          ]
+        }
+      },
+      "circle_preview_diameters_px": [
+        64,
+        128
+      ],
+      "accepted_draft_nearest_export_exact": true
+    },
+    "gemini": {
+      "file": "pfp-gemini.png",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "opaque": true,
+      "new_generation_attempts": 1,
+      "selected_attempt": 1,
+      "required_elements": {
+        "royal_blue_helmet": {
+          "status": "present",
+          "observation": "Royal-blue helmet, not cyan."
+        },
+        "royal_blue_suit": {
+          "status": "present",
+          "observation": "Royal-blue suit and blue shoulder pads."
+        },
+        "black_visor": {
+          "status": "present",
+          "observation": "Black wraparound visor present."
+        },
+        "red_yellow_green_mark_at_visor_top": {
+          "status": "present",
+          "observation": "Red/yellow/green mark present at visor top; enlarged relative to crop."
+        },
+        "pale_silver_mouthplate": {
+          "status": "present",
+          "observation": "Pale silver mouthplate below visor."
+        },
+        "white_chest_panel": {
+          "status": "present",
+          "observation": "White chest panel present."
+        },
+        "angular_multicolour_chest_emblem": {
+          "status": "present",
+          "observation": "Angular red/yellow/green/blue emblem present; interpreted contour."
+        },
+        "chest_emblem_red": {
+          "status": "present",
+          "observation": "Red upper section present."
+        },
+        "chest_emblem_yellow": {
+          "status": "present",
+          "observation": "Yellow left section present."
+        },
+        "chest_emblem_green": {
+          "status": "present",
+          "observation": "Green lower section present."
+        },
+        "chest_emblem_blue": {
+          "status": "present",
+          "observation": "Blue right section present."
+        },
+        "red_caps_on_blue_shoulder_pads": {
+          "status": "present",
+          "observation": "Red shoulder caps present on both blue shoulder pads."
+        }
+      },
+      "shared_elements": {
+        "three_quarter_head_toward_viewers_right": "present",
+        "ring_behind_head": "present",
+        "shoulders_in_front_of_ring_bottom": "present",
+        "diagonal_speed_stripes": "present",
+        "pixel_art_dark_navy_outlines": "present",
+        "extra_text_or_invented_badge": "absent"
+      },
+      "remaining_drift": [
+        "Visor mark is enlarged and its green stroke extends further down the visor than in the sprite.",
+        "Four-colour chest emblem is present, but its enlarged angular contour is not an exact pixel trace.",
+        "Tighter bust framing than the approximately 70% target; helmet and shoulders dominate the frame."
+      ],
+      "exact_sprite_match": false,
+      "assessment": "Required elements present; remaining drift listed explicitly.",
+      "reference_dimensions": [
+        440,
+        440
+      ],
+      "comparison_panel": {
+        "reference": {
+          "scale": 1.4285714285714286,
+          "displayed_head_height_px": 240,
+          "bounds": [
+            128,
+            8,
+            288,
+            176
+          ]
+        },
+        "portrait": {
+          "scale": 0.44802782012195125,
+          "displayed_head_height_px": 240,
+          "bounds": [
+            256.40829346092505,
+            48.995215311004785,
+            785.5566188197768,
+            584.6762360446571
+          ]
+        }
+      },
+      "circle_preview_diameters_px": [
+        64,
+        128
+      ]
+    }
+  },
+  "review_board": {
+    "file": "review-board.png",
+    "dimensions": [
+      1760,
+      2580
+    ]
+  }
+}

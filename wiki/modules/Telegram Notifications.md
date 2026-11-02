@@ -6,11 +6,13 @@ status: active
 language: typescript
 purpose: "Pair one private Telegram chat and deliver run alerts"
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-11-01
 tags: [module, telegram, notifications]
 ---
 
 # Telegram Notifications
+
+Planned extension: [[Codex Telegram Mobile]] describes Mini App browsing and explicit bot task routing. No task-submission behavior is implemented by that design document. Keep the current sole poller and approval/question routing intact; backlog rejection and new-task capabilities are separate gated work.
 
 `TelegramService` verifies an optional server-side `TELEGRAM_BOT_TOKEN` with `getMe`, creates a short-lived one-use `/start` pairing link, receives private-chat messages with Bot API long polling, and delivers queued messages with `sendMessage`. The token is not exposed through [[Local HTTP API]] or stored in SQLite. [[Persistence Store]] keeps the pairing hash, recipient, update offset, preferences, and notification outbox.
 
@@ -18,6 +20,14 @@ Only two run transitions create automatic alerts: entry into `awaiting_approval`
 
 Readiness requires successful polling. Startup and recovery use an immediate poll, followed by normal long polling when healthy. A polling outage disables pairing and test actions until the service recovers; the open Settings panel refreshes status automatically.
 
-The first release supports one private chat and notification delivery only. Plans are approved in [[Client Interface]]. It does not expose the loopback-only app on a phone, accept Telegram approval buttons, or use a public webhook.
+Power Agents run plans are still approved in [[Client Interface]]. Claude hooks use the existing authenticated approval/question endpoints. Codex Desktop uses a dedicated bot and independent pairing database through `src/server/codex/service.ts`; it never borrows Claude’s token or polling offset. Native command/network and current-turn permission approvals, empty-form MCP tool confirmations (including Browser use downloads), plus structured blocking/async questions can be answered on the desktop or Telegram. Explicit replies are bound to the original bot message and paired private user. Unknown, secret, oversized, file-change, plan/option-picker, authentication and other MCP elicitation requests remain desktop-only.
+
+The Codex adapter validates private socket ownership, protocol versions, owner identity and request/turn identity. Canonical history is transiently inspected; no full snapshots or transcripts are logged or persisted by the bridge; completion excerpts are retained in the delivery outbox. Desktop resolution, disconnect, expiration and duplicate replies invalidate controls. Async replies use ordinary steering with a fresh-state check; the internal desktop API has no atomic expected-turn guard. See [setup, supported prompts and limitations](../../docs/codex-telegram.md).
 
 Evidence: [Telegram service](../../src/server/telegram.ts), [store](../../src/server/store.ts), [HTTP API](../../src/server/http.ts), and [tests](../../tests/telegram.test.ts).
+
+Browser use download prompts arrive as `mcpServer/elicitation/request`, not native permission grants. Empty-object forms explicitly classified `mcp_tool_call` use the desktop follower elicitation response with empty content and null response metadata. Offered session/always persistence is never copied. Unknown/auth/OTP/user-verification forms remain desktop-only.
+
+Codex completion alerts detect observed in-progress turns that successfully finish. The dedicated durable outbox retains chat/turn identity and a message headed “✅ Project · done” with a brief final-response excerpt, retries delivery, and deduplicates repeat observations across restart. Historical, failed, and interrupted turns do not generate success alerts. Turns completed while disconnected or between snapshots may be missed. See [Codex completion behavior](../../docs/codex-telegram.md).
+
+Codex approvals opt-in (2026-11-01): `CodexRequests` forwards command, permission and MCP action approvals only with `approvals: true`, set from `CODEX_TELEGRAM_APPROVALS=true`; otherwise they stay desktop-only. Questions and completion alerts are unaffected. The status API reports `approvals`.

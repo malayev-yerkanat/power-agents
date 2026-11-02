@@ -6,11 +6,13 @@ status: active
 language: typescript
 purpose: "Persist runs and event journal in SQLite"
 created: 2026-10-07
-updated: 2026-10-08
+updated: 2026-10-30
 tags: [module, sqlite]
 ---
 
 # Persistence Store
+
+Flows use separate `flows` JSON rows and `node_runs` execution metadata (node/version, input hash, timing, status and error). `updateFlow` increments the flow version transactionally and notifies flow subscribers after commit. Recovery queries unfinished flows/history without API response limits. Current node output lives in flow JSON; output-history rollback remains planned. See [[Flow Engine]].
 
 `Store` uses Node's `DatabaseSync` with `runs` and `events` tables. A run is stored as JSON; events are separate ordered rows. `createRun` and `updateRun` write state and its event in one transaction. Updates increment the run version and timestamp. Subscribers receive the event after commit, which feeds [[Session and API Flow]].
 

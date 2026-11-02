@@ -1,0 +1,20 @@
+{
+  "chest": {
+    "origin": [
+      442,
+      646
+    ],
+    "grid_px": 12,
+    "cells": 21,
+    "crop": [
+      430,
+      634,
+      706,
+      910
+    ],
+    "gradient_bands": 5,
+    "shape": "official scalloped cloud sampled on local grid",
+    "glyph": "white rounded >_ sampled from official reference",
+    "outline": "none"
+  }
+}

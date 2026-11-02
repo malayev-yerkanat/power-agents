@@ -2,11 +2,14 @@
 type: index
 status: active
 created: 2026-10-07
-updated: 2026-10-08
+updated: 2026-10-30
 tags: [modules]
 ---
 
 # Modules Index
+
+- [[Flows UI]] — canvas, media playback, Capture upload, inspector and flow events
+- [[Flow Engine]] — typed DAG scheduling, approval gates, media stages and recovery
 
 - [[Server Runtime]] — process setup and hosting
 - [[Orchestration Engine]] — team state machine and scheduling

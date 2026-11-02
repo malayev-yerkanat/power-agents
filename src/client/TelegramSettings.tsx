@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowSquareOut, Check, PaperPlaneTilt, SpinnerGap } from '@phosphor-icons/react';
+import { locale, t } from './i18n';
+import { uiMessage } from './uiMessages';
 
 export type TelegramNotifications = { approval: boolean; completed: boolean };
 export type TelegramStatus = {
@@ -53,23 +55,23 @@ type ViewProps = {
 export function TelegramSettingsView({ status, busy, error, message, pairUrl, onPair, onTest, onUnpair, onToggle }: ViewProps) {
   const link = safeTelegramPairUrl(pairUrl);
   return <section className="telegram-settings" aria-labelledby="telegram-settings-title">
-    <div className="telegram-settings-heading"><div><span className="eyebrow">УВЕДОМЛЕНИЯ</span><h3 id="telegram-settings-title">Telegram</h3></div><span className={`connection-availability ${status.connected ? 'available' : ''}`}>{status.connected && <Check size={12} />}{status.connected ? 'Подключено' : status.configured ? 'Не подключено' : 'Не настроено'}</span></div>
-    {status.configured && status.error && <p className="telegram-feedback telegram-feedback-error" role="alert">Не удалось подключиться к Telegram. Проверьте токен бота и доступ к сети. Уведомления могут задерживаться.</p>}
-    {status.configured && !status.ready && !status.error && <p className="telegram-feedback" role="status">Подключаемся к Telegram…</p>}
-    {!status.configured ? <p className="telegram-explainer">Создайте бота через BotFather и задайте TELEGRAM_BOT_TOKEN в окружении сервера, затем перезапустите приложение. Токен не вводится в браузере.</p> : status.connected ? <>
-      <p className="telegram-explainer">Уведомления отправляются в привязанный личный чат{status.username ? ` через бота @${status.username.replace(/^@/, '')}` : ''}. Содержимое задачи в сообщениях не передаётся.</p>
+    <div className="telegram-settings-heading"><div><span className="eyebrow">{t('УВЕДОМЛЕНИЯ')}</span><h3 id="telegram-settings-title">Telegram</h3></div><span className={`connection-availability ${status.connected ? 'available' : ''}`}>{status.connected && <Check size={12} />}{status.connected ? t('Подключено') : status.configured ? t('Не подключено') : t('Не настроено')}</span></div>
+    {status.configured && status.error && <p className="telegram-feedback telegram-feedback-error" role="alert">{t('Не удалось подключиться к Telegram. Проверьте токен бота и доступ к сети. Уведомления могут задерживаться.')}</p>}
+    {status.configured && !status.ready && !status.error && <p className="telegram-feedback" role="status">{t('Подключаемся к Telegram…')}</p>}
+    {!status.configured ? <p className="telegram-explainer">{t('Создайте бота через BotFather и задайте TELEGRAM_BOT_TOKEN в окружении сервера, затем перезапустите приложение. Токен не вводится в браузере.')}</p> : status.connected ? <>
+      <p className="telegram-explainer">{t('Уведомления отправляются в привязанный личный чат{bot}. Содержимое задачи в сообщениях не передаётся.', { bot: status.username ? t(' через бота @{name}', { name: status.username.replace(/^@/, '') }) : '' })}</p>
       <div className="telegram-preferences">
-        <label><span><strong>План готов</strong><small>Сообщить, когда план ожидает согласования.</small></span><input type="checkbox" checked={status.notifications.approval} disabled={busy} onChange={event => void onToggle('approval', event.target.checked)} /></label>
-        <label><span><strong>Задача завершена</strong><small>Сообщить после завершения и проверки результата.</small></span><input type="checkbox" checked={status.notifications.completed} disabled={busy} onChange={event => void onToggle('completed', event.target.checked)} /></label>
+        <label><span><strong>{t('План готов')}</strong><small>{t('Сообщить, когда план ожидает согласования.')}</small></span><input type="checkbox" checked={status.notifications.approval} disabled={busy} onChange={event => void onToggle('approval', event.target.checked)} /></label>
+        <label><span><strong>{t('Задача завершена')}</strong><small>{t('Сообщить после завершения и проверки результата.')}</small></span><input type="checkbox" checked={status.notifications.completed} disabled={busy} onChange={event => void onToggle('completed', event.target.checked)} /></label>
       </div>
-      <div className="telegram-actions"><button type="button" className="secondary-button" disabled={busy || !status.ready} onClick={() => void onTest()}><PaperPlaneTilt size={15} />Тестовое уведомление</button><button type="button" className="text-button" disabled={busy} onClick={() => void onUnpair()}>Отключить</button></div>
+      <div className="telegram-actions"><button type="button" className="secondary-button" disabled={busy || !status.ready} onClick={() => void onTest()}><PaperPlaneTilt size={15} />{t('Тестовое уведомление')}</button><button type="button" className="text-button" disabled={busy} onClick={() => void onUnpair()}>{t('Отключить')}</button></div>
     </> : <>
-      <p className="telegram-explainer">Создайте одноразовую ссылку и откройте её в Telegram. Отправьте боту команду Start, чтобы привязать личный чат.</p>
-      <div className="telegram-actions"><button type="button" className="secondary-button" disabled={busy || !status.ready} onClick={() => void onPair()}>{busy ? <SpinnerGap size={15} /> : <PaperPlaneTilt size={15} />}{status.pending ? 'Создать новую ссылку' : 'Подключить Telegram'}</button>{link && <a className="telegram-pair-link" href={link} target="_blank" rel="noopener noreferrer">Открыть бота<ArrowSquareOut size={14} /></a>}</div>
-      {status.pending && <p className="telegram-pending" role="status">Ожидаем команду Start в Telegram. Ссылка действует до {new Date(status.pending.expiresAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}.</p>}
+      <p className="telegram-explainer">{t('Создайте одноразовую ссылку и откройте её в Telegram. Отправьте боту команду Start, чтобы привязать личный чат.')}</p>
+      <div className="telegram-actions"><button type="button" className="secondary-button" disabled={busy || !status.ready} onClick={() => void onPair()}>{busy ? <SpinnerGap size={15} /> : <PaperPlaneTilt size={15} />}{status.pending ? t('Создать новую ссылку') : t('Подключить Telegram')}</button>{link && <a className="telegram-pair-link" href={link} target="_blank" rel="noopener noreferrer">{t('Открыть бота')}<ArrowSquareOut size={14} /></a>}</div>
+      {status.pending && <p className="telegram-pending" role="status">{t('Ожидаем команду Start в Telegram. Ссылка действует до {time}.', { time: new Date(status.pending.expiresAt).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }) })}</p>}
     </>}
-    {error && <p className="telegram-feedback telegram-feedback-error" role="alert">{error}</p>}
-    {message && <p className="telegram-feedback" role="status">{message}</p>}
+    {error && <p className="telegram-feedback telegram-feedback-error" role="alert">{uiMessage(error)}</p>}
+    {message && <p className="telegram-feedback" role="status">{t(message)}</p>}
   </section>;
 }
 
@@ -115,6 +117,6 @@ export function TelegramSettings({ open, request, csrfToken }: { open: boolean; 
     setStatus(current => current ? { ...current, notifications: result.notifications } : current);
   });
   if (!open) return null;
-  if (!status) return <section className="telegram-settings" aria-label="Telegram"><p className="telegram-explainer">Загружаем статус Telegram…</p>{error && <><p className="telegram-feedback telegram-feedback-error" role="alert">{error}</p><button type="button" className="text-button telegram-retry" onClick={() => void load()}>Повторить</button></>}</section>;
+  if (!status) return <section className="telegram-settings" aria-label="Telegram"><p className="telegram-explainer">{t('Загружаем статус Telegram…')}</p>{error && <><p className="telegram-feedback telegram-feedback-error" role="alert">{uiMessage(error)}</p><button type="button" className="text-button telegram-retry" onClick={() => void load()}>{t('Повторить')}</button></>}</section>;
   return <TelegramSettingsView status={status} busy={busy} error={error} message={message} pairUrl={pairUrl} onPair={pair} onTest={test} onUnpair={unpair} onToggle={toggle} />;
 }

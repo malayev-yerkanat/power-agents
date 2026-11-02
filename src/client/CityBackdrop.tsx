@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PixelArtwork } from './PixelArtwork';
 import { AnimatedCityMonster } from './AnimatedCityMonster';
+import { t } from './i18n';
 
 const MOTION_KEY = 'power-agents-city-motion';
 
@@ -52,10 +53,10 @@ export function CityBackdrop({ initiallyCollapsed = true }: { initiallyCollapsed
       </div>}
     </div>
     <div className="city-motion-control">{expanded && <button className="city-motion-toggle" type="button" onClick={toggleMotion} disabled={reducedMotion}
-      aria-pressed={motionEnabled && !reducedMotion} aria-label="Анимация города"
-      title={reducedMotion ? 'Движение отключено настройкой уменьшения анимации' : undefined}>
+      aria-pressed={motionEnabled && !reducedMotion} aria-label={t('Анимация города')}
+      title={reducedMotion ? t('Движение отключено настройкой уменьшения анимации') : undefined}>
       <span className="city-motion-icon" aria-hidden="true">{motionEnabled && !reducedMotion ? 'Ⅱ' : '▷'}</span>
-      {reducedMotion ? 'Город · без движения' : motionEnabled ? 'Город · пауза' : 'Город · оживить'}
-    </button>}<button className="city-motion-toggle" type="button" aria-expanded={expanded} aria-controls="ambient-city" onClick={toggleExpanded}>{expanded ? 'Свернуть город' : 'Показать город'}</button></div>
+      {reducedMotion ? t('Город · без движения') : motionEnabled ? t('Город · пауза') : t('Город · оживить')}
+    </button>}<button className="city-motion-toggle" type="button" aria-expanded={expanded} aria-controls="ambient-city" onClick={toggleExpanded}>{expanded ? t('Свернуть город') : t('Показать город')}</button></div>
   </div>;
 }

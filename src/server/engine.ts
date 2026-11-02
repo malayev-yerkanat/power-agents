@@ -13,7 +13,7 @@ import { applyResult, findFact, type Job } from './core/results.ts';
 import { inlineText, listFiles, taskFolder } from './files.ts';
 import { runTeamTool, teamToolNames, TeamToolError, type TeamGrant, type TeamToolName } from './core/team.ts';
 const finished = (run: Run, callId: string): Run => ({ ...run, inFlight: run.inFlight?.filter(c => c.id !== callId) });
-const callNames: Record<TurnPurpose, string> = { plan: 'план', task: 'задача', reply: 'ответ коллеге', synthesize: 'сборка итога', review: 'проверка', resolve: 'разрешение конфликта' };
+const callNames: Record<TurnPurpose, string> = { plan: 'план', task: 'задача', reply: 'ответ коллеге', synthesize: 'сборка итога', review: 'проверка', resolve: 'разрешение конфликта', flow: 'узел потока' };
 function callLabel(run: Run, call: InFlightCall): string {
   const task = run.tasks.find(t => t.id === call.taskId);
   return `${run.members.find(m => m.id === call.memberId)?.name ?? call.memberId} — ${callNames[call.purpose]}${task && call.purpose === 'task' ? ` «${task.title}»` : ''}`;
@@ -339,7 +339,7 @@ export class Engine {
     const title = result.passed ? 'Проверка пройдена' : 'Проверка не пройдена';
     this.change(id, r => ({ ...r, repo: { ...r.repo!, check: { passed: result.passed, exitCode: result.exitCode, merges: run.repo!.merges } },
       artifacts: [...r.artifacts, { id: randomUUID(), kind: 'check', title, authorId: 'platform', createdAt: new Date().toISOString(),
-        body: `Команда: \`${command}\`\nКод выхода: ${result.exitCode ?? 'остановлена'}\n\n\`\`\`\n${result.output.replace(/```/g, "'''")}\n\`\`\`` }] }), 'check', `${title}: ${command}`.slice(0, 600));
+        body: `Команда: \`${command}\`\nКод выхода: ${result.exitCode ?? 'остановлена'}\nПесочница: ${result.sandboxed ? 'запись только в рабочей копии, сеть только на этом компьютере' : 'нет: sandbox-exec недоступен, команда работала без ограничений'}\n\n\`\`\`\n${result.output.replace(/```/g, "'''")}\n\`\`\`` }] }), 'check', `${title}: ${command}`.slice(0, 600));
   }
   private cleanupRepo(run: Run): void {
     if (run.repo) void removeWorktrees(run.repo.root, join(this.options.workspaceRoot, run.id)).catch(() => {});

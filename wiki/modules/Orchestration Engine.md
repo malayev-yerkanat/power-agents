@@ -6,7 +6,7 @@ status: active
 language: typescript
 purpose: "Schedule plan, task, reply, synthesis, and review turns"
 created: 2026-10-07
-updated: 2026-10-22
+updated: 2026-11-01
 tags: [module, orchestration]
 ---
 
@@ -37,3 +37,5 @@ File and code output (M2): CLI task turns write only in `tasks/<taskId>` (see `f
 Team tools (M3): `core/team.ts` holds the rules, `mcp.ts` serves `POST /mcp`. The engine mints a random token per tool-capable turn (`TEAM_TOOL_KINDS`: Claude, Codex, demo), passes it as `TurnInput.team`, revokes it when the turn ends, and logs each call as `team_tool` with the token's member. A grant is valid only while its call is in `inFlight` and the run is running.
 
 The engine limits runs to 100 turns and tasks to 20 turns. See [engine](../../src/server/engine.ts), [protocol](../../src/server/core/protocol.ts), and [[Data Flow]].
+
+Check sandbox (2026-11-01): `runCheck` in `workspace.ts` runs the user's check command through `/usr/bin/sandbox-exec` on macOS (`CHECK_SANDBOX_PROFILE`): writes only in the result worktree and a private temp folder, network only to localhost and Unix sockets, proxy variables removed. Reads are not restricted. `CheckResult.sandboxed` is shown in the check artifact; without `sandbox-exec` the command runs unconfined.

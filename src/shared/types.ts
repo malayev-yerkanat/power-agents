@@ -70,7 +70,7 @@ export interface EventHistoryPage { events: RunEvent[]; before?: number }
 export interface RunDetail { run: Run; events: RunEvent[]; eventsBefore?: number }
 export interface Bootstrap extends RunSummaryPage { connections: Connection[]; csrfToken: string; maxConcurrent: number; eventCursor: number }
 export interface CreateRunInput { goal: string; members: Member[]; leaderId: string; mode: 'live' | 'demo'; repoPath?: string; checkCommand?: string }
-export type TurnPurpose = 'plan' | 'task' | 'reply' | 'synthesize' | 'review' | 'resolve';
+export type TurnPurpose = 'plan' | 'task' | 'reply' | 'synthesize' | 'review' | 'resolve' | 'flow';
 export interface TurnInput {
   runId: string; member: Member; connection: Connection; purpose: TurnPurpose;
   prompt: string; cwd: string; sessionId?: string; signal: AbortSignal;

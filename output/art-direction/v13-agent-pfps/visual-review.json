@@ -1,0 +1,28 @@
+{
+  "reviewed": true,
+  "date": "2026-10-30",
+  "method": "Viewed all three exact 6x nearest-neighbour comparisons beside official logos, final portraits, and rebuilt review board.",
+  "observations": {
+    "codex": "Restored target cell-for-cell: eight visible lobes, one-cell blue rim, four lavender-to-blue bands, sharp two-cell straight chevron and thick underscore sharing its bottom row. Full target crop is pixel-identical.",
+    "gemini_chest": "Approved official-derived silhouette and interior colors preserved. Exactly four stray blue edge cells changed to dark red or dark green; all other chest pixels unchanged.",
+    "gemini_visor": "13x13-cell official-derived sparkle with visibly concave sides, four pointed tips, no isolated cells, and local-family edge colors. Original center retained at (578.5,276.5). Entire mark stays on helmet/visor; no clipping required."
+  },
+  "limitations": [
+    "Curves remain discrete flat 12px/13px logical cells, with no antialiasing."
+  ],
+  "sha256": {
+    "pfp-codex.png": "32b18c4fe961531a95625aac81a02cdf07df7a3eecd4502b256c3cff820abacf",
+    "pfp-gemini.png": "2d0708e449036c4d8010506c8bf9eb3da944fc781a0d33e768582cb250533e20",
+    "pfp-claude.png": "d3e548e36902a719eb2cc57d13fe153dfa58551cd19f0832ef945543131840e7",
+    "review-board.png": "187ec802c6b5d6c29372fe6ef06af7bdc1ef4fe9cb21cd6161bc05543e678169",
+    "review-codex-chest-4x.png": "8ac3b54f79b62ff17726ecde1847ee42971c623bc67b8fc73f2a1bfdbb7d1e1b",
+    "review-gemini-chest-4x.png": "797ac907aa39010151b8fbb417594dc8e709928da9f06142e815b76e955693fb",
+    "review-gemini-visor-4x.png": "3770f4355199c885f6303ede527f0e3c1ebdd2660e00849b4a8659557d33d446",
+    "logo-codex-official.png": "8a7b09ec323b4225b15d0f4cf054cac5e04abb8c4fdebf12cb2add8f21612002",
+    "logo-gemini-official.png": "bce270ef4dd29b493ed64e89cc82867ef13f1cf7ef837e79d845fddf69cc9768",
+    "check-codex-chest.png": "fffbb040661e47cb2a27229591cf5a9b2a72982c4ed9ecec4525a71205b27f73",
+    "check-gemini-chest.png": "6a7774270f9747ebaa8098a693bf14215c5db8ea45b9f107ecdeacce23701bbe",
+    "check-gemini-visor.png": "cb08aeec036b8a04df7dd1294a52452e41a461a8f9aab8b96ddb994e166375e9",
+    "target-codex-badge.png": "e4b8d78c0e1845fc55ef74d128ef6287f501f4dda707b2116595f6817475134c"
+  }
+}

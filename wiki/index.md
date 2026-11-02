@@ -2,7 +2,7 @@
 type: index
 status: active
 created: 2026-10-07
-updated: 2026-10-20
+updated: 2026-10-31
 tags: [navigation, repository]
 ---
 
@@ -12,11 +12,13 @@ Start with [[hot|Hot Cache]] for recent changes or [[Architecture Overview]] for
 
 ## System
 
+- [[Codex Telegram Mobile]] — approved planned design and gated implementation plan; not implemented
+
 - [[Architecture Overview]] — components and boundaries
 - [[Data Flow]] — create, approve, execute, review
 - [[Session and API Flow]] — local API, cookie, CSRF, SSE
 - [[Model Selection Flow]] — model lists for each connection
-- [[Telegram Notification Flow]] — private-chat pairing and durable alerts
+- [[Telegram Notification Flow]] — private-chat pairing, durable alerts and separate Codex decision bot
 - [[macOS Autostart Flow]] — login startup and service controls
 - [[Backup and Restore Flow]] — offline backup and recovery of local state
 - [[Tech Stack]] — runtime and dependencies
@@ -25,6 +27,9 @@ Start with [[hot|Hot Cache]] for recent changes or [[Architecture Overview]] for
 - [[Pixel Art Consistency]] — approved visual constraint and Airy Pixel implementation scope
 
 ## Modules
+
+- [[Flows UI]] — canvas, media playback, Capture upload, inspector and flow events
+- [[Flow Engine]] — typed DAG registry, gates, live text and media pipeline
 
 - [[Server Runtime]]
 - [[Orchestration Engine]]

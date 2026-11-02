@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import type { z } from 'zod';
 import { readDraft, writeDraft } from './draftStorage';
+import { t } from './i18n';
 
 export function useBrowserDraft<T>(key: string, schema: z.ZodType<T>, createDefault: () => T) {
   const [initial] = useState(() => {
@@ -43,5 +44,5 @@ export function useBrowserDraft<T>(key: string, schema: z.ZodType<T>, createDefa
     }
   }, [key]);
 
-  return { value, update, reset, storageError };
+  return { value, update, reset, storageError: t(storageError) };
 }

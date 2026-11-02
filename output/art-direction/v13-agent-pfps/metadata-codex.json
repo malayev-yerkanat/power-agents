@@ -1,0 +1,20 @@
+{
+  "chest": {
+    "origin": [
+      430,
+      634
+    ],
+    "grid_px": 12,
+    "cells": 23,
+    "crop": [
+      418,
+      622,
+      718,
+      922
+    ],
+    "gradient_bands": 4,
+    "shape": "eight hand-placed rounded lobes; exact target-codex-badge.png cells",
+    "glyph": "two-cell white > and _; seven-row chevron; shared baseline",
+    "outline": "one-cell #2d34c8 blue rim"
+  }
+}

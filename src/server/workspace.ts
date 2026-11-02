@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
-import { existsSync, realpathSync } from 'node:fs';
+import { existsSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { isAbsolute, join, sep } from 'node:path';
 import { ProcessExitError, runProcess, runtimeEnvironment } from './adapters/process.js';
 
@@ -9,7 +10,7 @@ const EMAIL = 'power-agents@localhost';
 
 export interface Worktree { dir: string; branch: string }
 export type MergeResult = { ok: true } | { ok: false; conflicts: string[] };
-export interface CheckResult { passed: boolean; exitCode: number | null; output: string }
+export interface CheckResult { passed: boolean; exitCode: number | null; output: string; sandboxed: boolean }
 
 /** Git in the C locale so messages parse; the user's hooks and signing never run on platform commits. */
 function git(cwd: string, args: string[], name = 'Power Agents'): Promise<string> {
@@ -87,10 +88,39 @@ export async function diffStat(resultDir: string, baseCommit: string): Promise<s
   return (await git(resultDir, ['diff', '--stat', baseCommit, 'HEAD'])).trim();
 }
 
+export const SANDBOX_EXEC = '/usr/bin/sandbox-exec';
+/**
+ * Agents wrote the code the check runs, so on macOS it may write only in the worktree and its own temp folder and
+ * reach the network only on this machine; reads stay open so toolchains work, except the app's sign-in key and databases,
+ * which would let check code drive the app over localhost. Unix sockets cannot leave the machine.
+ */
+export const CHECK_SANDBOX_PROFILE = `(version 1)(allow default)
+(deny network*)
+(allow network-bind network-inbound (local ip "localhost:*") (local unix-socket))
+(allow network-outbound (remote ip "localhost:*") (remote unix-socket))
+(deny file-read* (regex #"/\\.power-agents/access\\.key$" #"/\\.power-agents/[^/]+\\.sqlite(-wal|-shm|-journal)?$"))
+(deny file-write*)
+(allow file-write* (subpath (param "WORK")) (subpath (param "TMP"))
+  (literal "/dev/null") (literal "/dev/zero") (literal "/dev/tty") (literal "/dev/dtracehelper") (regex #"^/dev/fd/"))`;
+const PROXY_KEYS = ['HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'no_proxy'];
+
+/** The process to spawn for a check; without sandbox-exec (Linux) the command runs unconfined and says so. */
+export function checkInvocation(dir: string, tmp: string, command: string, sandbox = process.platform === 'darwin' && existsSync(SANDBOX_EXEC)): { file: string; args: string[]; sandboxed: boolean } {
+  return sandbox
+    ? { file: SANDBOX_EXEC, args: ['-D', `WORK=${dir}`, '-D', `TMP=${tmp}`, '-p', CHECK_SANDBOX_PROFILE, '/bin/sh', '-c', command], sandboxed: true }
+    : { file: '/bin/sh', args: ['-c', command], sandboxed: false };
+}
+
 /** The user's own check command, the only shell use; combined output keeps its last 200 KB. */
-export function runCheck(resultDir: string, command: string, options: { timeoutMs?: number } = {}): Promise<CheckResult> {
-  return new Promise((resolve, reject) => {
-    const child = spawn('/bin/sh', ['-c', command], { cwd: resultDir, env: runtimeEnvironment(), detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+export function runCheck(resultDir: string, command: string, options: { timeoutMs?: number; sandbox?: boolean } = {}): Promise<CheckResult> {
+  // sandbox-exec matches real paths (/var is /private/var); a localhost proxy would reopen the network, so none is passed.
+  const dir = realpathSync(resultDir);
+  const tmp = realpathSync(mkdtempSync(join(tmpdir(), 'power-agents-check-')));
+  const invocation = checkInvocation(dir, tmp, command, options.sandbox);
+  const env = { ...Object.fromEntries(Object.entries(runtimeEnvironment()).filter(([key]) => !PROXY_KEYS.includes(key))),
+    TMPDIR: tmp, npm_config_cache: join(tmp, 'npm-cache') };
+  const done = new Promise<CheckResult>((resolve, reject) => {
+    const child = spawn(invocation.file, invocation.args, { cwd: dir, env, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
     let chunks: Buffer[] = [];
     let size = 0;
     let timedOut = false;
@@ -113,9 +143,10 @@ export function runCheck(resultDir: string, command: string, options: { timeoutM
       let output = Buffer.concat(chunks).subarray(-CHECK_OUTPUT_BYTES).toString('utf8');
       if (timedOut) output += '\nПроверка остановлена: превышено время ожидания.\n';
       const exitCode = timedOut ? null : code;
-      resolve({ passed: exitCode === 0, exitCode, output });
+      resolve({ passed: exitCode === 0, exitCode, output, sandboxed: invocation.sandboxed });
     });
   });
+  return done.finally(() => rmSync(tmp, { recursive: true, force: true }));
 }
 
 /** Removes every worktree under runDir; the run's branches stay for the user. */

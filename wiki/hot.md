@@ -3,40 +3,18 @@ type: meta
 title: "Hot Cache"
 status: active
 created: 2026-10-07
-updated: 2026-10-22
+updated: 2026-11-02
 tags: [context]
 ---
 
 # Hot Cache
 
-## Last Updated
+Latest (2026-11-02): reel flows gained a **Project folder** node, now first in the `roblox-reel` template (eleven nodes) and wired into Brand's optional `project` input. It picks a folder from `CONTENT_PROJECTS_DIR` (default: three levels above `REEL_PIPELINE_DIR`) and creates `<project>/reels/<flow name>/`; approved outputs are copied into numbered stage folders. The **Brand** node now picks from a shared brand library (`brands` table, `/api/flows/brands`), filled by uploading a brand guide `.md` and/or `brand.json` or by an in-app form. Explained in ROBLOX is the first library brand. The Flows UI follows Airy Pixel. See [[Flow Engine]] and [[Flows UI]]. Existing flows such as Reel 002 have no Project node; add one with **+ Node**.
 
-2026-10-23. M1 accepted live 2026-10-26: review rework, facts board (changed facts reopen tasks that used them), safe resume. Combine/review calls get 15 minutes. M2 accepted live 2026-10-26 (task files, git worktree code runs). M3 accepted live 2026-10-26: MCP team tools with per-turn tokens (Claude, Codex). Connection failures show their reason; unreadable answers get one retry.
+Platform: the [platform audit](../docs/audits/2026-11-01-platform-audit.md) ranks remaining work in phases. Phase 0 added anti-framing headers and navigation fixes. Phase 1 sandboxed the repo check, stopped the dev server serving `.power-agents/`, added launch-link sign-in (`npm run open`) and made Codex Telegram approvals opt-in. Next: Phase 2 agent prompt rewrite and structured output, then distinct run titles.
 
-## Direction
+Reel media: F4 runs Voice, Capture, Edit, Preview, QA and Final through Python stages; live acceptance limits are in [F4 verification](../docs/f4-verification.md). F5 Telegram gates for reel flows remain planned.
 
-[Roadmap](../docs/roadmap.md): M1 finishes the core loop (review rework, shared facts, safe resume), then M2 file/code output, M3 MCP team tools.
+Codex mobile: [[Codex Telegram Mobile]] is planned, not built. The original follower transport is blocked ([evidence](../docs/codex-mobile-capabilities.md)); a supervised Desktop launcher on the documented App Server is the candidate ([research](../docs/codex-mobile-shared-server-research.md)). Implemented today: a Codex Telegram bridge for completion alerts, approvals and questions; see [[Telegram Notifications]] and [setup](../docs/codex-telegram.md).
 
-## Repository State
-
-All work through the review fixes is pushed to `main` (CI green). M1 follow-ups are being committed on 2026-10-26. Local checks: 158/158 Node tests, 81.45% line coverage, 35/35 Chromium tests, typecheck.
-
-## Current System
-
-- Power Agents is a local TypeScript/React/SQLite prototype. The Node server binds to `127.0.0.1:4317`; one team runs at a time with up to three parallel provider turns.
-- A leader plans, the user approves, participants work and ask questions, then the leader synthesizes and another participant reviews. Universal MCP tools and external repository edits remain planned.
-- `/api/bootstrap` returns 30 recent run summaries and an event cursor. Older runs and journal events load in pages; SSE replay requests a snapshot resync for gaps over 100 events.
-- SQLite stores runs, events, Telegram settings and a durable alert outbox. [[Backup and Restore Flow]] captures SQLite and workspaces only while the server is stopped. Backups contain private task content; `.env` and logs are excluded.
-- Telegram pairs one private chat with a one-use `/start` link for brief plan-ready and completion alerts. Approval stays in the local app; polling failure disables pairing and test controls until recovery.
-- Codex, Claude and Antigravity CLI plus OpenAI/Anthropic APIs are available when configured. CLIs use their own sign-in and never receive `OPENAI_API_KEY`/`ANTHROPIC_API_KEY`. Each turn receives only the documents it needs. Gemini receives prompts through CLI stdin. CLI plan/read-only controls are not an OS isolation boundary. Automated provider tests use mocks; a small Codex/Gemini live run passed on 2026-10-07.
-- A user LaunchAgent can start the built server at macOS login while the Mac is awake. CI checks tests with an 80% line-coverage gate, synthetic Chromium flows, type checking, build and dependency audit.
-
-## Current UI
-
-Task entry comes before a compact team summary and optional preview. Ambient city art loads on first expansion; the approved expanded pixel scale is unchanged. Completed runs show the accepted result above the optional encounter. Documents support safe Markdown, source view, copying and downloads. Paused/failed runs expose latest-review context when present and a clarification focus action; sending feedback and resuming remain separate.
-
-Drafts survive reload within one tab (`sessionStorage`). Fragment routes keep run/tab context. History search covers loaded pages; older pages load on request. [[Pixel Art Consistency]] remains authoritative for visuals.
-
-## Scope Boundaries
-
-See the roadmap backlog. Archive/rename, Telegram checks, dark mode, sprites and screen-reader checks also remain open.
+Canonical behavior is in the [prototype guide](../docs/prototype.md).

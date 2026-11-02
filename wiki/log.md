@@ -2,11 +2,126 @@
 type: log
 status: active
 created: 2026-10-07
-updated: 2026-10-22
+updated: 2026-11-02
 tags: [history]
 ---
 
 # Operation Log
+
+## 2026-11-02 — Brand accepts the Project folder
+
+- Brand gained an optional `project` input, so Project folder → Brand can be connected; the template wires it. Verified: typecheck, 346/346 unit, 7/7 Flows e2e, build; live registry shows the port.
+
+## 2026-11-02 — Project folder node; brand library on the Brand node
+
+- New first node **Project folder**: pick a content project; a run creates `<project>/reels/<flow name>/`, and every approved output is copied into numbered stage folders there. See [[Flow Engine]].
+- Brand node picks a brand from a shared library (upload `brand-guide.md` / `brand.json`, or fill in the app). Explained in ROBLOX was imported as the first library brand.
+- Flows UI restyled to Airy Pixel (committed earlier as `e482496`). See [[Flows UI]].
+- Verified: typecheck, 346/346 unit tests, 50/50 e2e, build; service restarted; library and project list checked in the browser. Not run: a live Project export into the real content folder (covered by unit tests on temp folders).
+
+## 2026-11-01 — Phase 1 complete: launch-link sign-in; Codex approvals opt-in
+
+- `/api/bootstrap` now needs a signed session cookie or a one-time launch link from `npm run open` (audit S3). Session and CSRF derive from `.power-agents/access.key` (0600), so restarts keep browsers signed in. The check sandbox cannot read the key or the SQLite files.
+- Codex Telegram forwards command, permission and MCP approvals only with `CODEX_TELEGRAM_APPROVALS=true` (audit S4); questions and completion alerts unchanged.
+- Verified: typecheck, 340/340 unit tests, 49/49 e2e, build. Not run against the live service: the running LaunchAgent still serves the previous build.
+
+## 2026-11-01 — Phase 1: sandboxed repo check; dev server hides run data
+
+- The repo check command now runs under macOS `sandbox-exec`: writes only in the result worktree and a private temp folder, network only on this machine, no proxy variables (audit S1). A control run proved the denials come from the profile.
+- `vite.config.ts` denies `.power-agents/**`; the dev server had served the run database and server log (audit S5, confirmed then fixed).
+- Verified: typecheck, 334/334 unit tests, 48/48 e2e (one unrelated flows test flaked once under parallel load, passed 3/3 alone), build. S3 launch token and S4 Telegram approval opt-in await a decision.
+
+## 2026-11-01 — Platform audit; Phase 0 frame headers and navigation state
+
+- Added [platform audit and improvement plan](../docs/audits/2026-11-01-platform-audit.md): security, agent architecture, code quality and UX findings with a phased plan.
+- Page responses now send `frame-ancestors 'none'` and `X-Frame-Options: DENY` (audit S2). The header marks exactly one current section, and a typed or linked fragment opens at the top (U1 part 1, U7).
+- Verified: typecheck, 332/332 unit tests, 47/47 Playwright e2e, build. The running LaunchAgent still serves the previous build until rebuilt and restarted. Not committed.
+
+## 2026-10-31 — Shared App Server connection candidate
+
+- Researched official Telegram and Codex docs in Chrome. Verified existing project/chat reads through App Server and two clients sharing a private Unix socket; no transcripts or identities printed.
+- Recorded a supervised stdio launcher candidate that preserves Desktop startup settings. Corrected the earlier blocker scope: follower IPC is limited, but another backend transport is viable for further testing.
+- Actual Desktop relaunch, tools/approvals, and task mutations remain unverified. Temporary test processes were stopped; no public listener, production change, or deployment.
+
+## 2026-10-31 — Brief Codex completion summaries
+
+- Matched the requested Telegram format: “✅ Project · done” followed by a final-response excerpt of up to 600 characters. Removed the chat-ID footer and stripped common Markdown formatting.
+- Prefer explicit final answers; use legacy unphased assistant messages only as fallback. Exclude commentary, tool output and user messages. Completed canonical history takes precedence over stale active overlays. The excerpt is retained in the durable delivery outbox.
+- Verified the installed Desktop message shape. All 331 unit/integration tests pass with 87.03% overall line coverage; build/typecheck and code review pass. No linter is configured. Restarted the service; live phone receipt remains unverified.
+
+## 2026-10-31 — Codex mobile capability gate blocked
+
+- Inspected installed Desktop source and verified live read-only initialization/owner snapshot metadata. Focused existing bridge tests pass: 80/80.
+- Documented absent catalog/create handlers on follower IPC and missing caller expected-turn binding for steering. Scoped app-tools access is not a verified background connector route.
+- Saved capability report and updated plan status. No dependent implementation, live task mutation, deployment, commit, or push.
+
+## 2026-10-31 — Codex Telegram mobile design and implementation plan
+
+- Saved the user-approved architecture and a ten-task implementation plan for Desktop project/chat mirroring, phone task submission, explicit bot targeting, and a hosted relay without transcript storage.
+- Capability verification is the first gate. Recorded the existing 100-chat/owner discovery limit, uncertain-delivery handling, and the local bot's inability to reply while the Mac sleeps.
+- Updated wiki navigation and planned-behavior references. Documentation/link checks only; no application implementation, live capability verification, hosting changes, commits, or pushes.
+
+## 2026-10-31 — Codex completion notifications
+
+- Added the missing successful-turn observer to the dedicated Codex Telegram bridge. Alerts include project basename and chat ID only.
+- Added durable completion queueing with chat/turn deduplication, recipient/preference checks and existing delivery retries. Historical, failed and interrupted turns are excluded; disconnected or unobserved short turns can be missed.
+- Regression tests were demonstrated failing before implementation. All 327 unit/integration tests pass with 86.99% overall line coverage; build/typecheck pass. No linter is configured. Storage enqueue failures retry without disconnecting IPC or cancelling approvals. Restarted the idle background service to activate the fix. Live phone receipt remains unverified.
+
+## 2026-10-30 — Browser use download approvals reach Telegram
+
+- Diagnosed the missed download request as `mcpServer/elicitation/request` with an empty MCP tool confirmation form, which the bridge previously left desktop-only. Added that exact request class with complete action previews and approve-once/decline responses.
+- Response metadata stays null, so offered session/always grants are never echoed. Authentication, OTP, verification, URL flows, populated/unknown forms and oversized previews remain desktop-only. Already accepted requests are not replayed.
+- TDD reproduced the missing prompt; 314/314 regression tests pass with 86.79% overall line coverage. Focused approval tests, build/typecheck and security review pass. No linter is configured. The live source request was inspected without answering it; a new live download approval was not executed as a test. Restarted the background service to activate the fix.
+
+## 2026-10-30 — Dedicated Codex Telegram decisions
+
+- Added a separate Codex bot token, pairing, poller and SQLite store while preserving Claude’s existing bot. Session/CSRF-protected pairing and credential-free status commands are available.
+- Added version-checked local desktop IPC, bounded chat discovery, canonical-history questions, native command/network and turn-scoped permission replies, free-text Telegram replies and stale/duplicate/desktop-first cancellation. Unsupported prompts remain desktop-only; no approval policy or sandbox changes.
+- Verification: 311/311 unit/integration tests pass with 86.72% overall line coverage; build/typecheck and all 44 browser regressions pass. Coverage includes identity binding, protocol validation, separate bot lifecycle, authorization and races. No linter is configured. Live desktop handshake, snapshot reads, dedicated bot pairing and a real Telegram-to-Codex async question reply verified. The user selected all local desktop chats. No real system approval was issued as a test.
+- Updated setup docs, prototype, module/flow maps and current wiki context. Existing user edits preserved; no commits or pushes.
+
+## 2026-10-30 — EN/RU language toggle review
+
+- Fixed untranslated encounter task alt text, known connection descriptions/model notes and interpolated platform errors; corrected English team wording. Feedback retains source keys and translates on display, including field validation, draft errors, clipboard/Telegram notices and screen-reader announcements.
+- Flow add-node stores the registry title; an untouched inspector title remains canonical on unrelated saves. Toggling updates default labels while retaining custom titles and unsaved config edits. Drafts, model output and unknown server text remain unchanged.
+- Expanded dictionary coverage to parse TypeScript/TSX strings, templates and JSX text, checked all dictionary placeholders, and fixed inherited-property fallback in `t()`. Added metadata/feedback/storage regressions and browser scenarios for reload persistence, existing validation/clipboard feedback, announcements, denied storage and flow edits.
+- Verification: **50/50 focused tests**; full `npm test` **248/265 pass**, **17 fail** solely with the baseline `listen EPERM` restriction (14 HTTP, one launchd, one MCP, one Telegram API). Typecheck/build pass; no lint script or configuration exists. `npm run test:e2e` cannot start Vite on `127.0.0.1:4318`; **44 scenarios discovered, zero executed**. Browser behavior remains unverified here. Protected F4 media/pipeline files were not edited. No commits or pushes.
+
+## 2026-10-30 — F4 live media pipeline
+
+- Implemented isolated content stages for ElevenLabs narration/alignment and -14 LUFS normalization, magenta-sync Capture, deterministic caption/punch/card editing, dynamic Remotion preview/final rendering and persisted QA reports. Reel 001 remains renderable. The template restores Voice → Scenes timings; Telegram gates remain planned for F5.
+- Power Agents resolves upstream version files, passes brand/notes, enforces timeouts and cancels process groups with render cleanup. Capture supports streamed MP4/MOV uploads up to 2 GiB; replacement uploads invalidate descendants. Versioned Range media has realpath containment, native card/inspector playback and retained `outputVersion`; exit 2 shows **Нужно действие**. Main HTTP/Telegram changes were preserved.
+- TDD RED tests preceded implementation; GREEN: **62/62 flow tests**. Full `npm test` and coverage: **242/259 pass**, **17 listener EPERM failures** (14 HTTP, one launchd, one MCP, one Telegram API), no skips/cancellations; **83.08% overall line coverage**. Typecheck/build pass; no lint script exists. Playwright discovers **40** scenarios but executes **0** because Vite cannot listen on 127.0.0.1:4318.
+- Content: **21 Python tests**, **20 pass**, **1 EPERM HTTP-stub skip**, zero failures; mocked HTTP still exercises real ffmpeg normalization. Stage line coverage **91.5%**; Remotion TypeScript and **7/7** composition/metadata assertions pass. No actual ElevenLabs requests or Remotion renders; live reel 002 acceptance remains unverified. No dependencies, `.env`, commits, pushes or reel 001 media changes. Concurrent localization edits were preserved; their dictionary arrived before successful final client checks.
+- Preserved landed localization; F4 Russian UI strings use `t()` with exact English dictionary keys. Fixed the upload-size unit translation and writable test-stream typing; **65/65 flow+i18n tests** pass. Updated the template help to describe live media.
+- Full file manifest, test evidence, dimensions and remaining acceptance: [F4 verification](../docs/f4-verification.md). Current behavior: [prototype guide](../docs/prototype.md), [[Flow Engine]], [[Flows UI]], [[Reel Flow Execution]].
+
+## 2026-10-30 — F3 live Idea, Script and Scenes
+
+- Implemented live text executors using discovered connections and injectable `TurnRunner`, read-only version directories, no team tools or session reuse. English brief-derived prompts include brand/upstream values, extra instructions and every rejection note. Zod validates candidate scores/selection, measured script length and five beats, and ordered scene coverage. One invalid-output correction includes JSON shape and measured count. Static live Brand is available; media remains planned for F4.
+- Added the protected connection catalog, Russian inspector select with **Авто**, and readable Idea/Script excerpts. Updated canonical prototype, module/flow pages and overview. The template's connected Voice timings still require F4; removing that edge enables Scenes' script-time fallback. Hard-no topic safety is prompt guidance plus human approval, not deterministic semantic moderation.
+- TDD source: [F3 plan](../.claude/plans/reel-flow-workspace.plan.md). Journeys: choose connection → generate Idea → approve → generate Script → approve → generate Scenes; reject with notes → revise; demo → no provider. RED: `node --import tsx --test tests/flow-executors.test.ts` failed with `ERR_MODULE_NOT_FOUND` for the not-yet-created executor. GREEN: `node --import tsx --test tests/flow*.test.ts` passes **34/34**. No checkpoint commits were created, as explicitly requested by the user.
+
+| Guarantee | Evidence | Result |
+|---|---|---|
+| All prompts include connected brand/upstream data, extra instructions and rejection notes; turns are isolated/read-only | `tests/flow-executors.test.ts` unit tests | PASS |
+| JSON/schema/count errors get one repair; unavailable connections fail; scenes cover beats and respect supplied timings | `tests/flow-executors.test.ts` unit tests | PASS |
+| Engine uses providers for live only; HTTP runs live Idea and Script through approval without opening a socket | `tests/flow-engine.test.ts`, `tests/flow-http.test.ts` integration tests | PASS |
+| Cards show chosen topic/hook and script count; inspector offers available connections and Auto | `tests/flow-canvas.test.ts` helper/render tests | PASS |
+
+- `npm test`: **211/228 pass**, **17 fail**, all `listen EPERM`: all 14 tests in `tests/http.test.ts`; occupied-port preflight in `tests/launchd.test.ts`; team-tool impersonation/security integration in `tests/mcp.test.ts`; settings API test in `tests/telegram.test.ts`. No cancellations or skips. `npm run test:coverage` has the same 17 listener failures and measures **81.49%** overall line coverage; new `executors.ts` and `outputs.ts` each have 100% line coverage.
+- `npm run typecheck` and `npm run build`: PASS (non-blocking Rollup annotation and large-chunk warnings). No lint script is defined. `npm run test:e2e`: Vite startup blocked by `listen EPERM` on `127.0.0.1:4318`; **0 executed**, **39 discovered** with `playwright test --list`. Real-provider F3 acceptance remains unverified; no actual model calls, dependency installs, `.env` edits, commits or pushes. Existing Telegram changes were left alone.
+
+## 2026-10-30 — F2 flow canvas workspace
+
+- Added the **Потоки** list and fragment routes, demo/live Roblox-template creation, dark React Flow canvas, status/output cards, typed connectors, run/approve/reject controls, note dialog, inspector, node/edge deletion, add-node menu and auto-run setting. Layout and edits use queued versioned writes with refetch on conflict.
+- Added client-safe registry metadata and global SSE `flow` invalidations from store subscriptions. Flow detail/list refresh on events and SSE open/reconnect. Updated the prototype and linked module/flow pages. Live executors (F3/F4), upload/media playback (F4) and Telegram flow gates (F5) remain planned.
+- Verification: `npm test` reports 194/211 passing; all 17 failures are sandbox `listen EPERM` (all 14 in `tests/http.test.ts`, occupied-port preflight in `tests/launchd.test.ts`, the team-tools security integration in `tests/mcp.test.ts`, and the settings API test in `tests/telegram.test.ts`). The six helper/navigation tests and all 13 flow engine/API tests pass. `npm run typecheck` and `npm run build` pass; the build retains a non-blocking large-chunk warning. Measured overall line coverage is 80.81%. `npm run test:e2e` cannot start Vite on `127.0.0.1:4318` (`listen EPERM`): zero executed; Playwright lists 39 scenarios, including four F2 tests. No lint script is defined.
+
+## 2026-10-30 — F1 headless flow engine
+
+- Added the typed node registry and Roblox reel template, separate DAG scheduler, gates/rejection reruns, stale propagation, version/hash directories, global concurrency/render lane and complete interrupted-execution recovery. Added protected flow routes and server lifecycle wiring while preserving existing Telegram work.
+- Added engine and API tests, including the four-node demo through two approvals. Updated canonical prototype and wiki pages; UI, live executors, uploads/media and flow Telegram actions remain planned. Verification: 11/11 F1 tests pass; full suite 188/205 pass, with all 17 failures caused by sandbox `listen EPERM`; typecheck and production build pass. Measured overall line coverage is 81.51%; flow modules have over 99% line coverage.
 
 ## 2026-10-28 — M4: plain-text artifact accepted
 

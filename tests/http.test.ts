@@ -3,7 +3,8 @@ import { createServer, request as httpRequest } from 'node:http';
 import { once } from 'node:events';
 import { test } from 'node:test';
 import type { AddressInfo } from 'node:net';
-import { createApiHandler } from '../src/server/http.ts';
+import { createApiHandler, setPageSecurityHeaders } from '../src/server/http.ts';
+import { createLaunchToken, csrfValue } from '../src/server/access.ts';
 import { Store } from '../src/server/store.ts';
 import { Engine } from '../src/server/engine.ts';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -335,4 +336,61 @@ test('a code run must point at a git repository', async () => {
     const [, input] = app.calls.at(-1) as [string, CreateRunInput];
     assert.equal(input.checkCommand, 'npm test');
   } finally { await app.close(); }
+});
+
+test('page responses refuse framing by other sites', async () => {
+  const server = createServer((_req, res) => { setPageSecurityHeaders(res); res.writeHead(200, { 'Content-Type': 'text/html' }); res.end('<!doctype html>'); });
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  try {
+    const response = await fetch(`http://127.0.0.1:${(server.address() as AddressInfo).port}/`);
+    assert.equal(response.headers.get('x-frame-options'), 'DENY');
+    assert.match(response.headers.get('content-security-policy') ?? '', /frame-ancestors 'none'/);
+    assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
+  } finally {
+    server.closeAllConnections();
+    await new Promise<void>(resolve => server.close(() => resolve()));
+  }
+});
+
+test('with an access key, bootstrap needs a one-time launch link or the signed-in cookie', async () => {
+  const store = new Store(':memory:');
+  const accessKey = Buffer.alloc(32, 7);
+  const engine = { create: () => fixture(), approve: () => fixture(), control: () => fixture(), message: () => fixture() };
+  const start = async () => {
+    const handler = createApiHandler({ store, engine, connections: [], accessKey });
+    const server = createServer((req, res) => { void handler(req, res); });
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    return { server, base: `http://127.0.0.1:${(server.address() as AddressInfo).port}` };
+  };
+  const stop = async (server: ReturnType<typeof createServer>) => { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); };
+  const first = await start();
+  try {
+    const refused = await fetch(`${first.base}/api/bootstrap`);
+    assert.equal(refused.status, 401);
+    assert.match((await refused.json() as { error: string }).error, /npm run open/);
+    assert.equal(refused.headers.get('set-cookie'), null);
+    assert.equal((await fetch(`${first.base}/api/bootstrap?launch=forged`)).status, 401);
+    const token = createLaunchToken(accessKey);
+    const signedIn = await fetch(`${first.base}/api/bootstrap?launch=${token}`);
+    assert.equal(signedIn.status, 200);
+    const setCookie = signedIn.headers.get('set-cookie')!;
+    assert.match(setCookie, /HttpOnly; SameSite=Strict; Max-Age=\d+/);
+    const { csrfToken } = await signedIn.json() as { csrfToken: string };
+    assert.equal(csrfToken, csrfValue(accessKey));
+    assert.equal((await fetch(`${first.base}/api/bootstrap?launch=${token}`)).status, 401);
+    const cookie = setCookie.split(';')[0];
+    assert.equal((await fetch(`${first.base}/api/bootstrap`, { headers: { Cookie: cookie } })).status, 200);
+    await stop(first.server);
+    // A restarted server keeps the same signed-in browser and CSRF token.
+    const second = await start();
+    try {
+      const again = await fetch(`${second.base}/api/runs`, { headers: { Cookie: cookie } });
+      assert.equal(again.status, 200);
+      const created = await fetch(`${second.base}/api/runs/run-1/messages`, { method: 'POST',
+        headers: { Cookie: cookie, 'X-CSRF-Token': csrfToken, 'Content-Type': 'application/json', Origin: second.base }, body: JSON.stringify({ body: 'still signed in' }) });
+      assert.equal(created.status, 200);
+    } finally { await stop(second.server); }
+  } finally { if (first.server.listening) await stop(first.server); store.close(); }
 });

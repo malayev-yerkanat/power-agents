@@ -1,0 +1,97 @@
+{
+  "sources_unchanged": true,
+  "files": {
+    "pfp-codex.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "changed_pixels": 49104,
+      "changed_bounds": [
+        430,
+        634,
+        706,
+        910
+      ],
+      "outside_mask_changes": 0,
+      "sha256": "071108389f1caf4eb9da4cc406af45272205b2366be45ffa7dbe805267b7fd52"
+    },
+    "pfp-claude.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "changed_pixels": 0,
+      "changed_bounds": null,
+      "outside_mask_changes": 0,
+      "sha256": "d3e548e36902a719eb2cc57d13fe153dfa58551cd19f0832ef945543131840e7"
+    },
+    "pfp-gemini.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGB",
+      "changed_pixels": 10985,
+      "changed_bounds": [
+        494,
+        192,
+        663,
+        361
+      ],
+      "outside_mask_changes": 0,
+      "sha256": "1a99df408db7338dc29bfde90a17534465a4108e871938468fac71a9584343af"
+    },
+    "sprite-gemini.png": {
+      "size": [
+        160,
+        160
+      ],
+      "mode": "RGBA",
+      "changed_pixels": 22,
+      "changed_bounds": [
+        83,
+        55,
+        88,
+        63
+      ],
+      "outside_mask_changes": 0,
+      "sha256": "bfd5591622dd8f39385d5a707b38186c32b2be7fc5a45b2a07be8b2d6ccd8c58"
+    }
+  },
+  "codex_badge": {
+    "suit_blue_shades": 3,
+    "cloud_lobes": 7,
+    "white_clearance": true,
+    "white_glyph_two_cells": true,
+    "old_badge_cleared": true
+  },
+  "sprite_alpha_unchanged": true,
+  "gemini_chest_unchanged": true,
+  "claude_byte_identical": true,
+  "review_artifacts": {
+    "exact_nearest_neighbor_zooms": 7,
+    "circle_previews": 6,
+    "board_size": [
+      3440,
+      5800
+    ]
+  },
+  "visual_inspection": {
+    "completed": true,
+    "viewed_artifact_hashes": {
+      "check-codex-shape.png": "9c2cb061387d03bd8f52bcd89ee9ca66be9f7dafdd756aa41e4c9747a9aa3213",
+      "preview-codex-128.png": "a00eb91313e49a0f197d4d9273a1811cca7d89ef89bcba78d2430d334b72e6c5",
+      "review-board.png": "48962073b44bae1fd2f01d2aff7cd6898456d7b168ae3dc426bb8a3b0173559a"
+    },
+    "notes": "Reviewed seven stepped lobes, visible junction notches and white panel separation. Palette and glyph preserved."
+  },
+  "validation_scope": {
+    "pixel_invariants": "passed",
+    "python_syntax": "checked with compile(); no bytecode written",
+    "app_suite": "Not run: suite invokes git init/add/commit; user forbids state-changing git commands.",
+    "linter": "No lint command configured in package.json."
+  }
+}

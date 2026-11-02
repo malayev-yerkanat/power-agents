@@ -11,7 +11,7 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   if (!/^\/api(?:\/|$)/.test(path)) throw new Error('Expected a local API path.');
   const response = await fetch(path, { ...options, credentials: 'same-origin' });
   const data = await response.json().catch(() => ({ error: 'Сервер вернул неожиданный ответ.' }));
-  if (!response.ok) throw new ApiError(response.status, data.error || `Не удалось выполнить запрос (${response.status}).`);
+  if (!response.ok) throw new ApiError(response.status, data.error || 'Не удалось выполнить запрос ({status}).'.replace('{status}', String(response.status)));
   return data as T;
 }
 
@@ -46,4 +46,16 @@ export function createSessionRequest(bootstrap: () => Promise<Session>, send: Re
       throw error;
     }
   };
+}
+
+/** Takes a one-time ?launch= token from the address and removes it, so it never stays in history or a bookmark. */
+export function takeLaunchToken(location: Pick<Location, 'search' | 'pathname' | 'hash'> = window.location,
+  history: Pick<History, 'replaceState' | 'state'> = window.history): string | undefined {
+  const params = new URLSearchParams(location.search);
+  const token = params.get('launch') ?? undefined;
+  if (token === undefined) return undefined;
+  params.delete('launch');
+  const search = params.toString();
+  history.replaceState(history.state, '', `${location.pathname}${search ? `?${search}` : ''}${location.hash}`);
+  return token;
 }

@@ -1,10 +1,13 @@
+import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import type { EventHistoryPage, Run, RunEvent, RunSummaryPage } from '../shared/types.ts';
+import type { Brand, BrandInput, Flow, FlowEvent, FlowSummary, NodeRun } from '../shared/flow-types.ts';
 
 type EventInput = Pick<RunEvent, 'type' | 'message' | 'actorId'>;
 type Listener = (event: RunEvent) => void;
+type FlowListener = (event: FlowEvent) => void;
 type EventRow = {
   id: number; run_id: string; type: string; message: string;
   actor_id: string | null; created_at: string;
@@ -28,6 +31,7 @@ type TelegramMessageRow = {
 export class Store {
   private readonly db: DatabaseSync;
   private readonly listeners = new Set<Listener>();
+  private readonly flowListeners = new Set<FlowListener>();
   private closed = false;
 
   constructor(path: string) {
@@ -68,6 +72,20 @@ export class Store {
         UNIQUE (run_id, kind, run_version)
       );
       CREATE INDEX IF NOT EXISTS telegram_outbox_due ON telegram_outbox(state, next_attempt_at, id);
+      CREATE TABLE IF NOT EXISTS flows (
+        id TEXT PRIMARY KEY,
+        created_at TEXT NOT NULL,
+        data TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS flows_created ON flows(created_at DESC, id DESC);
+      CREATE TABLE IF NOT EXISTS node_runs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        flow_id TEXT NOT NULL REFERENCES flows(id),
+        node_id TEXT NOT NULL, version INTEGER NOT NULL, status TEXT NOT NULL,
+        input_hash TEXT NOT NULL, started_at TEXT NOT NULL, finished_at TEXT, error TEXT
+      );
+      CREATE INDEX IF NOT EXISTS node_runs_flow ON node_runs(flow_id, node_id, id);
+      CREATE TABLE IF NOT EXISTS brands (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, data TEXT NOT NULL);
     `); } catch (error) { this.db.close(); throw error; }
   }
 
@@ -255,6 +273,20 @@ export class Store {
       VALUES ('test', ?, ?, ?)`).run(chatId, 'Power Agents: тестовое уведомление.', new Date().toISOString());
   }
 
+  queueCodexCompletion(threadId: string, turnId: string, text: string): void {
+    if (![threadId, turnId].every(id => typeof id === 'string' && id.length > 0 && id.length <= 300)
+      || typeof text !== 'string' || !text.trim() || text.length > 4000) {
+      throw new Error('Invalid Codex completion notification');
+    }
+    const settings = this.telegramSettings();
+    if (!settings.chat_id || !settings.completed_enabled) return;
+    // Reuse the durable outbox identity without colliding with Power Agents run IDs.
+    const identity = JSON.stringify(['codex-turn', threadId, turnId]);
+    this.db.prepare(`INSERT OR IGNORE INTO telegram_outbox
+      (kind, run_id, run_version, chat_id, text, next_attempt_at) VALUES ('completed', ?, 0, ?, ?, ?)`)
+      .run(identity, settings.chat_id, text, new Date().toISOString());
+  }
+
   telegramDueMessages(now = new Date().toISOString()): TelegramOutboxMessage[] {
     return this.db.prepare(`SELECT id, kind, run_id, run_version, chat_id, text, attempts, next_attempt_at
       FROM telegram_outbox WHERE state = 'pending' AND next_attempt_at <= ? ORDER BY id`).all(now)
@@ -290,10 +322,114 @@ export class Store {
       text: row.text, attempts: row.attempts, nextAttemptAt: row.next_attempt_at };
   }
 
+  listFlows(): FlowSummary[] {
+    return this.db.prepare(`SELECT id, created_at, json_extract(data, '$.title') AS title, json_extract(data, '$.template') AS template,
+      json_extract(data, '$.mode') AS mode, json_extract(data, '$.updatedAt') AS updated_at, json_extract(data, '$.version') AS version
+      FROM flows ORDER BY created_at DESC, id DESC LIMIT 200`).all().map(row => ({
+      id: row.id as string, title: row.title as string, ...(row.template ? { template: row.template as string } : {}),
+      mode: row.mode as Flow['mode'], createdAt: row.created_at as string, updatedAt: row.updated_at as string, version: row.version as number }));
+  }
+
+  getFlow(id: string): Flow | undefined {
+    const row = this.db.prepare('SELECT data FROM flows WHERE id = ?').get(id);
+    return row ? JSON.parse(row.data as string) as Flow : undefined;
+  }
+
+  unfinishedFlows(): Flow[] {
+    return this.db.prepare(`SELECT data FROM flows WHERE EXISTS (
+      SELECT 1 FROM json_each(flows.data, '$.nodes') WHERE json_extract(value, '$.status') IN ('queued', 'running')
+    ) OR EXISTS (SELECT 1 FROM node_runs WHERE flow_id = flows.id AND status = 'running')`)
+      .all().map(row => JSON.parse(row.data as string) as Flow);
+  }
+
+  interruptNodeRuns(flowId: string, error: string): void {
+    this.db.prepare(`UPDATE node_runs SET status = 'failed', finished_at = ?, error = ? WHERE flow_id = ? AND status = 'running'`)
+      .run(new Date().toISOString(), error, flowId);
+  }
+
+  listBrands(): Brand[] {
+    return this.db.prepare("SELECT data FROM brands ORDER BY json_extract(data, '$.name') COLLATE NOCASE, id").all()
+      .map(row => JSON.parse(row.data as string) as Brand);
+  }
+
+  getBrand(id: string): Brand | undefined {
+    const row = this.db.prepare('SELECT data FROM brands WHERE id = ?').get(id);
+    return row ? JSON.parse(row.data as string) as Brand : undefined;
+  }
+
+  /** Creates a brand, or replaces the fields of an existing one when `id` is given. */
+  saveBrand(input: BrandInput, id?: string): Brand | undefined {
+    const now = new Date().toISOString(), previous = id ? this.getBrand(id) : undefined;
+    if (id && !previous) return undefined;
+    const brand: Brand = { id: previous?.id ?? randomUUID(), name: input.name, guide: input.guide, settings: input.settings,
+      createdAt: previous?.createdAt ?? now, updatedAt: now };
+    this.db.prepare('INSERT INTO brands (id, created_at, data) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data')
+      .run(brand.id, brand.createdAt, JSON.stringify(brand));
+    return brand;
+  }
+
+  deleteBrand(id: string): boolean {
+    return Number(this.db.prepare('DELETE FROM brands WHERE id = ?').run(id).changes) > 0;
+  }
+
+  createFlow(flow: Flow): Flow {
+    this.db.prepare('INSERT INTO flows (id, created_at, data) VALUES (?, ?, ?)').run(flow.id, flow.createdAt, JSON.stringify(flow));
+    this.emitFlow({ flowId: flow.id, type: 'flow.created', message: flow.title });
+    return flow;
+  }
+
+  /** Read-modify-write in one transaction; `update` may throw to refuse the change. */
+  updateFlow(id: string, update: (flow: Flow) => Flow, event: Omit<FlowEvent, 'flowId'>): Flow {
+    this.db.exec('BEGIN IMMEDIATE');
+    let next: Flow;
+    try {
+      const previous = this.getFlow(id);
+      if (!previous) throw new Error(`Flow not found: ${id}`);
+      const changed = update(structuredClone(previous));
+      if (changed.id !== id) throw new Error('A flow ID cannot be changed');
+      next = { ...changed, version: previous.version + 1, updatedAt: new Date().toISOString() };
+      this.db.prepare('UPDATE flows SET data = ? WHERE id = ?').run(JSON.stringify(next), id);
+      this.db.exec('COMMIT');
+    } catch (error) { this.db.exec('ROLLBACK'); throw error; }
+    this.emitFlow({ flowId: id, ...event });
+    return next;
+  }
+
+  startNodeRun(flowId: string, nodeId: string, version: number, inputHash: string): number {
+    return Number(this.db.prepare(`INSERT INTO node_runs (flow_id, node_id, version, status, input_hash, started_at)
+      VALUES (?, ?, ?, 'running', ?, ?)`).run(flowId, nodeId, version, inputHash, new Date().toISOString()).lastInsertRowid);
+  }
+
+  finishNodeRun(id: number, error?: string): void {
+    this.db.prepare('UPDATE node_runs SET status = ?, finished_at = ?, error = ? WHERE id = ?')
+      .run(error === undefined ? 'done' : 'failed', new Date().toISOString(), error ?? null, id);
+  }
+
+  nodeRuns(flowId: string, limit = 100): NodeRun[] {
+    return this.db.prepare(`SELECT id, flow_id, node_id, version, status, input_hash, started_at, finished_at, error
+      FROM node_runs WHERE flow_id = ? ORDER BY id DESC LIMIT ?`).all(flowId, limit).map(row => ({
+      id: row.id as number, flowId: row.flow_id as string, nodeId: row.node_id as string, version: row.version as number,
+      status: row.status as NodeRun['status'], inputHash: row.input_hash as string, startedAt: row.started_at as string,
+      ...(row.finished_at ? { finishedAt: row.finished_at as string } : {}), ...(row.error ? { error: row.error as string } : {}) }));
+  }
+
+  subscribeFlows(listener: FlowListener): () => void {
+    this.flowListeners.add(listener);
+    return () => { this.flowListeners.delete(listener); };
+  }
+
+  private emitFlow(event: FlowEvent): void {
+    for (const listener of [...this.flowListeners]) {
+      try { listener({ ...event }); }
+      catch (error) { console.error('Flow event listener failed after commit:', error); }
+    }
+  }
+
   close(): void {
     if (this.closed) return;
     this.db.close();
     this.listeners.clear();
+    this.flowListeners.clear();
     this.closed = true;
   }
 

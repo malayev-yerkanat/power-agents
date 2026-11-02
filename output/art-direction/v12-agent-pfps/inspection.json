@@ -1,0 +1,157 @@
+{
+  "method": "Deterministic PIL source-pixel stripe continuation, followed by local grid emblem drawing.",
+  "generator_used": false,
+  "resampling": "nearest-neighbour only",
+  "stripe_cleanup": "Discrete stripe-label continuation with copied source colours; no RGB averaging or blur",
+  "grid_measurement": {
+    "codex_nominal_block_px": 12,
+    "gemini_nominal_block_px": 13,
+    "limitation": "The v11 raster has variable-width cells, not one exact global grid. Local nominal grids are used only inside the replacement emblems."
+  },
+  "checklist": {
+    "rings_removed_all_three": "done",
+    "codex_symmetric_blue_badge_white_outline": "done",
+    "codex_bold_terminal_pair_centered_common_baseline": "done",
+    "gemini_equal_four_color_chest_blades_navy_outline": "done",
+    "gemini_small_axis_aligned_four_color_visor_mark": "done",
+    "claude_ring_only": "done",
+    "review_board_before_after_4x_and_circular_previews": "done",
+    "no_changes_outside_fix_areas": "done"
+  },
+  "agents": {
+    "codex": {
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "opaque": true,
+      "ring_removed": true,
+      "character_pixels_outside_emblem_fixes_unchanged": true,
+      "ring_repair_before_emblems": true,
+      "changed_pixels_total": 193322,
+      "changed_pixels_outside_fix_areas": 0,
+      "unexpected_character_changes": 0,
+      "outside_fix_changed_coordinates": [],
+      "ring_repair_mask": "ring-mask-codex.png",
+      "emblem_repair_mask": "emblem-mask-codex.png",
+      "exact_diff_mask": "diff-mask-codex.png",
+      "emblems": {
+        "chest": {
+          "grid_px": 12,
+          "origin": [
+            442,
+            646
+          ],
+          "crop": [
+            430,
+            634,
+            706,
+            910
+          ],
+          "center": [
+            568,
+            772
+          ],
+          "shield_horizontal_symmetry": true,
+          "terminal_common_baseline_y_exclusive": 814,
+          "terminal_pair_center_x": 568,
+          "old_footprint_pixels": 41065
+        }
+      },
+      "source_sha256": "8aa0bd80e7ce195ce20850f62efdc34fc11bc62287e570e1e457bd85f61033c0"
+    },
+    "claude": {
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "opaque": true,
+      "ring_removed": true,
+      "character_pixels_outside_emblem_fixes_unchanged": true,
+      "ring_repair_before_emblems": true,
+      "changed_pixels_total": 132748,
+      "changed_pixels_outside_fix_areas": 0,
+      "unexpected_character_changes": 0,
+      "outside_fix_changed_coordinates": [],
+      "ring_repair_mask": "ring-mask-claude.png",
+      "emblem_repair_mask": "emblem-mask-claude.png",
+      "exact_diff_mask": "diff-mask-claude.png",
+      "emblems": {},
+      "source_sha256": "7255923c79a773a7e1196641d2beb809117f2bdd99dc9845879d283f0854a049"
+    },
+    "gemini": {
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "opaque": true,
+      "ring_removed": true,
+      "character_pixels_outside_emblem_fixes_unchanged": true,
+      "ring_repair_before_emblems": true,
+      "changed_pixels_total": 172884,
+      "changed_pixels_outside_fix_areas": 0,
+      "unexpected_character_changes": 0,
+      "outside_fix_changed_coordinates": [],
+      "ring_repair_mask": "ring-mask-gemini.png",
+      "emblem_repair_mask": "emblem-mask-gemini.png",
+      "exact_diff_mask": "diff-mask-gemini.png",
+      "emblems": {
+        "chest": {
+          "grid_px": 13,
+          "center": [
+            556,
+            832
+          ],
+          "crop": [
+            426,
+            702,
+            686,
+            962
+          ],
+          "blade_cell_counts": {
+            "red": 27,
+            "blue": 27,
+            "green": 27,
+            "yellow": 27
+          },
+          "quarter_turn_geometry_equal": true,
+          "solid_palette_blades": true,
+          "outline": "dark navy"
+        },
+        "visor": {
+          "grid_px": 13,
+          "center": [
+            578,
+            276
+          ],
+          "crop": [
+            513,
+            211,
+            643,
+            341
+          ],
+          "new_size_px": [
+            78,
+            78
+          ],
+          "old_size_px": [
+            104,
+            175
+          ],
+          "axis_aligned": true,
+          "symmetric_geometry": true,
+          "four_colors": true,
+          "old_mark_trail_removed": true,
+          "old_trail_cleanup_includes_fringe_x": [
+            622,
+            623
+          ]
+        }
+      },
+      "source_sha256": "e013e2ab8fd515548d395d5ee95ac41e4017894c51406491b5c1808dbdccd0f6"
+    }
+  },
+  "remaining_issues": [],
+  "independent_verifier": "verify_artifacts.py",
+  "verification": "Pixel-difference assertions, badge reflection and common baseline assertions, quarter-turn blade geometry/count assertions, visor reflection assertions; visual review of all portraits and the review board."
+}

@@ -1,5 +1,6 @@
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { t } from './i18n';
 
 const plugins = [remarkGfm];
 
@@ -23,11 +24,11 @@ export function MarkdownDocument({ body }: { body: string }) {
       h4: ({ children }) => <h6>{children}</h6>,
       h5: ({ children }) => <h6>{children}</h6>,
       h6: ({ children }) => <h6>{children}</h6>,
-      img: ({ alt }) => <span className="document-image-note">[Изображение: {alt || 'без подписи'}]</span>,
+      img: ({ alt }) => <span className="document-image-note">[{t('Изображение:')} {alt || t('без подписи')}]</span>,
       a: ({ href, children }) => href
         ? <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
         : <span>{children}</span>,
-      table: ({ children }) => <div className="document-table" tabIndex={0} role="region" aria-label="Таблица документа"><table>{children}</table></div>,
+      table: ({ children }) => <div className="document-table" tabIndex={0} role="region" aria-label={t('Таблица документа')}><table>{children}</table></div>,
     }}>{body}</Markdown>
   </div>;
 }

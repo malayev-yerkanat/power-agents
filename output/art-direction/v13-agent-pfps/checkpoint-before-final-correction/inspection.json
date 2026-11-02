@@ -1,0 +1,76 @@
+{
+  "method": "Official-logo BOX coverage >= 0.5; flat 12px/13px cells; nearest-neighbour previews",
+  "checklist": {
+    "codex_23_cells_official_cloud_four_bands_blue_rim_two_cell_terminal": true,
+    "gemini_19_cell_chest_official_mask_equal_tips_fixed_palette": true,
+    "gemini_9_cell_visor_official_mask_equal_tips_local_color_edges": true,
+    "claude_byte_identical": true,
+    "review_board_v12_v13_three_4x_comparisons_64_128_circles": true,
+    "zero_changes_outside_emblem_masks": true,
+    "three_6x_nearest_neighbour_comparisons_visually_reviewed": true
+  },
+  "agents": {
+    "codex": {
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "opaque": true,
+      "changed_pixels_total": 56454,
+      "changed_pixels_outside_emblem_masks": 0,
+      "correction_changed_pixels_outside_old_and_new_masks": 0,
+      "source_sha256": "b13e26a5ddd957bf4d6297e9e4a11ec62e368d1c2aaacacc1829f545d5ac9e74"
+    },
+    "gemini": {
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "opaque": true,
+      "changed_pixels_total": 33185,
+      "changed_pixels_outside_emblem_masks": 0,
+      "correction_changed_pixels_outside_old_and_new_masks": 0,
+      "source_sha256": "3ff58df3970b40ced1c950fd0101f375c61b2ae0b58fddb9570b3710d2bb606c"
+    },
+    "claude": {
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "opaque": true,
+      "changed_pixels_total": 0,
+      "changed_pixels_outside_emblem_masks": 0,
+      "correction_changed_pixels_outside_old_and_new_masks": 0,
+      "source_sha256": "d3e548e36902a719eb2cc57d13fe153dfa58551cd19f0832ef945543131840e7"
+    }
+  },
+  "visual_review": {
+    "reviewed": true,
+    "date": "2026-10-30",
+    "method": "Viewed all three exact 6x nearest-neighbour comparisons beside official logos, final portraits and rebuilt review board.",
+    "observations": {
+      "codex": "Cloud silhouette sampled from official logo alpha after isolating it from the opaque white app tile. Four gradient bands, one-cell blue rim, thick terminal strokes at official relative bounds.",
+      "gemini_chest": "19-cell official BOX silhouette at 0.5 coverage; concave stepped sides and four equal pointed tips. Official RGB averages snapped to requested nine-color palette with darker local-color edges.",
+      "gemini_visor": "9-cell official BOX silhouette at 0.5 coverage; concave stepped shoulders and four equal pointed tips. Same palette sampling and edge shading as chest."
+    },
+    "limitations": [
+      "Coarse 12px/13px logical cells approximate curves. Literal RGB BOX sampling includes white-background coverage at boundary cells before palette quantization.",
+      "Codex supplied alpha contains the white app tile; connected cloud isolation and filling enclosed glyph holes are required before alpha downsampling."
+    ],
+    "sha256": {
+      "pfp-codex.png": "1f9fb9e5a789c03289ba66e760b4e3f9d06d24567376cbd4d09190c4648cdced",
+      "pfp-gemini.png": "2122e1f2a448f7d7aa8f7e7f32f3bc8ea5f9dcbf65fc863cb921836a6c6e740f",
+      "pfp-claude.png": "d3e548e36902a719eb2cc57d13fe153dfa58551cd19f0832ef945543131840e7",
+      "review-board.png": "c588ef6f2a696806bfe494e113c55401c936ad3c75ba2d2353af64f2e5dea9ee",
+      "review-codex-chest-4x.png": "6ea1bec4c7925a8a2cc47073fa6599f72dc867e12e59436a47e8bfea37e4f11c",
+      "review-gemini-chest-4x.png": "aa4cc007fbe5382c9be7ac18580fe7e2bea2251f74520a6ef18fa3e1b3186e27",
+      "review-gemini-visor-4x.png": "853828a20c9160e4111b41300156127a556d4b7d4f0aa4965c2aadc4fdbfb594",
+      "logo-codex-official.png": "8a7b09ec323b4225b15d0f4cf054cac5e04abb8c4fdebf12cb2add8f21612002",
+      "logo-gemini-official.png": "bce270ef4dd29b493ed64e89cc82867ef13f1cf7ef837e79d845fddf69cc9768",
+      "check-codex-chest.png": "b63979fa1eee9474edfb1aa48ab7c21ad1c3fcadd088ba84ec80f87eb368c500",
+      "check-gemini-chest.png": "3c34abdbb18254349449a7d3e3e6ce35a9764c5dc902154ae8387e4fe6fb4292",
+      "check-gemini-visor.png": "f2b42add4db927a1a2181aa4616e23fa427487a03375505e67033144a760b9f6"
+    }
+  },
+  "verify_command": "PYTHONDONTWRITEBYTECODE=1 python3 verify_v13.py"
+}

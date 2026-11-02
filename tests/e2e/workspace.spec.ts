@@ -485,3 +485,112 @@ test('loaded-only search keeps older-page loading available', async ({ page }) =
   await expect(page.getByRole('button', { name: /Старый документ/ })).toBeVisible();
   await expect(page.getByText('Загружено 2 из 2 запусков.')).toBeVisible();
 });
+
+test('EN/RU switch translates the interface and is remembered after reload', async ({ page }) => {
+  await mockWorkspace(page);
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+  const goal = page.locator('#goal');
+  await goal.fill('short');
+  await page.getByRole('button', { name: 'Составить план', exact: true }).click();
+  await expect(page.locator('#goal-error')).toContainText('минимум 10');
+  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('heading', { name: /Assemble a team/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'New task', exact: true })).toBeVisible();
+  await expect(goal).toHaveValue('short');
+  await expect(goal).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.locator('#goal-error')).toHaveText('Describe the goal in more detail: at least 10 characters.');
+  await page.getByRole('button', { name: 'Переключить на русский' }).click();
+  await expect(page.locator('#goal-error')).toContainText('минимум 10');
+  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(goal).toHaveValue('short');
+  await expect(page.getByRole('button', { name: 'Flows', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Draft plan', exact: true }).click();
+  await expect(page.locator('#goal-error')).toHaveText('Describe the goal in more detail: at least 10 characters.');
+  await page.getByRole('button', { name: 'Переключить на русский' }).click();
+  await expect(page.getByRole('button', { name: 'Новая задача', exact: true })).toBeVisible();
+  await expect(page.locator('#goal-error')).toContainText('минимум 10');
+});
+
+test('language changes translate existing clipboard feedback and run announcements without altering documents', async ({ page }) => {
+  await mockWorkspace(page);
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => {} }, configurable: true });
+  });
+  await page.goto('/#/runs/review-fixture?tab=artifacts');
+  await page.getByRole('button', { name: 'Копировать Markdown', exact: true }).click();
+  await expect(page.locator('.artifact-action-notice')).toHaveText('Markdown скопирован.');
+  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await expect(page.locator('.artifact-action-notice')).toHaveText('Markdown copied.');
+  await expect(page.locator('.run-content > .sr-only[role="status"]')).toContainText('Task complete. Results are available');
+  await expect(page.getByRole('heading', { name: 'План проверки', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Переключить на русский' }).click();
+  await expect(page.locator('.artifact-action-notice')).toHaveText('Markdown скопирован.');
+});
+
+test('the language toggle works when browser storage is denied', async ({ page }) => {
+  await mockWorkspace(page);
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Storage denied', 'SecurityError'); } });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('button', { name: 'New task', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Переключить на русский' }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+});
+
+test('header marks exactly one current section', async ({ page }) => {
+  await mockWorkspace(page);
+  await page.route('**/api/flows', route => route.fulfill({ json: { flows: [] } }));
+  await page.goto('/#/runs/review-fixture');
+  const nav = page.getByRole('navigation', { name: 'Разделы пространства' });
+  const active = () => nav.locator('button.is-active').allTextContents();
+  await expect(nav.locator('button.is-active')).toHaveCount(1);
+  expect(await active()).toEqual(['Пространство']);
+  await nav.getByRole('button', { name: 'Потоки' }).click();
+  await expect(nav.getByRole('button', { name: 'Потоки' })).toHaveAttribute('aria-current', 'page');
+  expect(await active()).toEqual(['Потоки']);
+  await nav.getByRole('button', { name: 'Пространство' }).click();
+  await expect(page).toHaveURL(/#\/new$/);
+  expect(await active()).toEqual(['Пространство']);
+  await nav.getByRole('button', { name: 'Запуски', exact: true }).click();
+  expect(await active()).toEqual(['Запуски']);
+});
+
+test('a linked hash opens the page at the top', async ({ page }) => {
+  await mockWorkspace(page);
+  await page.setViewportSize({ width: 390, height: 600 });
+  await page.goto('/');
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await page.evaluate(() => { window.location.hash = '#/runs/review-fixture'; });
+  await expect(page.getByRole('tab', { name: /^Результаты/ })).toBeVisible();
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+});
+
+test('the development server refuses local run data', async ({ request }) => {
+  const { mkdirSync, rmSync, writeFileSync } = await import('node:fs');
+  mkdirSync('.power-agents', { recursive: true });
+  writeFileSync('.power-agents/e2e-probe.txt', 'private run text');
+  try {
+    const response = await request.get('/.power-agents/e2e-probe.txt');
+    expect(response.status()).toBe(403);
+    expect(await response.text()).not.toContain('private run text');
+  } finally { rmSync('.power-agents/e2e-probe.txt', { force: true }); }
+});
+
+test('a launch link signs in once and leaves no token in the address', async ({ page }) => {
+  await mockWorkspace(page);
+  const bootstraps: string[] = [];
+  page.on('request', request => { if (new URL(request.url()).pathname === '/api/bootstrap') bootstraps.push(new URL(request.url()).search); });
+  await page.goto('/?launch=one-time#/runs/review-fixture');
+  await expect(page.getByRole('tab', { name: /^Результаты/ })).toBeVisible();
+  expect(page.url()).not.toContain('launch');
+  expect(page.url()).toMatch(/#\/runs\/review-fixture$/);
+  expect(bootstraps.filter(search => search.includes('launch=one-time'))).toHaveLength(1);
+});

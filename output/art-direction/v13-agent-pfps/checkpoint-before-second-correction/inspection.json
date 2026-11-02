@@ -1,0 +1,71 @@
+{
+  "method": "Deterministic PIL; local 12px/13px cells; nearest-neighbour only",
+  "checklist": {
+    "codex_23_cells_eight_lobes_four_bands_blue_rim_two_cell_terminal": true,
+    "gemini_19_cell_chest_plump_equal_tips_clean_colors_no_black_outline": true,
+    "gemini_9_cell_visor_plump_sparkle_no_outline": true,
+    "claude_byte_identical": true,
+    "review_board_v12_v13_three_4x_comparisons_64_128_circles": true,
+    "zero_changes_outside_emblem_masks": true
+  },
+  "agents": {
+    "codex": {
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "opaque": true,
+      "changed_pixels_total": 53144,
+      "changed_pixels_outside_emblem_masks": 0,
+      "correction_changed_pixels_outside_old_and_new_masks": 0,
+      "source_sha256": "b13e26a5ddd957bf4d6297e9e4a11ec62e368d1c2aaacacc1829f545d5ac9e74"
+    },
+    "gemini": {
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "opaque": true,
+      "changed_pixels_total": 35584,
+      "changed_pixels_outside_emblem_masks": 0,
+      "correction_changed_pixels_outside_old_and_new_masks": 0,
+      "source_sha256": "3ff58df3970b40ced1c950fd0101f375c61b2ae0b58fddb9570b3710d2bb606c"
+    },
+    "claude": {
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "opaque": true,
+      "changed_pixels_total": 0,
+      "changed_pixels_outside_emblem_masks": 0,
+      "correction_changed_pixels_outside_old_and_new_masks": 0,
+      "source_sha256": "d3e548e36902a719eb2cc57d13fe153dfa58551cd19f0832ef945543131840e7"
+    }
+  },
+  "visual_review": {
+    "reviewed": true,
+    "date": "2026-10-30",
+    "method": "Viewed all three standalone exact 4x nearest-neighbour crops beside supplied official logos; also viewed final portraits and rebuilt full board.",
+    "observations": {
+      "codex": "Eight visible rounded pixel lobes; blue perimeter separates lavender from chest; four bands and two-cell terminal strokes share a baseline.",
+      "gemini_chest": "19-cell symmetric sparkle; only terminal cells are one-cell wide; concave sides and plump body; red/yellow/green blades with blue body and one transition band.",
+      "gemini_visor": "9-cell symmetric plump sparkle centred at the original visor mark centre, with the same colour placement and no rim."
+    },
+    "limitations": [
+      "Curves use coarse 12px/13px logical cells; silhouettes are pixel-art approximations of the references."
+    ],
+    "sha256": {
+      "pfp-codex.png": "32b18c4fe961531a95625aac81a02cdf07df7a3eecd4502b256c3cff820abacf",
+      "pfp-gemini.png": "60b77eae89a232211a719b2c3ef7cbca35800a8047249d819f7808aba8507951",
+      "pfp-claude.png": "d3e548e36902a719eb2cc57d13fe153dfa58551cd19f0832ef945543131840e7",
+      "review-board.png": "06388960bc71e0af86b304c225de87d9d1088b1714554eafaf5a860751708b2f",
+      "review-codex-chest-4x.png": "8ac3b54f79b62ff17726ecde1847ee42971c623bc67b8fc73f2a1bfdbb7d1e1b",
+      "review-gemini-chest-4x.png": "c4a0f58c62c8998e6903ad5ca488158740203af435a98a2895e59415f8802191",
+      "review-gemini-visor-4x.png": "cd447965443894a3bfcf8f74134bc7bddab3bb7e8066a8f018f32a298b3e4d10",
+      "logo-codex-official.png": "8a7b09ec323b4225b15d0f4cf054cac5e04abb8c4fdebf12cb2add8f21612002",
+      "logo-gemini-official.png": "bce270ef4dd29b493ed64e89cc82867ef13f1cf7ef837e79d845fddf69cc9768"
+    }
+  },
+  "verify_command": "PYTHONDONTWRITEBYTECODE=1 python3 verify_v13.py"
+}
