@@ -1,18 +1,20 @@
 import type { Node, Edge } from '@xyflow/react';
-import type { Flow, FlowNode, FlowPatch, FlowRegistryNode, PortType } from '../../shared/flow-types';
+import type { Brand, Flow, FlowNode, FlowPatch, FlowRegistryNode, PortType } from '../../shared/flow-types';
 import { t } from '../i18n';
 
 export type FlowCardData = {
   node: FlowNode; definition?: FlowRegistryNode; runnable: boolean;
   flowId: string; upload?: (id: string, file: File) => void;
   pending?: boolean; action?: (id: string, action: 'run' | 'approve' | 'reject') => void;
+  brands?: Brand[]; projects?: string[]; setConfig?: (id: string, config: Record<string, unknown>) => void;
+  brandFiles?: (id: string, files: File[]) => void; openBrand?: (id: string, brandId?: string) => void;
 };
 export type CanvasNode = Node<FlowCardData, 'flowCard'>;
 // Values live in flows.css (--flow-port-*) with the rest of the canvas palette.
-const portTypes: PortType[] = ['text', 'brand', 'idea', 'script', 'audio', 'timings', 'scenes', 'video', 'edit', 'report'];
+const portTypes: PortType[] = ['text', 'project', 'brand', 'idea', 'script', 'audio', 'timings', 'scenes', 'video', 'edit', 'report'];
 export const portColors = Object.fromEntries(portTypes.map(type => [type, `var(--flow-port-${type})`])) as Record<PortType, string>;
 export const nodeLabels: Record<string, string> = {
-  brand: 'Бренд', idea: 'Идея', script: 'Сценарий', voice: 'Озвучка', scenes: 'Сцены', capture: 'Съёмка',
+  project: 'Папка проекта', brand: 'Бренд', idea: 'Идея', script: 'Сценарий', voice: 'Озвучка', scenes: 'Сцены', capture: 'Съёмка',
   edit: 'План монтажа', preview: 'Превью', qa: 'Проверка качества', final: 'Финальный рендер', prompt: 'Заметка',
 };
 export const statusLabels: Record<FlowNode['status'], string> = {

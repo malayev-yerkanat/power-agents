@@ -6,7 +6,7 @@ status: active
 language: typescript
 purpose: "Execute typed DAG nodes with approval gates, live text and media stages"
 created: 2026-10-30
-updated: 2026-10-30
+updated: 2026-11-02
 tags: [module, flows, scheduling]
 ---
 
@@ -31,3 +31,7 @@ English prompts include connected brand text/rules, upstream values, extra instr
 Parsing/validation failure gets one stateless repair with the shape, error and prior response. Word errors state the measured count. A second failure is stored as a failed node; provider errors bypass formatting retries. [Executor tests](../../tests/flow-executors.test.ts) cover prompts, connections, JSON/count repair and scene contracts; engine and socket-free HTTP tests establish live-only provider calls and protected API execution. No live-provider acceptance run was performed for F3; see [[log|Operation Log]] for checks.
 
 F4 launches `python3 -I` using the environment's `REEL_PIPELINE_DIR`, validates stage output paths with `resolveFile` plus realpath containment, and passes connected inline values/files together with ancestor script/timings/brand and notes. Voice/Capture/Edit/Render/QA timeouts are 5/10/2/30/5 minutes. Exit 2 records `needsHuman`; failed QA keeps its report for inspection. `outputVersion` identifies retained files across failed/new executions. New uploads mark Capture and descendants stale. Byte-range media serves validated node version folders; upload and media routes reuse the existing session/CSRF boundary without changing Telegram routes. The [prototype guide](../../docs/prototype.md) records full setup, contract, dimension rounding and acceptance limits.
+
+Project folder and brand library (2026-11-02): the registry adds **Project folder** (`project` output port, gate off, config `project`) as the first `roblox-reel` node, so the template has eleven nodes. Brand has an optional `project` input; the template wires Project → Brand, so Brand waits for the folder. Live runs resolve the folder name inside `CONTENT_PROJECTS_DIR`, or three levels above `REEL_PIPELINE_DIR`, refusing paths and symlinks that leave it, and create `<project>/reels/<flow name>/` with a `.power-agents-flow` owner marker; another flow or a non-empty folder made by hand gets an ID suffix instead. When any node is approved, the engine copies its output into numbered stage folders there (`01-brand` … `10-final`): files as they are, inline values as `<port>.json`, Brand as `brand-guide.md` plus `brand.json`. Approving the Project node copies everything already approved. Copy errors are logged and never fail a node. See [project module](../../src/server/flows/project.ts).
+
+Brand config gains `brandId`, chosen from a shared library stored in the `brands` table of [[Persistence Store]] and served by `GET/POST /api/flows/brands` and `PUT/DELETE /api/flows/brands/:id` (guide ≤ 40,000 characters, settings ≤ 16 KB). A live Brand run outputs the library brand's name, guide and settings, its `colors.accent` as `accent` for the reel renderer, and the node's extra text and rules; a deleted brand fails the run. `GET /api/flows/projects` lists project folders. Tests: [project tests](../../tests/flow-project.test.ts) and [API tests](../../tests/flow-http.test.ts).

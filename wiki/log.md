@@ -2,11 +2,22 @@
 type: log
 status: active
 created: 2026-10-07
-updated: 2026-11-01
+updated: 2026-11-02
 tags: [history]
 ---
 
 # Operation Log
+
+## 2026-11-02 — Brand accepts the Project folder
+
+- Brand gained an optional `project` input, so Project folder → Brand can be connected; the template wires it. Verified: typecheck, 346/346 unit, 7/7 Flows e2e, build; live registry shows the port.
+
+## 2026-11-02 — Project folder node; brand library on the Brand node
+
+- New first node **Project folder**: pick a content project; a run creates `<project>/reels/<flow name>/`, and every approved output is copied into numbered stage folders there. See [[Flow Engine]].
+- Brand node picks a brand from a shared library (upload `brand-guide.md` / `brand.json`, or fill in the app). Explained in ROBLOX was imported as the first library brand.
+- Flows UI restyled to Airy Pixel (committed earlier as `e482496`). See [[Flows UI]].
+- Verified: typecheck, 346/346 unit tests, 50/50 e2e, build; service restarted; library and project list checked in the browser. Not run: a live Project export into the real content folder (covered by unit tests on temp folders).
 
 ## 2026-11-01 — Phase 1 complete: launch-link sign-in; Codex approvals opt-in
 

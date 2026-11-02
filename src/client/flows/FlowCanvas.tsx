@@ -5,6 +5,8 @@ import { FlowCard } from './FlowCard';
 import { FlowInspector } from './FlowInspector';
 import { compatiblePorts, nodeLabels, patchNodes, toCanvas, type CanvasNode } from './helpers';
 import { useFlow, type Request } from './useFlow';
+import { parseBrandFiles, useBrands } from './brands';
+import { BrandEditor } from './BrandEditor';
 import { t, useLanguage } from '../i18n';
 import { uiMessage } from '../uiMessages';
 
@@ -31,7 +33,31 @@ export function FlowCanvas({ id, request, csrfToken, back }: { id: string; reque
   const rejectDialog = useRef<HTMLDialogElement>(null);
   const addMenu = useRef<HTMLDivElement>(null);
   const addToggle = useRef<HTMLButtonElement>(null);
+  const { brands, save: saveBrand, remove: removeBrand } = useBrands(request, csrfToken);
+  const [projects, setProjects] = useState<string[]>([]);
+  const [editor, setEditor] = useState<{ nodeId: string; brandId?: string } | null>(null);
   const { language } = useLanguage();
+  useEffect(() => { void request<{ projects: string[] }>('/api/flows/projects').then(data => setProjects(data.projects), () => {}); }, [request]);
+  const setConfig = useCallback((nodeId: string, config: Record<string, unknown>) => {
+    void patch(latest => ({ nodes: patchNodes(latest).map(n => n.id === nodeId ? { ...n, config: { ...n.config, ...config } } : n) }));
+  }, [patch]);
+  const keepBrand = useCallback(async (nodeId: string, input: Parameters<typeof saveBrand>[0], id?: string) => {
+    try {
+      const brand = await saveBrand(input, id);
+      setConfig(nodeId, { brandId: brand.id });
+      return true;
+    } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); return false; }
+  }, [saveBrand, setConfig, setError]);
+  const brandFiles = useCallback((nodeId: string, files: File[]) => {
+    void Promise.all(files.map(async file => {
+      if (file.size > 40_000) throw new Error(t('Файл {name} больше 40 КБ.', { name: file.name }));
+      return { name: file.name, text: await file.text() };
+    })).then(parseBrandFiles).then(input =>
+      // Uploading a brand again with the same name replaces it instead of adding a duplicate.
+      keepBrand(nodeId, input, brands.find(b => b.name.toLowerCase() === input.name.toLowerCase())?.id))
+      .catch(cause => setError(cause instanceof Error ? cause.message : String(cause)));
+  }, [brands, keepBrand, setError]);
+  const openBrand = useCallback((nodeId: string, brandId?: string) => setEditor({ nodeId, brandId }), []);
   const labels = useMemo(ariaLabels, [language]);
   useEffect(() => {
     if (!menu) return;
@@ -52,10 +78,10 @@ export function FlowCanvas({ id, request, csrfToken, back }: { id: string; reque
       const previous = current.find(n => n.id === node.id);
       // Keep React Flow's measured size: without it the node is hidden until its size changes again.
       return { ...node, position: positions.current[node.id] || node.position, selected: previous?.selected,
-        ...(previous?.measured ? { measured: previous.measured } : {}), data: { ...node.data, pending, action: act, upload } };
+        ...(previous?.measured ? { measured: previous.measured } : {}), data: { ...node.data, pending, action: act, upload, brands, projects, setConfig, brandFiles, openBrand } };
     }));
     setEdges(current => mapped.edges.map(edge => ({ ...edge, selected: current.find(e => e.id === edge.id)?.selected })));
-  }, [mapped, pending, act, upload]);
+  }, [mapped, pending, act, upload, brands, projects, setConfig, brandFiles, openBrand]);
   useEffect(() => { if (rejectId) rejectDialog.current?.showModal(); else rejectDialog.current?.close(); }, [rejectId]);
   const savePositions = useCallback(() => {
     const batch = positions.current;
@@ -137,8 +163,11 @@ export function FlowCanvas({ id, request, csrfToken, back }: { id: string; reque
           </ReactFlow>}
         </div>
         {selectedNode && definition && <FlowInspector key={JSON.stringify([selectedNode.id, selectedNode.title, selectedNode.gate, selectedNode.config])} node={selectedNode} definition={definition}
-          flowId={id} upload={upload} connections={connections} pending={pending} close={() => setSelected(null)} save={value => patch(latest => ({ nodes: patchNodes(latest).map(n => n.id === selectedNode.id ? { ...n, ...value } : n) }))} />}
+          flowId={id} upload={upload} connections={connections} brands={brands} projects={projects} openBrand={openBrand} pending={pending} close={() => setSelected(null)} save={value => patch(latest => ({ nodes: patchNodes(latest).map(n => n.id === selectedNode.id ? { ...n, ...value } : n) }))} />}
         </div></>}
+    {editor && <BrandEditor key={editor.brandId ?? 'new'} brand={brands.find(b => b.id === editor.brandId)} close={() => setEditor(null)}
+      save={input => keepBrand(editor.nodeId, input, editor.brandId)}
+      remove={editor.brandId ? async () => { try { await removeBrand(editor.brandId!); return true; } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); return false; } } : undefined} />}
     <dialog ref={rejectDialog} className="flow-reject" onCancel={() => setRejectId(null)} aria-labelledby="flow-reject-title">
       <form onSubmit={async e => { e.preventDefault(); if (rejectId && await action(rejectId, 'reject', note)) setRejectId(null); }}>
         <h2 id="flow-reject-title">{t('Отклонить результат')}</h2><label>{t('Замечание')}<textarea autoFocus required maxLength={12000} rows={4} value={note} onChange={e => setNote(e.target.value)} /></label>

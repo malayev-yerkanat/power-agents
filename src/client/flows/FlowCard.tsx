@@ -1,6 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { nodeLabels, nodeTitle, outputExcerpt, portColors, statusLabels, type CanvasNode } from './helpers';
 import { FlowMedia, FlowUpload } from './FlowMedia';
+import { BrandControls, ProjectControls } from './NodeControls';
 import { t, useLanguage } from '../i18n';
 
 export function FlowCard({ data, selected }: NodeProps<CanvasNode>) {
@@ -15,11 +16,12 @@ export function FlowCard({ data, selected }: NodeProps<CanvasNode>) {
       style={{ top: 48 + index * 23, background: portColors[port.type] }} />)}
     <header><span className="flow-type">{t(nodeLabels[node.type] ?? '') || definition?.title || node.type}</span>
       <h2>{nodeTitle(node, definition)}</h2><span className="flow-status-chip">{node.needsHuman ? t('Нужно действие') : t(statusLabels[node.status])}</span></header>
-    <div className="flow-preview">{(value?.value !== undefined || !value?.files?.length) && (['idea', 'script'].includes(node.type)
+    {node.type === 'brand' ? <BrandControls data={data} /> : node.type === 'project' ? <ProjectControls data={data} />
+    : <div className="flow-preview">{(value?.value !== undefined || !value?.files?.length) && (['idea', 'script'].includes(node.type)
       ? <p className="flow-text-preview">{outputExcerpt(value?.value, node.type)}</p>
       : <pre>{outputExcerpt(value?.value)}</pre>)}
       <FlowMedia flowId={flowId} node={node} />
-    </div>
+    </div>}
     <FlowUpload node={node} pending={pending} upload={upload} />
     {node.error && <p className="flow-node-error">{node.error}</p>}
     <footer className="nodrag nopan">

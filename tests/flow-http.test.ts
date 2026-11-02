@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { Readable } from 'node:stream';
 import { EventEmitter } from 'node:events';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -14,11 +14,11 @@ import { Store } from '../src/server/store.ts';
 import type { Connection, TurnRunner } from '../src/shared/types.ts';
 import { idea, script } from './fixtures/flow-results.ts';
 
-async function setup(runner?: TurnRunner) {
+async function setup(runner?: TurnRunner, projectsRoot?: string) {
   const connections: Connection[] = runner ? [{ id: 'claude', name: 'Claude Code', kind: 'claude-cli', available: true, detail: '', executable: '/private/cli' }] : [];
   const root = mkdtempSync(join(tmpdir(), 'power-flow-http-'));
   const store = new Store(':memory:');
-  const flows = new FlowEngine({ store, root, connections, runner });
+  const flows = new FlowEngine({ store, root, connections, runner, projectsRoot });
   const engine = {
     create() { throw new Error('Unexpected team run'); }, approve() { throw new Error('Unexpected team approval'); },
     control() { throw new Error('Unexpected team control'); }, message() { throw new Error('Unexpected team message'); },
@@ -96,15 +96,38 @@ test('flow registry exposes JSON port definitions and config defaults before flo
     assert.equal(response.status, 200);
     const { types } = await response.json() as { types: { type: string; title: string; inputs: unknown[];
       outputs: unknown[]; gate: boolean; lane?: string; configDefaults: Record<string, unknown> }[] };
-    assert.equal(types.length, 11);
+    assert.equal(types.length, 12);
     assert.deepEqual(types.find(value => value.type === 'brand'), {
-      type: 'brand', title: 'Brand', inputs: [], outputs: [{ name: 'brand', type: 'brand' }], gate: false,
-      configDefaults: { text: '', rules: [] },
+      type: 'brand', title: 'Brand', inputs: [{ name: 'project', type: 'project', optional: true }], outputs: [{ name: 'brand', type: 'brand' }], gate: false,
+      configDefaults: { brandId: '', text: '', rules: [] },
     });
     assert.equal(types.find(value => value.type === 'script')!.configDefaults.words, 150);
     assert.equal(types.find(value => value.type === 'preview')!.lane, 'render');
     assert.ok(types.every(value => !('config' in value)));
   } finally { await app.close(); }
+});
+
+test('brand library API creates, lists, updates and deletes brands; projects lists content project folders', async () => {
+  const projects = mkdtempSync(join(tmpdir(), 'power-projects-'));
+  mkdirSync(join(projects, 'project-b')); mkdirSync(join(projects, 'project-a')); mkdirSync(join(projects, '.hidden'));
+  const app = await setup(undefined, projects);
+  try {
+    assert.deepEqual(await (await app.request('/projects')).json(), { projects: ['project-a', 'project-b'] });
+    assert.deepEqual(await (await app.request('/brands')).json(), { brands: [] });
+    const created = await app.request('/brands', 'POST', { name: 'Explained in ROBLOX', guide: '# Guide', settings: { colors: { accent: '#FFC814' } } });
+    assert.equal(created.status, 201);
+    const { brand } = await created.json() as { brand: { id: string; name: string } };
+    assert.equal(brand.name, 'Explained in ROBLOX');
+    const updated = await app.request(`/brands/${brand.id}`, 'PUT', { name: 'Renamed', guide: '', settings: {} });
+    assert.equal((await updated.json() as { brand: { name: string } }).brand.name, 'Renamed');
+    assert.deepEqual((await (await app.request('/brands')).json() as { brands: { name: string }[] }).brands.map(b => b.name), ['Renamed']);
+    assert.equal((await app.request('/brands', 'POST', { name: ' ', guide: '' })).status, 400);
+    assert.equal((await app.request('/brands', 'POST', { name: 'Big', guide: 'x'.repeat(40_001) })).status, 400);
+    assert.equal((await app.request('/brands/missing', 'PUT', { name: 'X' })).status, 404);
+    assert.equal((await app.request(`/brands/${brand.id}`, 'DELETE')).status, 200);
+    assert.equal((await app.request(`/brands/${brand.id}`, 'DELETE')).status, 404);
+    assert.equal((await app.rawRequest('/api/flows/brands', { method: 'POST', headers: { ...app.headers, 'X-CSRF-Token': 'wrong' }, body: '{"name":"X"}' })).status, 403);
+  } finally { await app.close(); rmSync(projects, { recursive: true, force: true }); }
 });
 
 test('global SSE emits flow changes without run cursor IDs and unsubscribes on close', async () => {

@@ -120,7 +120,8 @@ async function runNode(page: Page, id: string, gated = true) {
   await expect(node.getByRole('button', { name: 'Запустить', exact: true })).toBeEnabled();
   await node.getByRole('button', { name: 'Запустить', exact: true }).click();
   await expect(node).toHaveAttribute('data-status', gated ? 'awaiting_approval' : 'approved');
-  await expect(node).toContainText(`"type": "${id}"`);
+  // Brand and Project cards show their controls instead of the raw output.
+  if (!['brand', 'project'].includes(id)) await expect(node).toContainText(`"type": "${id}"`);
 }
 
 async function approveNode(page: Page, id: string) {
@@ -132,6 +133,9 @@ test('demo template runs Brand and Idea, then approval unlocks Script through fl
   const id = await createDemoFlow(page, flows);
   const scriptRun = card(page, 'script').getByRole('button', { name: 'Запустить', exact: true });
   await expect(scriptRun).toBeDisabled();
+  // Brand waits for the connected Project folder.
+  await expect(card(page, 'brand').getByRole('button', { name: 'Запустить', exact: true })).toBeDisabled();
+  await runNode(page, 'project', false);
   const readsBeforeBrand = flows.reads.filter(path => path === `/api/flows/${id}`).length;
   await runNode(page, 'brand', false);
   await expect.poll(() => flows.reads.filter(path => path === `/api/flows/${id}`).length).toBeGreaterThan(readsBeforeBrand);
@@ -140,7 +144,7 @@ test('demo template runs Brand and Idea, then approval unlocks Script through fl
   await approveNode(page, 'idea');
   await expect(scriptRun).toBeEnabled();
   await runNode(page, 'script');
-  expect(flows.store.nodeRuns(id).map(run => run.nodeId)).toEqual(['script', 'idea', 'brand']);
+  expect(flows.store.nodeRuns(id).map(run => run.nodeId)).toEqual(['script', 'idea', 'brand', 'project']);
 
   // This change has no browser mutation response: only the flow event can reveal it.
   const current = flows.engine.get(id);
@@ -153,6 +157,7 @@ test('demo template runs Brand and Idea, then approval unlocks Script through fl
 
 test('the complete demo reel reaches Final from the canvas without model calls', async ({ page, flows }) => {
   const id = await createDemoFlow(page, flows);
+  await runNode(page, 'project', false);
   await runNode(page, 'brand', false);
   for (const nodeId of ['idea', 'script', 'voice', 'scenes', 'capture', 'edit', 'preview']) {
     await runNode(page, nodeId);
@@ -162,7 +167,32 @@ test('the complete demo reel reaches Final from the canvas without model calls',
   await runNode(page, 'final');
   await approveNode(page, 'final');
   expect(flows.store.getFlow(id)?.nodes.every(node => node.status === 'approved')).toBe(true);
-  expect(flows.store.nodeRuns(id)).toHaveLength(10);
+  expect(flows.store.nodeRuns(id)).toHaveLength(11);
+});
+
+test('Brand adds a library brand by upload or in-app form and picks it from the dropdown', async ({ page, flows }) => {
+  const id = await createDemoFlow(page, flows);
+  const brand = card(page, 'brand');
+  await brand.getByRole('button', { name: '+ Добавить файл' }).click();
+  await brand.getByLabel('Загрузить файлы').setInputFiles([
+    { name: 'brand-guide.md', mimeType: 'text/markdown', buffer: Buffer.from('# Explained in ROBLOX: brand guide\n\nDeadpan narrator.') },
+    { name: 'brand.json', mimeType: 'application/json', buffer: Buffer.from('{"name":"Explained in ROBLOX","handle":"@expl.in.roblox","colors":{"accent":"#FFC814"}}') },
+  ]);
+  await expect(brand).toContainText('@expl.in.roblox');
+  const uploaded = flows.store.listBrands()[0];
+  expect(uploaded).toMatchObject({ name: 'Explained in ROBLOX', guide: '# Explained in ROBLOX: brand guide\n\nDeadpan narrator.' });
+  await expect.poll(() => flows.store.getFlow(id)?.nodes.find(n => n.id === 'brand')?.config.brandId).toBe(uploaded.id);
+
+  await brand.getByRole('button', { name: '+ Добавить файл' }).click();
+  await brand.getByRole('button', { name: 'Заполнить в приложении' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Новый бренд' });
+  await dialog.getByLabel('Название').fill('Space Facts');
+  await dialog.getByLabel('Брендбук').fill('Calm and curious.');
+  await dialog.getByRole('button', { name: 'Сохранить' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(brand.getByLabel('Выбрать бренд')).toHaveValue(flows.store.listBrands().find(b => b.name === 'Space Facts')!.id);
+  await brand.getByLabel('Выбрать бренд').selectOption({ label: 'Explained in ROBLOX' });
+  await expect.poll(() => flows.store.getFlow(id)?.nodes.find(n => n.id === 'brand')?.config.brandId).toBe(uploaded.id);
 });
 
 test('Capture offers an upload on the card and inspector and displays versioned media', async ({ page, flows }) => {

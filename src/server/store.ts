@@ -1,8 +1,9 @@
+import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import type { EventHistoryPage, Run, RunEvent, RunSummaryPage } from '../shared/types.ts';
-import type { Flow, FlowEvent, FlowSummary, NodeRun } from '../shared/flow-types.ts';
+import type { Brand, BrandInput, Flow, FlowEvent, FlowSummary, NodeRun } from '../shared/flow-types.ts';
 
 type EventInput = Pick<RunEvent, 'type' | 'message' | 'actorId'>;
 type Listener = (event: RunEvent) => void;
@@ -84,6 +85,7 @@ export class Store {
         input_hash TEXT NOT NULL, started_at TEXT NOT NULL, finished_at TEXT, error TEXT
       );
       CREATE INDEX IF NOT EXISTS node_runs_flow ON node_runs(flow_id, node_id, id);
+      CREATE TABLE IF NOT EXISTS brands (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, data TEXT NOT NULL);
     `); } catch (error) { this.db.close(); throw error; }
   }
 
@@ -343,6 +345,31 @@ export class Store {
   interruptNodeRuns(flowId: string, error: string): void {
     this.db.prepare(`UPDATE node_runs SET status = 'failed', finished_at = ?, error = ? WHERE flow_id = ? AND status = 'running'`)
       .run(new Date().toISOString(), error, flowId);
+  }
+
+  listBrands(): Brand[] {
+    return this.db.prepare("SELECT data FROM brands ORDER BY json_extract(data, '$.name') COLLATE NOCASE, id").all()
+      .map(row => JSON.parse(row.data as string) as Brand);
+  }
+
+  getBrand(id: string): Brand | undefined {
+    const row = this.db.prepare('SELECT data FROM brands WHERE id = ?').get(id);
+    return row ? JSON.parse(row.data as string) as Brand : undefined;
+  }
+
+  /** Creates a brand, or replaces the fields of an existing one when `id` is given. */
+  saveBrand(input: BrandInput, id?: string): Brand | undefined {
+    const now = new Date().toISOString(), previous = id ? this.getBrand(id) : undefined;
+    if (id && !previous) return undefined;
+    const brand: Brand = { id: previous?.id ?? randomUUID(), name: input.name, guide: input.guide, settings: input.settings,
+      createdAt: previous?.createdAt ?? now, updatedAt: now };
+    this.db.prepare('INSERT INTO brands (id, created_at, data) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data')
+      .run(brand.id, brand.createdAt, JSON.stringify(brand));
+    return brand;
+  }
+
+  deleteBrand(id: string): boolean {
+    return Number(this.db.prepare('DELETE FROM brands WHERE id = ?').run(id).changes) > 0;
   }
 
   createFlow(flow: Flow): Flow {

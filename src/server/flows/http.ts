@@ -11,6 +11,7 @@ export interface FlowApi {
   fileRoot?(): string;
   upload?(id: string, nodeId: string, req: IncomingMessage): Promise<Flow>;
   connections?(): Connection[];
+  projects?(): Promise<string[]>;
   create(input: CreateFlowInput): Flow | Promise<Flow>;
   update(id: string, patch: FlowPatch): Flow | Promise<Flow>;
   run(id: string, nodeId: string): Flow | Promise<Flow>;
@@ -32,6 +33,8 @@ const patchSchema = z.object({ version: z.number().int().nonnegative().safe(), t
     config: z.record(z.string(), z.unknown()), gate: z.boolean() }).strict()).max(200).optional(),
   edges: z.array(z.object({ id, from: endpoint, to: endpoint }).strict()).max(2000).optional() }).strict();
 const emptySchema = z.object({}).strict();
+const brandSchema = z.object({ name: z.string().trim().min(1).max(120), guide: z.string().max(40_000).default(''),
+  settings: z.record(z.string(), z.unknown()).default({}).refine(value => JSON.stringify(value).length <= 16_000, 'Brand settings exceed 16 KB') }).strict();
 const rejectSchema = z.object({ note: z.string().trim().min(1).max(12_000) }).strict();
 
 export async function handleFlows(req: IncomingMessage, res: ServerResponse, path: string[], store: Store,
@@ -40,6 +43,21 @@ export async function handleFlows(req: IncomingMessage, res: ServerResponse, pat
   if (req.method === 'GET' && path.length === 2) { json(res, 200, { flows: store.listFlows() }); return; }
   if (req.method === 'GET' && path.length === 3 && path[2] === 'connections') {
     json(res, 200, { connections: flows.connections?.() ?? [] }); return;
+  }
+  if (path[2] === 'projects' && path.length === 3 && req.method === 'GET') { json(res, 200, { projects: await flows.projects?.() ?? [] }); return; }
+  if (path[2] === 'brands') {
+    if (path.length === 3 && req.method === 'GET') { json(res, 200, { brands: store.listBrands() }); return; }
+    if (path.length === 3 && req.method === 'POST') { json(res, 201, { brand: store.saveBrand(brandSchema.parse(await readBody(req))) }); return; }
+    if (path.length === 4 && req.method === 'PUT') {
+      const brand = store.saveBrand(brandSchema.parse(await readBody(req)), id.parse(path[3]));
+      if (!brand) throw new HttpError(404, 'Brand not found');
+      json(res, 200, { brand }); return;
+    }
+    if (path.length === 4 && req.method === 'DELETE') {
+      if (!store.deleteBrand(id.parse(path[3]))) throw new HttpError(404, 'Brand not found');
+      json(res, 200, { ok: true }); return;
+    }
+    throw new HttpError(404, 'API endpoint not found');
   }
   if (req.method === 'GET' && path.length === 3 && path[2] === 'registry') {
     const types: FlowRegistryNode[] = Object.values(registry).map(({ type, title, inputs, outputs, gate, lane, config }) => ({

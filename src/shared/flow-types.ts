@@ -1,5 +1,5 @@
 /** Value kinds a node port carries; an edge may only join ports of the same kind ('text' accepts any). */
-export type PortType = 'text' | 'brand' | 'idea' | 'script' | 'audio' | 'timings' | 'scenes' | 'video' | 'edit' | 'report';
+export type PortType = 'text' | 'project' | 'brand' | 'idea' | 'script' | 'audio' | 'timings' | 'scenes' | 'video' | 'edit' | 'report';
 export type NodeStatus = 'idle' | 'queued' | 'running' | 'awaiting_approval' | 'approved' | 'rejected' | 'stale' | 'failed';
 export interface PortSpec { name: string; type: PortType; optional?: boolean }
 /** Client-safe node registry metadata; server validation schemas never cross the API boundary. */
@@ -48,4 +48,10 @@ export interface FlowPatch {
   nodes?: Pick<FlowNode, 'id' | 'type' | 'title' | 'position' | 'config' | 'gate'>[];
   edges?: FlowEdge[];
 }
+/** A reusable brand from the shared library: a written guide plus settings shaped like the content project's brand.json. */
+export interface Brand {
+  id: string; name: string; guide: string; settings: Record<string, unknown>;
+  createdAt: string; updatedAt: string;
+}
+export type BrandInput = Pick<Brand, 'name' | 'guide' | 'settings'>;
 export interface FlowEvent { flowId: string; nodeId?: string; type: string; message: string }

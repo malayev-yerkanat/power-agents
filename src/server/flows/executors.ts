@@ -1,12 +1,14 @@
 import { pipelineExecutors } from './pipeline.ts';
+import { prepareReelFolder } from './project.ts';
 import { z } from 'zod';
 import type { Connection, Member, TurnRunner } from '../../shared/types.ts';
+import type { Brand } from '../../shared/flow-types.ts';
 import { runTurn } from '../adapters/index.ts';
 import { parseJsonObject } from '../adapters/common.ts';
 import type { ExecutionContext, Executor } from './registry.ts';
 import { ideaSchema, scriptSchema, scriptWordRange, scenesSchema, sceneTimings, validateSceneCoverage } from './outputs.ts';
 /** `madeTopics` lists topics already chosen in other flows, so Idea does not repeat a reel. */
-interface Options { connections: Connection[]; runner?: TurnRunner; madeTopics?: (flowId: string) => string[] }
+interface Options { connections: Connection[]; runner?: TurnRunner; madeTopics?: (flowId: string) => string[]; brand?: (id: string) => Brand | undefined; projectsRoot?: string }
 const sameTopic = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 const shapes = {
   idea: '{"candidates":[{"topic":"Topic","hook":"Topic explained in Roblox","mechanic":"Roblox mechanic","payoff":"twist","scores":{"hook":4,"mappability":4,"payoff":4,"timeliness":4,"safety":5},"total":21}],"chosen":0}',
@@ -55,7 +57,16 @@ async function generate<T>(ctx: ExecutionContext, options: Options, type: keyof 
 export function createLiveExecutors(options: Options): Record<string, Executor> {
   return {
     ...pipelineExecutors,
-    brand: async ({ node }) => ({ brand: { value: { text: node.config.text, rules: node.config.rules } } }),
+    project: async ({ flow, node }) => ({ project: { value: await prepareReelFolder(flow, String(node.config.project ?? ''), options.projectsRoot) } }),
+    brand: async ({ node }) => {
+      const id = String(node.config.brandId ?? '');
+      const brand = id ? options.brand?.(id) : undefined;
+      if (id && !brand) throw new Error('Бренд не найден в библиотеке. Выберите другой бренд.');
+      const colors = brand?.settings.colors as { accent?: unknown } | undefined;
+      return { brand: { value: { ...(brand ? { name: brand.name, guide: brand.guide, settings: brand.settings } : {}),
+        // The reel renderer reads a per-video accent from edit.brand.accent.
+        ...(typeof colors?.accent === 'string' ? { accent: colors.accent } : {}), text: node.config.text, rules: node.config.rules } } };
+    },
     idea: async ctx => {
       const avoid = [...new Set([...(Array.isArray(ctx.node.config.avoid) ? ctx.node.config.avoid.map(String) : []), ...(options.madeTopics?.(ctx.flow.id) ?? [])]
         .map(topic => topic.trim()).filter(Boolean))];

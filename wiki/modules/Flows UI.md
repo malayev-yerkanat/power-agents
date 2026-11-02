@@ -6,7 +6,7 @@ status: active
 language: typescript
 purpose: "Edit and operate typed approval flows on a canvas"
 created: 2026-10-30
-updated: 2026-10-30
+updated: 2026-11-02
 tags: [module, flows, ui]
 ---
 
@@ -25,3 +25,5 @@ F2 adds the Russian **Потоки** navigation entry beside the team workspace.
 [App](../../src/client/App.tsx) forwards global SSE `flow` notifications as browser invalidations. The selected flow refetches detail on each matching event and on stream open/reconnect; the list refreshes on invalidation. Store notifications are not replayed with the team-run event cursor, so reconnect snapshot reads recover gaps. [[Flow Engine]] owns execution and [[Local HTTP API]] owns protected routes; the client never imports the server registry or executors.
 
 [Pure helper tests](../../tests/flow-canvas.test.ts) cover compatible ports, readiness and flow-to-React-Flow mapping; [navigation tests](../../tests/navigation.test.ts) cover route round trips. [Browser tests](../../tests/e2e/flows.spec.ts) exercise Brand → Idea → approval → Script, the complete ten-node demo, inspector event/conflict recovery, and graph connection/add/drag/keyboard/delete persistence with the real engine/API handler behind intercepted browser requests and flow events. These are demo-only checks; live Idea/Script/Scenes have fake-runner tests; real-provider smoke testing and real Remotion acceptance rendering remain unverified. F4 adds SSR media/upload tests and a browser upload/media scenario; server stages use fake scripts and the content project tests use generated media and mocked provider/render calls. Browser verification depends on permission to bind the Playwright Vite server; see [[log|Operation Log]] for the recorded run result.
+
+2026-11-02: the canvas follows the platform's Airy Pixel rules (ivory paper, cobalt ink frames, square corners, pixel headings, platform status colors and button classes). Brand and Project cards show controls instead of raw output: Brand has **+ Add new file** (upload a brand guide `.md` and/or `brand.json`, or fill a form in the app), a **Choose brand** dropdown of the shared library, and a summary with handle, colour swatches and an Edit button; uploading a brand with an existing name replaces it. Project has a dropdown of content project folders and shows where files are saved after a run. Code: [NodeControls](../../src/client/flows/NodeControls.tsx), [BrandEditor](../../src/client/flows/BrandEditor.tsx), [brands hook and file parser](../../src/client/flows/brands.ts).

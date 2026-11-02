@@ -4,6 +4,7 @@ import { unlink } from 'node:fs/promises';
 import type { IncomingMessage } from 'node:http';
 import { receiveUpload } from './media.ts';
 import { PipelineError } from './pipeline.ts';
+import { exportNode, listProjects, reelFolder } from './project.ts';
 import { join } from 'node:path';
 import { z } from 'zod';
 import type { CreateFlowInput, Flow, FlowNode, FlowPatch, PortValue } from '../../shared/flow-types.ts';
@@ -75,24 +76,28 @@ function ready(flow: Flow, node: FlowNode): boolean {
     return e ? flow.nodes.some(n => n.id === e.from.node && n.status === 'approved') : !!port.optional;
   });
 }
-interface Options { store: Store; root: string; executors?: Record<string, Executor>; maxConcurrent?: number; connections?: Connection[]; runner?: TurnRunner }
+/** projectsRoot overrides the content projects folder from the environment (tests). */
+interface Options { store: Store; root: string; executors?: Record<string, Executor>; maxConcurrent?: number; connections?: Connection[]; runner?: TurnRunner; projectsRoot?: string }
 interface Active { flowId: string; nodeId: string; version: number; lane?: string; controller: AbortController }
 export class FlowEngine {
   private readonly active = new Map<number, Active>();
   private readonly queuedFlows = new Set<string>();
   private stopped = false;
+  private exports: Promise<void> = Promise.resolve();
   private scheduled = false;
   private readonly limit: number;
   private readonly liveExecutors: Record<string, Executor>;
   constructor(private readonly options: Options) {
     this.limit = options.maxConcurrent ?? 3;
-    this.liveExecutors = createLiveExecutors({ connections: options.connections ?? [], runner: options.runner, madeTopics: id => this.madeTopics(id) });
+    this.liveExecutors = createLiveExecutors({ connections: options.connections ?? [], runner: options.runner, madeTopics: id => this.madeTopics(id),
+      brand: id => options.store.getBrand(id), projectsRoot: options.projectsRoot });
     if (!Number.isSafeInteger(this.limit) || this.limit < 1) invalid('maxConcurrent must be a positive integer');
     for (const flow of options.store.unfinishedFlows()) {
       if (flow.nodes.some(busy)) this.change(flow.id, f => ({ ...f, nodes: f.nodes.map(n => busy(n) ? { ...n, status: 'failed', error: 'interrupted, run again' } : n) }), 'interrupted, run again');
       options.store.interruptNodeRuns(flow.id, 'interrupted, run again');
     }
   }
+  projects(): Promise<string[]> { return listProjects(this.options.projectsRoot); }
   connections(): Connection[] { return (this.options.connections ?? []).map(({ executable: _executable, ...connection }) => connection); }
   /** Chosen topics of approved Idea nodes in every other flow. */
   private madeTopics(exceptId: string): string[] {
@@ -158,7 +163,7 @@ export class FlowEngine {
     const flow = this.get(id), node = this.node(flow, nodeId);
     if (node.status !== 'awaiting_approval') refuse('Node is not awaiting approval');
     const next = this.change(id, f => stale({ ...f, nodes: f.nodes.map(n => n.id === nodeId ? { ...n, status: 'approved' } : n) }, [nodeId]), 'Approved', nodeId);
-    this.abortInvalidated(id); this.autoQueue(id); return next;
+    this.exportApproved(id, nodeId); this.abortInvalidated(id); this.autoQueue(id); return next;
   }
   reject(id: string, nodeId: string, value: string): Flow {
     this.ensureOpen();
@@ -188,6 +193,16 @@ export class FlowEngine {
       this.abortInvalidated(id); this.autoQueue(id); return next;
     } catch (error) { await unlink(join(dir, upload.name)).catch(() => {}); throw error; }
   }
+  /** Mirrors approved output into the Project node's reel folder; a newly approved Project copies everything approved so far. */
+  private exportApproved(id: string, nodeId: string): void {
+    const flow = this.get(id), folder = reelFolder(flow), node = this.node(flow, nodeId);
+    if (!folder) return;
+    const nodes = node.type === 'project' ? flow.nodes.filter(n => n.status === 'approved') : [node];
+    const job = this.exports.then(async () => { for (const n of nodes) await exportNode(flow, n, this.options.root, folder); });
+    this.exports = job.catch(cause => console.error('Flow output could not be copied to the project folder:', cause));
+  }
+  /** Settles once every pending copy to a project folder has finished. */
+  exported(): Promise<void> { return this.exports; }
   private abortInvalidated(id: string): void {
     const flow = this.get(id);
     for (const active of this.active.values()) if (active.flowId === id) {
@@ -245,6 +260,7 @@ export class FlowEngine {
       const current = this.get(flow.id).nodes.find(n => n.id === node.id);
       if (current?.status !== 'running' || current.version !== node.version) { error = 'Execution superseded'; return; }
       this.change(flow.id, f => ({ ...f, nodes: f.nodes.map(n => n.id === node.id ? { ...n, output, outputVersion: node.version, needsHuman: undefined, status: n.gate ? 'awaiting_approval' : 'approved' } : n) }), node.gate ? 'Awaiting approval' : 'Approved', node.id);
+      if (!node.gate) this.exportApproved(flow.id, node.id);
       this.autoQueue(flow.id);
     } catch (cause) {
       if (this.stopped) return;

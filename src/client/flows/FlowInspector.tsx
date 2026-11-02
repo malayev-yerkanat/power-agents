@@ -1,18 +1,19 @@
 import { useState } from 'react';
 import type { FlowNode, FlowRegistryNode } from '../../shared/flow-types';
 import type { Connection } from '../../shared/types';
+import type { Brand } from '../../shared/flow-types';
 import { nodeLabels, nodeTitle } from './helpers';
 import { FlowMedia, FlowUpload } from './FlowMedia';
 import { t } from '../i18n';
 
 const fieldLabels: Record<string, string> = {
   text: 'Текст', rules: 'Правила (по одному на строку)', prompt: 'Инструкция', connectionId: 'Подключение', model: 'Модель',
-  topic: 'Тема', avoid: 'Уже сделанные темы (по одной на строку)', words: 'Число слов', voice: 'Голос', language: 'Язык', instructions: 'Указания', height: 'Высота кадра',
+  brandId: 'Бренд из библиотеки', project: 'Проект', topic: 'Тема', avoid: 'Уже сделанные темы (по одной на строку)', words: 'Число слов', voice: 'Голос', language: 'Язык', instructions: 'Указания', height: 'Высота кадра',
 };
-export function FlowInspector({ node, definition, connections, pending, save, close, flowId, upload }: {
+export function FlowInspector({ node, definition, connections, pending, save, close, flowId, upload, brands = [], projects = [], openBrand }: {
   node: FlowNode; definition: FlowRegistryNode; pending: boolean;
   flowId?: string; upload?: (id: string, file: File) => void;
-  connections: Connection[];
+  connections: Connection[]; brands?: Brand[]; projects?: string[]; openBrand?: (nodeId: string, brandId?: string) => void;
   save: (value: Pick<FlowNode, 'title' | 'gate' | 'config'>) => Promise<boolean | undefined>; close: () => void;
 }) {
   // Keep a localized default as display text only; unrelated saves preserve the stored title.
@@ -33,7 +34,15 @@ export function FlowInspector({ node, definition, connections, pending, save, cl
         // Explicit name: a wrapping <label> would otherwise include a textarea's own text in its label text.
         const label = t(fieldLabels[key] ?? '') || key;
         return <label key={key}>{label}
-          {key === 'connectionId'
+          {key === 'brandId' || key === 'project'
+            ? <select aria-label={label} value={String(value)} disabled={busy} onChange={e => set(e.target.value)}>
+                <option value="">{t('Не выбран')}</option>
+                {key === 'brandId' ? brands.map(brand => <option key={brand.id} value={brand.id}>{brand.name}</option>)
+                  : projects.map(name => <option key={name} value={name}>{name}</option>)}
+                {value && !(key === 'brandId' ? brands.some(brand => brand.id === value) : projects.includes(String(value)))
+                  ? <option value={String(value)} disabled>{String(value)} · {t('недоступно')}</option> : null}
+              </select>
+            : key === 'connectionId'
             ? <select aria-label={label} value={String(value)} disabled={busy} onChange={e => set(e.target.value)}>
                 <option value="">{t('Авто')}</option>
                 {connections.filter(connection => connection.available).map(connection =>
@@ -51,7 +60,9 @@ export function FlowInspector({ node, definition, connections, pending, save, cl
                 : <textarea aria-label={label} rows={4} value={String(value)} disabled={busy} onChange={e => set(e.target.value)} />}
         </label>;
       })}
-      <button className="primary-button" type="submit" disabled={busy}>{t('Сохранить')}</button>{/* Always mounted: a live region inserted together with its text is often not announced. */}
+      <button className="primary-button" type="submit" disabled={busy}>{t('Сохранить')}</button>
+      {node.type === 'brand' && openBrand && <button type="button" disabled={busy} onClick={() => openBrand(node.id, String(config.brandId ?? '') || undefined)}>
+        {config.brandId ? t('Изменить бренд') : t('Новый бренд')}</button>}{/* Always mounted: a live region inserted together with its text is often not announced. */}
       <span role="status">{saved ? t('Сохранено') : ''}</span>
     </form>
     <p>{t('Версия результата:')} {node.version}</p>

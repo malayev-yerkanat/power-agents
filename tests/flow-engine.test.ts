@@ -144,7 +144,10 @@ test('template includes all typed ports and final waits on QA; live missing exec
   const { engine, store, create, clean } = setup();
   try {
     const f = engine.create({ title: 'Reel', mode: 'demo', template: 'roblox-reel' });
-    assert.equal(f.nodes.length, 10);
+    assert.equal(f.nodes.length, 11);
+    assert.equal(f.nodes[0].type, 'project');
+    assert.ok(f.edges.some(e => e.from.node === 'project' && e.to.node === 'brand' && e.to.port === 'project'));
+    assert.equal(registry.brand.inputs[0].optional, true);
     assert.equal(registry.qa.gate, false);
     assert.deepEqual(registry.voice.outputs.map(p => p.name), ['audio', 'timings']);
     assert.ok(f.edges.some(e => e.from.node === 'qa' && e.to.node === 'final' && e.to.port === 'report'));
